@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NameAndPosition.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">dewdropper</a> &gt; <a href="index.source.html" class="el_package">com.dewdropper.read</a> &gt; <span class="el_source">NameAndPosition.java</span></div><h1>NameAndPosition.java</h1><pre class="source lang-java linenums">package com.dewdropper.read;
+
+import com.dewdropper.structure.events.Event;
+import java.util.function.Consumer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+
+<span class="nc bnc" id="L11" title="All 54 branches missed.">@Data</span>
+<span class="nc" id="L12">@NoArgsConstructor</span>
+<span class="nc" id="L13">@AllArgsConstructor</span>
+public class NameAndPosition {
+<span class="nc" id="L15">    private String streamName;</span>
+<span class="nc" id="L16">    private Long position;</span>
+
+<span class="nc" id="L18">    private StreamType streamType;</span>
+<span class="nc" id="L19">    private String name;</span>
+<span class="nc" id="L20">    private Consumer&lt;Event&gt; consumer;</span>
+<span class="nc" id="L21">    private Class&lt;?&gt; messageType;</span>
+
+<span class="nc" id="L23">    @Builder(buildMethodName = &quot;create&quot;)</span>
+<span class="nc" id="L24">    public NameAndPosition(StreamType streamType, String name, Consumer&lt;Event&gt; consumer, Class&lt;?&gt; messageType) {</span>
+<span class="nc" id="L25">        this.streamType = streamType;</span>
+<span class="nc" id="L26">        this.name = name;</span>
+<span class="nc" id="L27">        this.consumer = consumer;</span>
+<span class="nc" id="L28">        this.messageType = messageType;</span>
+<span class="nc" id="L29">    }</span>
+
+    public boolean isComplete() {
+<span class="nc" id="L32">        return StringUtils.isNotEmpty(streamName);</span>
+    }
+
+    public NameAndPosition completeTask(String streamName, Long position) {
+<span class="nc" id="L36">        this.streamName = streamName;</span>
+<span class="nc" id="L37">        this.position = position;</span>
+<span class="nc" id="L38">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
