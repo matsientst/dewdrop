@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">dewdropper</a> &gt; <a href="index.source.html" class="el_package">com.dewdropper.structure.subscribe</a> &gt; <span class="el_source">EventHandler.java</span></div><h1>EventHandler.java</h1><pre class="source lang-java linenums">package com.dewdropper.structure.subscribe;
+
+import static java.util.Objects.requireNonNull;
+
+import com.dewdropper.structure.events.Event;
+import com.dewdropper.structure.read.Handler;
+import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
+
+<span class="nc bnc" id="L10" title="All 30 branches missed.">@Data</span>
+public class EventHandler&lt;T extends Event&gt; {
+<span class="nc" id="L12">    private Handler&lt;T&gt; handler;</span>
+<span class="nc" id="L13">    private String handlerName;</span>
+<span class="nc" id="L14">    private Class&lt;?&gt; messageType;</span>
+
+<span class="nc" id="L16">    public EventHandler(Handler&lt;T&gt; handler, String handlerName) {</span>
+<span class="nc" id="L17">        requireNonNull(&quot;Handler is required&quot;);</span>
+
+<span class="nc" id="L19">        this.handler = handler;</span>
+<span class="nc bnc" id="L20" title="All 2 branches missed.">        this.handlerName = StringUtils.isEmpty(handlerName) ? &quot;&quot; : handlerName;</span>
+<span class="nc" id="L21">        this.messageType = handler.getMessageType();</span>
+<span class="nc" id="L22">    }</span>
+
+    public boolean tryHandle(T event) {
+<span class="nc bnc" id="L25" title="All 4 branches missed.">        if (event != null &amp;&amp; messageType.isAssignableFrom(event.getClass())) {</span>
+<span class="nc" id="L26">            T msg = (T) messageType.cast(event);</span>
+<span class="nc" id="L27">            handler.handle(msg); // if this throws let it bubble up.</span>
+<span class="nc" id="L28">            return true;</span>
+        }
+<span class="nc" id="L30">        return false;</span>
+    }
+
+    public boolean isSame(Class&lt;?&gt; messagesType, Object handler) {
+<span class="nc bnc" id="L34" title="All 4 branches missed.">        return messagesType.equals(this.messageType) &amp;&amp; handler.getClass().equals(this.handler.getClass());</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AggregateProxyFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">dewdropper</a> &gt; <a href="index.source.html" class="el_package">com.dewdropper.aggregate.proxy</a> &gt; <span class="el_source">AggregateProxyFactory.java</span></div><h1>AggregateProxyFactory.java</h1><pre class="source lang-java linenums">package com.dewdropper.aggregate.proxy;
+
+import com.dewdropper.aggregate.EventState;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
+import javassist.CannotCompileException;
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtConstructor;
+import javassist.Loader;
+import javassist.NotFoundException;
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.ProxyFactory;
+import javassist.util.proxy.ProxyObject;
+import lombok.extern.log4j.Log4j2;
+
+<span class="nc" id="L21">@Log4j2</span>
+<span class="nc" id="L22">public class AggregateProxyFactory {</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public static &lt;T&gt; T create(Class&lt;T&gt; iface) throws ReflectiveOperationException {
+<span class="nc" id="L26">        ClassPool pool = ClassPool.getDefault();</span>
+
+<span class="nc" id="L28">        Loader loader = (Loader) AccessController.doPrivileged((PrivilegedAction) () -&gt; new Loader(Thread.currentThread().getContextClassLoader(), pool));</span>
+        try {
+<span class="nc" id="L30">            CtClass ctClass = pool.get(iface.getName());</span>
+<span class="nc" id="L31">            ctClass.defrost();</span>
+<span class="nc" id="L32">            ctClass.setSuperclass(pool.get(EventState.class.getName()));</span>
+<span class="nc" id="L33">            ctClass.writeFile(&quot;com.dewdropper&quot;);</span>
+<span class="nc" id="L34">            ProxyFactory factory = new ProxyFactory();</span>
+<span class="nc" id="L35">            factory.setSuperclass(ctClass.toClass(loader, iface.getProtectionDomain()));</span>
+
+<span class="nc" id="L37">            MethodHandler handler = new AggregateHandler();</span>
+
+<span class="nc" id="L39">            Object instance = factory.create(new Class[] {}, new Object[] {}, handler);</span>
+<span class="nc" id="L40">            return (T) instance;</span>
+<span class="nc" id="L41">        } catch (ReflectiveOperationException e) {</span>
+<span class="nc" id="L42">            log.error(&quot;Couldn't create object&quot;, e);</span>
+<span class="nc" id="L43">            throw e;</span>
+<span class="nc" id="L44">        } catch (NotFoundException | CannotCompileException e) {</span>
+<span class="nc" id="L45">            log.error(&quot;Couldn't create object&quot;, e);</span>
+<span class="nc" id="L46">            return null;</span>
+<span class="nc" id="L47">        } catch (IOException e) {</span>
+<span class="nc" id="L48">            throw new RuntimeException(e);</span>
+        }
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
