@@ -9,7 +9,7 @@
         <Root level="INFO">
             <AppenderRef ref="Console"/>
         </Root>
-        <Logger name="com.dewdropper" level="DEBUG" additivity="false">
+        <Logger name="com.dewdrop" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
     </Loggers>
