@@ -1,6 +1,0 @@
-com/dewdropper/DewDropperTest.class
-com/dewdropper/datastore/eventstore/EventStoreUtilsTest.class
-com/dewdropper/TestEvent.class
-com/dewdropper/aggregate/AggregateStateOrchestratorTest.class
-com/dewdropper/TestAggregate.class
-com/dewdropper/serialize/JsonSerializerTest.class

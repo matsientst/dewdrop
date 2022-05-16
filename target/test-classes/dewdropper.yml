@@ -1,3 +1,0 @@
-dewdropper:
-  eventstoredb:
-    connection-string: esdb://localhost:2113?tls=false
