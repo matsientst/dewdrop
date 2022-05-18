@@ -1,6 +1,7 @@
-package com.dewdrop;
+package com.dewdrop.fixture;
 
 import com.dewdrop.aggregate.AggregateId;
+import com.dewdrop.read.readmodel.CacheRoot;
 import com.dewdrop.structure.api.Event;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TestAccountEvent extends Event {
+public abstract class DewdropAccountEvent extends Event {
     @AggregateId
     private UUID accountId;
 

@@ -1,16 +1,16 @@
 package com.dewdrop.aggregate;
 
-import com.dewdrop.TestCreateAccountCommand;
+import com.dewdrop.fixture.DewdropCreateAccountCommand;
 import java.util.UUID;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-class AggregateStateOrchestratorTest {
+class QueryStateOrchestratorTest {
     @Test
     @Disabled
     void create() {
         AggregateStateOrchestrator orchestrator = new AggregateStateOrchestrator();
-        TestCreateAccountCommand command = new TestCreateAccountCommand(UUID.randomUUID(),"test");
+        DewdropCreateAccountCommand command = new DewdropCreateAccountCommand(UUID.randomUUID(),"test");
         orchestrator.onCommand(command);
     }
 

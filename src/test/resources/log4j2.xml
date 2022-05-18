@@ -4,6 +4,9 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
+        <Console name="NoPatternConsole" target="SYSTEM_OUT">
+            <PatternLayout pattern="%msg%n"/>
+        </Console>
     </Appenders>
     <Loggers>
         <Root level="INFO">
@@ -11,6 +14,9 @@
         </Root>
         <Logger name="com.dewdrop" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="com.dewdrop.config.ascii" level="DEBUG" additivity="false">
+            <AppenderRef ref="NoPatternConsole"/>
         </Logger>
     </Loggers>
 </Configuration>

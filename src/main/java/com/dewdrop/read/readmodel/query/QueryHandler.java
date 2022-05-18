@@ -1,4 +1,4 @@
-package com.dewdrop.command;
+package com.dewdrop.read.readmodel.query;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -9,6 +9,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface CommandHandler {
-    Class<?> value();
+public @interface QueryHandler {
 }

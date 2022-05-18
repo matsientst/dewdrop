@@ -1,5 +1,6 @@
-package com.dewdrop.read;
+package com.dewdrop.read.readmodel;
 
+import com.dewdrop.read.StreamType;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.read.Handler;
@@ -8,12 +9,12 @@ import com.dewdrop.streamstore.subscribe.Subscription;
 import lombok.Data;
 
 @Data
-public abstract class ReadModel<T extends Message> implements Handler<T> {
+public abstract class AbstractReadModel<T extends Message> implements Handler<T> {
     protected Subscription<T> subscription;
     protected Class<?> messageType;
     protected StreamType streamType;
 
-    protected ReadModel(Class<?> messageType, StreamType streamType, StreamStore streamStoreConnection, EventSerializer eventSerializer) {
+    protected AbstractReadModel(Class<?> messageType, StreamType streamType, StreamStore streamStoreConnection, EventSerializer eventSerializer) {
         this.messageType = messageType;
         this.streamType = streamType;
         this.subscription = new Subscription<>(this, messageType, streamStoreConnection, eventSerializer);

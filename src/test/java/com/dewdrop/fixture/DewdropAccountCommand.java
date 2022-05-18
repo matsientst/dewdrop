@@ -1,4 +1,4 @@
-package com.dewdrop;
+package com.dewdrop.fixture;
 
 import com.dewdrop.aggregate.AggregateId;
 import com.dewdrop.api.DefaultCommand;
@@ -8,7 +8,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class TestAccountCommand extends DefaultCommand {
+public class DewdropAccountCommand extends DefaultCommand {
     @AggregateId
     private UUID accountId;
 }

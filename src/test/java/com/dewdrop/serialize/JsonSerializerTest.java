@@ -11,7 +11,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
-import com.dewdrop.TestMessage;
+import com.dewdrop.fixture.DewdropAccountCreated;
+import com.dewdrop.fixture.DewdropAccountCreated;
+import com.dewdrop.fixture.DewdropFundsAddedToAccount;
 import com.dewdrop.streamstore.serialize.JsonSerializer;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.events.ReadEventData;
@@ -42,7 +44,7 @@ class JsonSerializerTest {
     void setup() throws JsonProcessingException {
         objectMapper = spy(new ObjectMapper());
         jsonSerializer = spy(new JsonSerializer(objectMapper));
-        TestMessage test = new TestMessage(UUID.randomUUID(), "test");
+        DewdropAccountCreated test = new DewdropAccountCreated(UUID.randomUUID(), "test");
         message = spy(test);
 
         readEventData = new ReadEventData(UUID.randomUUID().toString(), UUID.randomUUID(), 3L, "TestEvent", objectMapper.writeValueAsBytes(message), objectMapper.writeValueAsBytes(commitHeaders), true, Instant.now());
@@ -57,7 +59,7 @@ class JsonSerializerTest {
     void serialize() {
         WriteEventData eventData = jsonSerializer.serialize(message, commitHeaders).orElse(null);
 
-        assertEquals(TestMessage.class.getSimpleName(), eventData.getEventType());
+        assertEquals(DewdropAccountCreated.class.getSimpleName(), eventData.getEventType());
     }
 
     @Test
@@ -87,23 +89,24 @@ class JsonSerializerTest {
     void deserialize() throws JsonProcessingException {
         ReadEventData eventData = new ReadEventData(UUID.randomUUID().toString(), UUID.randomUUID(), 3L, "TestEvent", objectMapper.writeValueAsBytes(message), objectMapper.writeValueAsBytes(commitHeaders), true, Instant.now());
 
-        Optional<TestMessage> deserialize = jsonSerializer.deserialize(eventData);
-        TestMessage result = deserialize.orElse(null);
+        Optional<DewdropAccountCreated> deserialize = jsonSerializer.deserialize(eventData);
+        DewdropAccountCreated result = deserialize.orElse(null);
 
-        TestMessage castedEvent = (TestMessage) message;
-        assertThat(result.getId(), is(castedEvent.getId()));
-        assertThat(result.getTest(), is(castedEvent.getTest()));
+        DewdropAccountCreated castedEvent = (DewdropAccountCreated) message;
+
+        assertThat(result.getAccountId(), is(castedEvent.getAccountId()));
+        assertThat(result.getName(), is(castedEvent.getName()));
     }
 
     @Test
     void deserialize_exception() throws IOException {
         doThrow(IOException.class).when(objectMapper).readValue(any(byte[].class), any(Class.class));
-        Optional<TestMessage> result = jsonSerializer.deserialize(readEventData);
+        Optional<DewdropAccountCreated> result = jsonSerializer.deserialize(readEventData);
         assertThat(result.isEmpty(), is(true));
 
         doReturn(null).when(objectMapper).writeValueAsBytes(anyMap());
         Optional<WriteEventData> eventData = new JsonSerializer(objectMapper).serialize(message, new HashMap<>());
-        Optional<TestMessage> response = jsonSerializer.deserialize(readEventData);
+        Optional<DewdropAccountCreated> response = jsonSerializer.deserialize(readEventData);
         assertThat(response.isEmpty(), is(true));
     }
 
@@ -121,14 +124,14 @@ class JsonSerializerTest {
     }
 
     private void assertWriteEventData(WriteEventData eventData) throws IOException {
-        assertThat(TestMessage.class.getSimpleName(), is(eventData.getEventType()));
+        assertThat(DewdropAccountCreated.class.getSimpleName(), is(eventData.getEventType()));
         assertThat(eventData.getEventId(), is(notNullValue()));
         assertThat(eventData.isJson(), is(true));
         assertThat(eventData.isJson(), is(true));
         assertThat(eventData.getMetadata().length, is(greaterThan(0)));
         assertThat(eventData.getData().length, is(greaterThan(0)));
-        TestMessage testEvent = objectMapper.readValue(eventData.getData(), TestMessage.class);
-        assertThat(testEvent.getTest(), is("test"));
-        assertThat(testEvent.getId(), is(((TestMessage) message).getId()));
+        DewdropAccountCreated testEvent = objectMapper.readValue(eventData.getData(), DewdropAccountCreated.class);
+        assertThat(testEvent.getName(), is("test"));
+        assertThat(testEvent.getAccountId(), is(((DewdropAccountCreated) message).getAccountId()));
     }
 }

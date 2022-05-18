@@ -5,9 +5,8 @@ import com.dewdrop.config.DewdropSettings;
 import com.dewdrop.structure.api.Command;
 import java.util.List;
 
-
 public class Dewdrop {
-    private DewdropSettings settings;
+    private final DewdropSettings settings;
 
     public Dewdrop(DewdropSettings settings) {
         this.settings = settings;
@@ -18,4 +17,12 @@ public class Dewdrop {
             .onCommand(command);
     }
 
+    public <T, R> Result<R> onQuery(T query) {
+        return settings.getQueryStateOrchestrator()
+            .onQuery(query);
+    }
+
+    public DewdropSettings getSettings() {
+        return settings;
+    }
 }

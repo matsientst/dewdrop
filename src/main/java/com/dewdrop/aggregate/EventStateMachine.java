@@ -29,12 +29,12 @@ public abstract class EventStateMachine {
 
         if (recorder.hasRecordedEvents()) throw new IllegalStateException("Restoring from events is not possible when an instance has recorded events.");
 
-        messages.stream().forEach(event -> {
+        messages.stream().forEach(message -> {
             if (version < 0) // new aggregates have an expected version of -1 or -2
-                version = 0; // got first event (zero based)
+                version = 0; // got first message (zero based)
             else
                 version++;
-            applyState(event);
+            applyState(message);
         });
     }
 

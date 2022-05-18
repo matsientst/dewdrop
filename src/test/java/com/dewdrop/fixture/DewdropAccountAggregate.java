@@ -1,4 +1,4 @@
-package com.dewdrop;
+package com.dewdrop.fixture;
 
 import com.dewdrop.aggregate.Aggregate;
 import com.dewdrop.aggregate.AggregateId;
@@ -7,13 +7,13 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 
 @Aggregate
-public class TestAccountAggregate {
+public class DewdropAccountAggregate {
     @AggregateId
     UUID accountId;
     String name;
     BigDecimal balance = BigDecimal.ZERO;
 
-    public TestAccountAggregate() {}
+    public DewdropAccountAggregate() {}
 
     public UUID getAccountId() {
         return accountId;
@@ -32,28 +32,28 @@ public class TestAccountAggregate {
     }
 
 
-    public TestAccountCreated handle(TestCreateAccountCommand command) {
+    public DewdropAccountCreated handle(DewdropCreateAccountCommand command) {
         if (StringUtils.isEmpty(command.getName())) {
             throw new IllegalArgumentException("Name cannot be empty");
         }
 
-        return new TestAccountCreated(command.getAccountId(), command.getName());
+        return new DewdropAccountCreated(command.getAccountId(), command.getName());
     }
 
-    public TestFundsAddedToAccount handle(TestAddFundsToAccountCommand command) {
+    public DewdropFundsAddedToAccount handle(DewdropAddFundsToAccountCommand command) {
         if (command.getAccountId() == null) {
             throw new IllegalArgumentException("Id cannot be empty");
         }
 
-        return new TestFundsAddedToAccount(command.getAccountId(), command.getFunds());
+        return new DewdropFundsAddedToAccount(command.getAccountId(), command.getFunds());
     }
 
-    public void on(TestAccountCreated event) {
+    public void on(DewdropAccountCreated event) {
         this.accountId = event.getAccountId();
         this.name = event.getName();
     }
 
-    public void on(TestFundsAddedToAccount event) {
+    public void on(DewdropFundsAddedToAccount event) {
         this.balance = this.balance.add(event.getFunds());
     }
 }

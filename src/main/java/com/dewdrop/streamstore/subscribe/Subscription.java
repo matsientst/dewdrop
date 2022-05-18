@@ -1,6 +1,6 @@
 package com.dewdrop.streamstore.subscribe;
 
-import static com.dewdrop.streamstore.subscribe.EventClassHierarchy.getMeAndMyChildren;
+import static com.dewdrop.streamstore.subscribe.EventClassHierarchy.getMyChildren;
 import static java.util.Objects.requireNonNull;
 
 import com.dewdrop.read.NameAndPosition;
@@ -68,7 +68,7 @@ public class Subscription<T extends Message> {
     void subscribeHandler(EventHandler<T> handler, boolean includeDerived) {
         List<Class<?>> eventTypes;
         if (includeDerived) {
-            eventTypes = new ArrayList<>(getMeAndMyChildren(handler.getMessageType()));
+            eventTypes = new ArrayList<>(getMyChildren(handler.getMessageType()));
         } else {
             eventTypes = List.of(handler.getMessageType());
 
@@ -92,7 +92,7 @@ public class Subscription<T extends Message> {
     public void unsubscribe(Handler<T> handler) {
         requireNonNull(handler, "handler");
 
-        Set<Class<?>> descendants = getMeAndMyChildren(handler.getMessageType());
+        Set<Class<?>> descendants = getMyChildren(handler.getMessageType());
         for (Class<?> clazz : descendants) {
             List<EventHandler<T>> handlesFor = getHandlesFor(clazz);
 
@@ -116,7 +116,7 @@ public class Subscription<T extends Message> {
 
         EventHandler<T> allHandler = new EventHandler<>(handler, handler.getClass().getSimpleName());
         // THis is BAD? Why traverse all objects?
-        Set<Class<?>> eventTypes = EventClassHierarchy.getMeAndMyChildren(allHandler.getMessageType());
+        Set<Class<?>> eventTypes = EventClassHierarchy.getMyChildren(allHandler.getMessageType());
 
         for (Class<?> currentMessageType : eventTypes) {
             subscribeToMessageType(allHandler, currentMessageType);

@@ -4,13 +4,17 @@ import com.dewdrop.Dewdrop;
 import com.dewdrop.aggregate.AggregateStateOrchestrator;
 import com.dewdrop.command.CommandMapper;
 import com.dewdrop.command.DefaultAggregateCommandMapper;
+import com.dewdrop.config.ascii.Ascii;
+import com.dewdrop.read.readmodel.DefaultAnnotationReadModelMapper;
+import com.dewdrop.read.readmodel.QueryStateOrchestrator;
+import com.dewdrop.read.readmodel.ReadModelMapper;
 import com.dewdrop.streamstore.eventstore.EventStore;
 import com.dewdrop.streamstore.repository.StreamStoreRepository;
 import com.dewdrop.streamstore.serialize.JsonSerializer;
 import com.dewdrop.streamstore.stream.PrefixStreamNameGenerator;
 import com.dewdrop.structure.StreamNameGenerator;
+import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.serialize.EventSerializer;
-import com.dewdrop.utils.AnnotationReflection;
 import com.dewdrop.utils.ReflectionsConfigUtils;
 import com.eventstore.dbclient.EventStoreDBClient;
 import com.eventstore.dbclient.EventStoreDBClientSettings;
@@ -33,14 +37,16 @@ public class DewdropSettings {
     private ObjectMapper objectMapper;
     private EventStoreDBClient eventStoreDBClient;
     private EventSerializer eventSerializer;
-    private EventStore eventStore;
+    private StreamStore streamStore;
     private StreamNameGenerator streamNameGenerator;
     private StreamStoreRepository streamStoreRepository;
     private AggregateStateOrchestrator aggregateStateOrchestrator;
+    private QueryStateOrchestrator queryStateOrchestrator;
     private CommandMapper commandMapper;
+    private ReadModelMapper readModelMapper;
 
     @Builder(buildMethodName = "create")
-    public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper) {
+    public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper) {
         this.properties = properties;
         this.objectMapper = Optional.ofNullable(objectMapper)
             .orElse(defaultObjectMapper());
@@ -50,16 +56,22 @@ public class DewdropSettings {
             }
             this.eventStoreDBClient = Optional.ofNullable(eventStoreDBClient)
                 .orElse(eventStoreDBClient(properties));
-            this.eventStore = new EventStore(getEventStoreDBClient());
+            this.streamStore = new EventStore(getEventStoreDBClient());
         } catch (ParseError e) {
             throw new IllegalArgumentException("Unable to parse EventStore connection", e);
         }
         ReflectionsConfigUtils.init(getProperties().getPackageToScan());
-        this.eventSerializer = Optional.ofNullable(eventSerializer).orElse(new JsonSerializer(getObjectMapper()));
+        this.eventSerializer = Optional.ofNullable(eventSerializer)
+            .orElse(new JsonSerializer(getObjectMapper()));
         this.streamNameGenerator = new PrefixStreamNameGenerator(getProperties().getStreamPrefix());
-        this.streamStoreRepository = new StreamStoreRepository(getEventStore(), getStreamNameGenerator(), getEventSerializer());
-        this.commandMapper = Optional.ofNullable(commandMapper).orElse(new DefaultAggregateCommandMapper(getStreamStoreRepository()));
+        this.streamStoreRepository = new StreamStoreRepository(getStreamStore(), getStreamNameGenerator(), getEventSerializer());
+        this.commandMapper = Optional.ofNullable(commandMapper)
+            .orElse(new DefaultAggregateCommandMapper());
+        getCommandMapper().init(getStreamStoreRepository());
         this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper());
+        this.readModelMapper = new DefaultAnnotationReadModelMapper();
+        getReadModelMapper().init(getStreamStore(), getEventSerializer());
+        this.queryStateOrchestrator = new QueryStateOrchestrator(getReadModelMapper());
     }
 
     private EventStoreDBClient eventStoreDBClient(DewdropProperties properties) throws ParseError {
@@ -81,6 +93,7 @@ public class DewdropSettings {
     }
 
     public Dewdrop start() {
+        Ascii.writeAscii();
         return new Dewdrop(this);
     }
 }
