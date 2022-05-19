@@ -1,5 +1,9 @@
 package com.dewdrop.streamstore.serialize;
 
+import static com.dewdrop.streamstore.repository.StreamStoreRepository.CAUSATION_ID;
+import static com.dewdrop.streamstore.repository.StreamStoreRepository.CORRELATION_ID;
+
+import com.dewdrop.structure.events.CorrelationCausation;
 import com.dewdrop.structure.events.ReadEventData;
 import com.dewdrop.structure.events.WriteEventData;
 import com.dewdrop.structure.serialize.EventSerializer;
@@ -48,26 +52,38 @@ public class JsonSerializer implements EventSerializer {
 
     @Override
     public <T> Optional<T> deserialize(ReadEventData event) {
-        Map<String, Object> clrQualifiedName = new HashMap<>();
+        Map<String, Object> metadata = new HashMap<>();
         try {
-            clrQualifiedName = objectMapper.readValue(event.getMetadata(), Map.class);
+            metadata = objectMapper.readValue(event.getMetadata(), Map.class);
         } catch (IOException e) {
             Integer length = event.getMetadata() == null ? 0 : event.getMetadata().length;
 
             log.error("problem deserialize metadata for event {} - size of metaData:{}", event.getEventType(), length, e);
         }
-        String className = (String) clrQualifiedName.get(EVENT_CLASS);
+        String className = (String) metadata.get(EVENT_CLASS);
         if (StringUtils.isBlank(className)) {
             log.error("className not found for eventType:{}", event.getEventType());
             return Optional.empty();
         }
 
-        return deserializeEvent(event, className);
+        return deserializeEvent(event, className, metadata);
     }
 
-    public <T> Optional<T> deserializeEvent(ReadEventData event, String className) {
+    public <T> Optional<T> deserializeEvent(ReadEventData event, String className, Map<String, Object> metadata) {
         try {
             T value = (T) objectMapper.readValue(event.getData(), Class.forName(className));
+            if(value instanceof CorrelationCausation) {
+                CorrelationCausation correlationCausation = (CorrelationCausation) value;
+                if(metadata.containsKey(CAUSATION_ID)) {
+                    String uuid = (String) metadata.get(CAUSATION_ID);
+                    correlationCausation.setCausationId(UUID.fromString(uuid));
+                }
+                if(metadata.containsKey(CORRELATION_ID)) {
+                    String uuid = (String) metadata.get(CORRELATION_ID);
+                    correlationCausation.setCorrelationId(UUID.fromString(uuid));
+                }
+            }
+
             return Optional.of(value);
         } catch (IOException e) {
             log.error("Unable to deserialize data for class:" + className, e);

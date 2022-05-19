@@ -1,7 +1,6 @@
 package com.dewdrop.fixture;
 
 import com.dewdrop.aggregate.AggregateId;
-import com.dewdrop.read.readmodel.CacheRoot;
 import com.dewdrop.structure.api.Event;
 import java.util.UUID;
 import lombok.AllArgsConstructor;

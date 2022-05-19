@@ -32,10 +32,11 @@ class DewdropTest {
             .start();
 
         DewdropCreateAccountCommand command = new DewdropCreateAccountCommand(UUID.randomUUID(), "test");
-        dewDrop.onCommand(command);
+        Result<Object> objectResult = dewDrop.onCommand(command);
+
 
         DewdropAddFundsToAccountCommand addFunds = new DewdropAddFundsToAccountCommand(command.getAccountId(), new BigDecimal(100));
-        dewDrop.onCommand(addFunds);
+        dewDrop.onSubsequentCommand(addFunds, command);
 
         DewdropGetAccountByIdQuery query = new DewdropGetAccountByIdQuery(command.getAccountId());
         Result<DewdropAccountDetails> result = dewDrop.onQuery(query);

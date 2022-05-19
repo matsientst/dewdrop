@@ -2,6 +2,7 @@ package com.dewdrop.config;
 
 import com.dewdrop.Dewdrop;
 import com.dewdrop.aggregate.AggregateStateOrchestrator;
+import com.dewdrop.command.CommandHandlerMapper;
 import com.dewdrop.command.CommandMapper;
 import com.dewdrop.command.DefaultAggregateCommandMapper;
 import com.dewdrop.config.ascii.Ascii;
@@ -66,9 +67,9 @@ public class DewdropSettings {
         this.streamNameGenerator = new PrefixStreamNameGenerator(getProperties().getStreamPrefix());
         this.streamStoreRepository = new StreamStoreRepository(getStreamStore(), getStreamNameGenerator(), getEventSerializer());
         this.commandMapper = Optional.ofNullable(commandMapper)
-            .orElse(new DefaultAggregateCommandMapper());
+            .orElse(new CommandHandlerMapper());
         getCommandMapper().init(getStreamStoreRepository());
-        this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper());
+        this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getStreamStoreRepository());
         this.readModelMapper = new DefaultAnnotationReadModelMapper();
         getReadModelMapper().init(getStreamStore(), getEventSerializer());
         this.queryStateOrchestrator = new QueryStateOrchestrator(getReadModelMapper());

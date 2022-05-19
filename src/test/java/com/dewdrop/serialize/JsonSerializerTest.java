@@ -12,8 +12,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
 import com.dewdrop.fixture.DewdropAccountCreated;
-import com.dewdrop.fixture.DewdropAccountCreated;
-import com.dewdrop.fixture.DewdropFundsAddedToAccount;
 import com.dewdrop.streamstore.serialize.JsonSerializer;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.events.ReadEventData;
@@ -26,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.collections4.map.HashedMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -113,13 +112,13 @@ class JsonSerializerTest {
     @Test
     void deserializeEvent() throws IOException {
         doThrow(IOException.class).when(objectMapper).readValue(any(byte[].class), any(Class.class));
-        Object result = jsonSerializer.deserializeEvent(readEventData, message.getClass().getName());
+        Object result = jsonSerializer.deserializeEvent(readEventData, message.getClass().getName(), new HashedMap<>());
         assertThat(result, is(Optional.empty()));
     }
 
     @Test
     void deserializeEvent_eventAndClassName_ClassNotFound() throws IOException {
-        Object result = jsonSerializer.deserializeEvent(readEventData, "Test");
+        Object result = jsonSerializer.deserializeEvent(readEventData, "Test",  new HashedMap<>());
         assertThat(result, is(Optional.empty()));
     }
 

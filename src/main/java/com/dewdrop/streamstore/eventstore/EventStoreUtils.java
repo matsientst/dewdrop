@@ -72,7 +72,7 @@ public class EventStoreUtils {
 
             @Override
             public void onError(Subscription subscription, Throwable throwable) {
-                log.error("There was an error receiving the event? the subscription id:{}", subscription.getSubscriptionId(), throwable.getCause());
+                log.error("There was an error receiving the event? the subscription id:{}", subscription.getSubscriptionId(), throwable.getCause().getMessage());
             }
 
             @Override

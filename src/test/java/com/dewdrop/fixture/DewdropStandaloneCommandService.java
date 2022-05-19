@@ -20,13 +20,9 @@ public class DewdropStandaloneCommandService {
 
     public DewdropAccountAggregateSubclass process(DewdropAddFundsToAccountCommand command) {
         DewdropAccountAggregateSubclass accountAggregate = new DewdropAccountAggregateSubclass();
-        Optional<AggregateRoot> aggregateRoot = streamStoreRepository.getById(command.getAccountId(), accountAggregate, Integer.MAX_VALUE, command);
-        if (aggregateRoot.isPresent()) {
-            accountAggregate = (DewdropAccountAggregateSubclass) aggregateRoot.get();
-            accountAggregate.handle(command);
-            streamStoreRepository.save(accountAggregate);
-            return accountAggregate;
-        }
-        return null;
+        AggregateRoot aggregateRoot = streamStoreRepository.getById(command.getAccountId(), accountAggregate, Integer.MAX_VALUE, command);
+        accountAggregate.handle(command);
+        streamStoreRepository.save(aggregateRoot);
+        return accountAggregate;
     }
 }

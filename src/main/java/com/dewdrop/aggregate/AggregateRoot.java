@@ -12,7 +12,7 @@ import java.util.UUID;
 import lombok.Data;
 
 @Data
-public class AggregateRoot extends EventStateMachine implements CorrelationCausation {
+public class AggregateRoot extends EventStateMachine  {
     private final List<Message> messages = new ArrayList<>();
     private Object target = null;
     private String targetClassName = null;
@@ -36,7 +36,7 @@ public class AggregateRoot extends EventStateMachine implements CorrelationCausa
         }
 
         this.correlationId = command.getCorrelationId();
-        this.causationId = command.getCausationId();
+        this.causationId = command.getMessageId();
     }
 
     public EventRecorder getRecorder() {
@@ -61,7 +61,7 @@ public class AggregateRoot extends EventStateMachine implements CorrelationCausa
         return target;
     }
 
-    public Optional<Event> handleCommand(Command command) {
+    public Optional<List<Event>> handleCommand(Command command) {
         return DewdropReflectionUtils.callMethod(getTarget(), "handle", command);
     }
 

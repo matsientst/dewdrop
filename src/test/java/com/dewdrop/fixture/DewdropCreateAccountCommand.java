@@ -1,5 +1,6 @@
 package com.dewdrop.fixture;
 
+import com.dewdrop.structure.api.Message;
 import java.util.UUID;
 import lombok.Data;
 

@@ -34,11 +34,11 @@ public class StreamStoreRepository {
     StreamNameGenerator streamNameGenerator;
     EventSerializer serializer;
 
-    public static final String AGGREGATE_CLR_TYPE_NAME = "AggregateClrTypeName";
-    public static final String AGGREGATE_CLR_TYPE_NAME_HEADER = "AggregateClrTypeNameHeader";
-    public static final String COMMIT_ID_HEADER = "CommitId";
+    public static final String AGGREGATE_CLR_TYPE_NAME = "aggregateClassName";
+//    public static final String AGGREGATE_CLR_TYPE_NAME_HEADER = "AggregateClrTypeNameHeader";
+    public static final String COMMIT_ID_HEADER = "commitId";
 
-    public static final String MESSAGE_ID = "msgId";
+    public static final String MESSAGE_ID = "messageId";
     public static final String CORRELATION_ID = "correlationId";
     public static final String CAUSATION_ID = "causationId";
 
@@ -55,10 +55,12 @@ public class StreamStoreRepository {
     }
 
 
-    public Optional<AggregateRoot> getById(UUID id, AggregateRoot aggregateRoot, int version, CorrelationCausation command) {
+    public AggregateRoot getById(UUID id, AggregateRoot aggregateRoot, int version, CorrelationCausation command) {
         log.debug("Looking up aggregate with id {}", id);
         if (version <= 0) {throw new IllegalArgumentException("Cannot get version <= 0");}
-
+        if (command != null) {
+            aggregateRoot.setSource(command);
+        }
         String streamName = streamNameGenerator.generateForAggregate(aggregateRoot.getTarget().getClass(), id);
 
         Long sliceStart = 0L;
@@ -70,7 +72,7 @@ public class StreamStoreRepository {
             streamReadResults = connection.read(request);
 
             if (!streamReadResults.isStreamExists()) {
-                return Optional.empty();
+                return aggregateRoot;
             }
             // if (streamReadResults instanceof StreamNotFoundSlice) {throw new AggregateNotFoundException(id,
             // aggClass);}
@@ -100,11 +102,9 @@ public class StreamStoreRepository {
         //
         // if (version != Integer.MAX_VALUE && aggregate.getExpectedVersion() != version - 1) {throw new
         // AggregateVersionException(id, aggClass, (long) version, aggregate.getExpectedVersion());}
-        if (command != null) {
-            aggregateRoot.setSource(command);
-        }
 
-        return Optional.of(aggregateRoot);
+
+        return aggregateRoot;
     }
 
     AggregateRoot constructFromAggregate(Class<? extends AggregateRoot> aggClass) {
@@ -158,13 +158,12 @@ public class StreamStoreRepository {
         Map<String, Object> commitHeaders = new HashMap<>();
         commitHeaders.put(COMMIT_ID_HEADER, UUID.randomUUID());
         String header = aggregateRoot.getClass()
-            .getName() + "," + aggregateRoot.getClass()
+            .getName() + "," + aggregateRoot.getTarget().getClass()
             .getSimpleName();
-        commitHeaders.put(AGGREGATE_CLR_TYPE_NAME_HEADER, header);
-        commitHeaders.put(AGGREGATE_CLR_TYPE_NAME, aggregateRoot.getClass()
-            .getName());
+//        commitHeaders.put(AGGREGATE_CLR_TYPE_NAME_HEADER, header);
+        commitHeaders.put(AGGREGATE_CLR_TYPE_NAME, aggregateRoot.getTargetClassName());
 
-        if (aggregateRoot.getCorrelationId() != null) {
+        if (aggregateRoot.getCausationId() != null) {
             commitHeaders.put(CAUSATION_ID, aggregateRoot.getCausationId());
         }
         if (aggregateRoot.getCorrelationId() != null) {

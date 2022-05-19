@@ -1,8 +1,7 @@
 package com.dewdrop.utils;
 
 import com.dewdrop.aggregate.AggregateId;
-import com.dewdrop.read.readmodel.CacheRoot;
-import com.dewdrop.read.readmodel.CacheRootKey;
+import com.dewdrop.read.readmodel.CreationEvent;
 import com.dewdrop.structure.api.Message;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -16,7 +15,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 public class CacheUtils {
     public static boolean isCacheRoot(Message message) {
         return message.getClass()
-            .isAnnotationPresent(CacheRoot.class);
+            .isAnnotationPresent(CreationEvent.class);
     }
 
     public static Optional<UUID> getCacheRootKey(Message message) {

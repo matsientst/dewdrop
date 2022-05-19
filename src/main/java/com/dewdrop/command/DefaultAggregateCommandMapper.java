@@ -8,6 +8,7 @@ import com.dewdrop.structure.api.Command;
 import com.dewdrop.structure.api.Event;
 import com.dewdrop.utils.AggregateIdUtils;
 import com.dewdrop.utils.AggregateUtils;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,11 @@ public class DefaultAggregateCommandMapper extends AbstractCommandHandlerMapper 
         super.construct(streamStoreRepository);
         // warming up the aggregateRoot cache
         AggregateUtils.getAnnotatedAggregateRoots();
+    }
+
+    @Override
+    public Optional<Method> getCommandHandlersThatSupportCommand(Command command) {
+        return null;
     }
 
     public Result<List<Object>> onCommand(Command command) {
@@ -40,18 +46,14 @@ public class DefaultAggregateCommandMapper extends AbstractCommandHandlerMapper 
                 Optional<UUID> aggregateId = AggregateIdUtils.getAggregateId(command);
                 if (aggregateId.isPresent()) {
                     UUID id = aggregateId.get();
-                    aggregateRoot = streamStoreRepository.getById(id, aggregateRoot, Integer.MAX_VALUE, command)
-                        .orElse(aggregateRoot);
-
-                    if(aggregateRoot.getCausationId() == null) {
-                        aggregateRoot.setCausationId(id);
-                        aggregateRoot.setCorrelationId(id);
-                    }
+                    aggregateRoot = streamStoreRepository.getById(id, aggregateRoot, Integer.MAX_VALUE, command);
                 }
                 try {
-                    Optional<Event> result = aggregateRoot.handleCommand(command);
+                    Optional<List<Event>> result = aggregateRoot.handleCommand(command);
                     if (result.isPresent()) {
-                        aggregateRoot.raise(result.get());
+                        for (Event event : result.get()) {
+                            aggregateRoot.raise(event);
+                        }
                         streamStoreRepository.save(aggregateRoot);
                         results.add(aggregateRoot.getTarget());
                     }

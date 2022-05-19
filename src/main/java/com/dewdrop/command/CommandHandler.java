@@ -10,5 +10,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface CommandHandler {
-    Class<?> value();
+    Class<?> value() default void.class;
+
 }

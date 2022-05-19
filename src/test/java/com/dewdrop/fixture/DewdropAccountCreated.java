@@ -1,13 +1,13 @@
 package com.dewdrop.fixture;
 
-import com.dewdrop.read.readmodel.CacheRoot;
+import com.dewdrop.read.readmodel.CreationEvent;
 import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@CacheRoot
+@CreationEvent
 public class DewdropAccountCreated extends DewdropAccountEvent {
     private String name;
 

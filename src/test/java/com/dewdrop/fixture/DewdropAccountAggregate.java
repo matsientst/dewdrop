@@ -2,7 +2,9 @@ package com.dewdrop.fixture;
 
 import com.dewdrop.aggregate.Aggregate;
 import com.dewdrop.aggregate.AggregateId;
+import com.dewdrop.command.CommandHandler;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 
@@ -14,38 +16,22 @@ public class DewdropAccountAggregate {
     BigDecimal balance = BigDecimal.ZERO;
 
     public DewdropAccountAggregate() {}
-
-    public UUID getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(UUID accountId) {
-        this.accountId = accountId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-
-    public DewdropAccountCreated handle(DewdropCreateAccountCommand command) {
+    @CommandHandler
+    public List<DewdropAccountCreated> handle(DewdropCreateAccountCommand command) {
         if (StringUtils.isEmpty(command.getName())) {
             throw new IllegalArgumentException("Name cannot be empty");
         }
 
-        return new DewdropAccountCreated(command.getAccountId(), command.getName());
+        return List.of(new DewdropAccountCreated(command.getAccountId(), command.getName()));
     }
-
-    public DewdropFundsAddedToAccount handle(DewdropAddFundsToAccountCommand command) {
+    @CommandHandler
+    public List<DewdropFundsAddedToAccount> handle(DewdropAddFundsToAccountCommand command) {
         if (command.getAccountId() == null) {
             throw new IllegalArgumentException("Id cannot be empty");
         }
 
-        return new DewdropFundsAddedToAccount(command.getAccountId(), command.getFunds());
+        DewdropFundsAddedToAccount dewdropFundsAddedToAccount = new DewdropFundsAddedToAccount(command.getAccountId(), command.getFunds());
+        return List.of(dewdropFundsAddedToAccount);
     }
 
     public void on(DewdropAccountCreated event) {

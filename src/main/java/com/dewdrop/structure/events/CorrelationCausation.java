@@ -1,13 +1,22 @@
 package com.dewdrop.structure.events;
 
+import com.dewdrop.structure.api.AbstractMessage;
+import com.dewdrop.structure.api.Message;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
+import lombok.Data;
 
-public interface CorrelationCausation {
-    UUID getCorrelationId();
+@Data
+public abstract class CorrelationCausation extends AbstractMessage {
+    @JsonIgnore
+    protected UUID correlationId;
+    @JsonIgnore
+    protected UUID causationId;
 
-    void setCorrelationId(UUID var1);
+    public CorrelationCausation() {
+        super();
+        this.causationId = null;
+        this.correlationId = UUID.randomUUID();
+    }
 
-    UUID getCausationId();
-
-    void setCausationId(UUID var1);
 }
