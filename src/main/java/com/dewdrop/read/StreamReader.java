@@ -60,7 +60,7 @@ public class StreamReader {
 
             this.firstEventRead = true;
             remaining -= readResults.getEvents().size();
-            sliceStart = readResults.getNextEventNumber();
+            sliceStart = readResults.getNextEventPosition();
 
             readResults.getEvents().forEach(eventRead());
 

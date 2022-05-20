@@ -29,7 +29,7 @@ public class AggregateStateOrchestrator {
         this.streamStoreRepository = streamStoreRepository;
     }
 
-    public Result<Object> onCommand(Command command) {
+    public Result<Object> executeCommand(Command command) {
         Optional<Method> commandHandlerMethod = commandMapper.getCommandHandlersThatSupportCommand(command);
 
         if (commandHandlerMethod.isEmpty()) {
@@ -41,7 +41,7 @@ public class AggregateStateOrchestrator {
         return processCommand(command, commandHandlerMethod.get());
     }
 
-    public Result<Object> onSubsequentCommand(Command command, CorrelationCausation previous) {
+    public Result<Object> executeSubsequentCommand(Command command, CorrelationCausation previous) {
         Optional<Method> commandHandlerMethod = commandMapper.getCommandHandlersThatSupportCommand(command);
 
         if (commandHandlerMethod.isEmpty()) {

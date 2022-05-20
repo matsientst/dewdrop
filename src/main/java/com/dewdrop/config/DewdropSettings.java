@@ -70,7 +70,7 @@ public class DewdropSettings {
             .orElse(new CommandHandlerMapper());
         getCommandMapper().init(getStreamStoreRepository());
         this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getStreamStoreRepository());
-        this.readModelMapper = new DefaultAnnotationReadModelMapper();
+        this.readModelMapper = Optional.ofNullable(readModelMapper).orElse(new DefaultAnnotationReadModelMapper());
         getReadModelMapper().init(getStreamStore(), getEventSerializer());
         this.queryStateOrchestrator = new QueryStateOrchestrator(getReadModelMapper());
     }

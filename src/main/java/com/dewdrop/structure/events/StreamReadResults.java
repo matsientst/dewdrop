@@ -15,13 +15,13 @@ public class StreamReadResults {
     private long fromEventNumber;
     private Direction direction;
     private List<ReadEventData> events;
-    private long nextEventNumber;
-    private long lastEventNumber;
+    private long nextEventPosition;
+    private long lastEventPosition;
     private boolean isEndOfStream;
     private boolean streamExists = false;
 
     @Builder(builderMethodName = "create")
-    public StreamReadResults(String streamName, long fromEventNumber, Direction direction, List<ReadEventData> events, long nextEventNumber, long lastEventNumber, boolean isEndOfStream) {
+    public StreamReadResults(String streamName, long fromEventNumber, Direction direction, List<ReadEventData> events, long nextEventPosition, long lastEventPosition, boolean isEndOfStream) {
 
         if (StringUtils.isEmpty(streamName)) { throw new IllegalArgumentException("Stream cannot be null, empty or whitespace"); }
 
@@ -29,8 +29,8 @@ public class StreamReadResults {
         this.fromEventNumber = fromEventNumber;
         this.direction = direction;
         this.events = Optional.ofNullable(events).orElse(new ArrayList<>());
-        this.nextEventNumber = nextEventNumber;
-        this.lastEventNumber = lastEventNumber;
+        this.nextEventPosition = nextEventPosition;
+        this.lastEventPosition = lastEventPosition;
         this.isEndOfStream = isEndOfStream;
         this.streamExists = true;
     }

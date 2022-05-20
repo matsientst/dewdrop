@@ -32,8 +32,9 @@ public class EventStoreUtils {
         Long currentRevision = recordedEvents.stream().mapToLong(event -> {
             return event.getEventNumber();
         }).max().orElse(0L);
-        // TODO: How do we calculate next and last event numbers?
-        return new StreamReadResults(readRequest.getStream(), readRequest.getStart(), readRequest.getDirection(), recordedEvents, currentRevision, currentRevision, true);
+
+        boolean isEndOfStream = readResult.getEvents().isEmpty() || readResult.getEvents().size() < readRequest.getCount();
+        return new StreamReadResults(readRequest.getStream(), readRequest.getStart(), readRequest.getDirection(), recordedEvents, currentRevision + 1, currentRevision, isEndOfStream);
     }
 
 

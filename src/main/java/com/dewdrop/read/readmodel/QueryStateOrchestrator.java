@@ -16,7 +16,7 @@ public class QueryStateOrchestrator {
         this.readModelMapper = readModelMapper;
     }
 
-    public <T, R> Result<R> onQuery(T query) {
+    public <T, R> Result<R> executeQuery(T query) {
         CacheableCategoryReadModel<Message, Object> readModel = readModelMapper.getReadModelByQuery(query);
         Optional<Result<?>> handle = DewdropReflectionUtils.callMethod(readModel.getReadModel(), "handle", query, readModel.getCachedItems());
         if (handle.isPresent()) {

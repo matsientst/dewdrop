@@ -80,7 +80,7 @@ public class StreamStoreRepository {
             // if (streamReadResults instanceof StreamDeletedSlice) {throw new AggregateDeletedException(id,
             // aggClass);}
 
-            sliceStart = streamReadResults.getNextEventNumber();
+            sliceStart = streamReadResults.getNextEventPosition();
 
             appliedEventCount += streamReadResults.getEvents()
                 .size();
@@ -95,7 +95,7 @@ public class StreamStoreRepository {
                 .collect(toList());
             aggregateRoot.restoreFromEvents(messages);
 
-        } while (version > streamReadResults.getNextEventNumber() && !streamReadResults.isEndOfStream());
+        } while (version > streamReadResults.getNextEventPosition() && !streamReadResults.isEndOfStream());
         //
         // if (version != Integer.MAX_VALUE && version != appliedEventCount) {throw new
         // AggregateVersionException(id, aggClass, (long) version, aggregate.getExpectedVersion());}

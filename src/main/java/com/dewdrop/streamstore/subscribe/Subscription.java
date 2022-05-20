@@ -31,12 +31,12 @@ import lombok.extern.log4j.Log4j2;
 @Data
 public class Subscription<T extends Message> {
     private final Map<Class<?>, List<EventHandler<T>>> handlers = new ConcurrentHashMap<>();
-    protected final List<StreamListener<T>> listeners = Collections.synchronizedList(new ArrayList<>());
-    private StreamStore streamStoreConnection;
-    private EventSerializer eventSerializer;
-    private Class<?> eventType;
-    private Handler<T> handler;
-    private ScheduledExecutorService executorService;
+    protected final StreamListener<T> listener;
+    private final StreamStore streamStoreConnection;
+    private final EventSerializer eventSerializer;
+    private final Class<?> eventType;
+    private final Handler<T> handler;
+    private final ScheduledExecutorService executorService;
 
     public Subscription(Handler<T> handler, Class<?> eventType, StreamStore streamStoreConnection, EventSerializer eventSerializer) {
         this.streamStoreConnection = streamStoreConnection;
@@ -44,16 +44,10 @@ public class Subscription<T extends Message> {
         this.eventType = eventType;
         this.handler = handler;
         this.executorService = Executors.newScheduledThreadPool(2);
+        this.listener = new StreamListener<>(eventType, streamStoreConnection, eventSerializer);
+        subscribeToAll(handler);
     }
 
-    StreamListener<T> addNewListener() {
-        StreamListener<T> listener = new StreamListener<>(eventType, streamStoreConnection, eventSerializer);
-        synchronized (listeners) {
-            listeners.add(listener);
-        }
-        subscribeToAll(handler);
-        return listener;
-    }
 
     public AutoCloseable subscribe(Handler<T> handler, boolean includeDerived) {
         requireNonNull(handler, "handler");
@@ -148,7 +142,7 @@ public class Subscription<T extends Message> {
     void subscribeByNameAndPosition(StreamReader streamReader) {
         NameAndPosition nameAndPosition = streamReader.getNameAndPosition();
         try {
-            addNewListener().start(nameAndPosition.getStreamName(), nameAndPosition.getPosition(), this);
+            listener.start(nameAndPosition.getStreamName(), nameAndPosition.getPosition(), this);
             log.info("Completed subscription to stream: {} from position:{}", nameAndPosition.getStreamName(), nameAndPosition.getPosition());
         } catch (Exception e) {
             log.error("Problem starting subscription: {} at: {}", nameAndPosition.getStreamName(), nameAndPosition.getPosition(), e);

@@ -32,14 +32,14 @@ class DewdropTest {
             .start();
 
         DewdropCreateAccountCommand command = new DewdropCreateAccountCommand(UUID.randomUUID(), "test");
-        Result<Object> objectResult = dewDrop.onCommand(command);
+        dewDrop.executeCommand(command);
 
 
         DewdropAddFundsToAccountCommand addFunds = new DewdropAddFundsToAccountCommand(command.getAccountId(), new BigDecimal(100));
-        dewDrop.onSubsequentCommand(addFunds, command);
+        dewDrop.executeSubsequentCommand(addFunds, command);
 
         DewdropGetAccountByIdQuery query = new DewdropGetAccountByIdQuery(command.getAccountId());
-        Result<DewdropAccountDetails> result = dewDrop.onQuery(query);
+        Result<DewdropAccountDetails> result = dewDrop.executeQuery(query);
         assertThat(result.get(), is(notNullValue()));
     }
 
@@ -52,10 +52,10 @@ class DewdropTest {
             .start();
 
         DewdropCreateAccountCommand command = new DewdropCreateAccountCommand(UUID.randomUUID(), "test");
-        dewDrop.onCommand(command);
+        dewDrop.executeCommand(command);
 
         DewdropAddFundsToAccountCommand addFunds = new DewdropAddFundsToAccountCommand(command.getAccountId(), new BigDecimal(100));
-        dewDrop.onCommand(addFunds);
+        dewDrop.executeCommand(addFunds);
     }
 
     @Test

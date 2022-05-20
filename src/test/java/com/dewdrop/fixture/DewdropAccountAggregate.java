@@ -33,7 +33,6 @@ public class DewdropAccountAggregate {
         DewdropFundsAddedToAccount dewdropFundsAddedToAccount = new DewdropFundsAddedToAccount(command.getAccountId(), command.getFunds());
         return List.of(dewdropFundsAddedToAccount);
     }
-
     public void on(DewdropAccountCreated event) {
         this.accountId = event.getAccountId();
         this.name = event.getName();

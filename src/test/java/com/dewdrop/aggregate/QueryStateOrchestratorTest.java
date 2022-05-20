@@ -11,7 +11,7 @@ class QueryStateOrchestratorTest {
     void create() {
         AggregateStateOrchestrator orchestrator = new AggregateStateOrchestrator();
         DewdropCreateAccountCommand command = new DewdropCreateAccountCommand(UUID.randomUUID(),"test");
-        orchestrator.onCommand(command);
+        orchestrator.executeCommand(command);
     }
 
 

@@ -61,8 +61,8 @@ class MessageStoreUtilsTest {
         assertThat(readRequest.getDirection(), is(streamReadResults.getDirection()));
         ReadEventData event = streamReadResults.getEvents().get(0);
         assertThat(eventId, is(event.getEventId()));
-        assertThat(streamRevision.getValueUnsigned(), is(streamReadResults.getNextEventNumber()));
-        assertThat(streamRevision.getValueUnsigned(), is(streamReadResults.getLastEventNumber()));
+        assertThat(streamRevision.getValueUnsigned(), is(streamReadResults.getNextEventPosition()));
+        assertThat(streamRevision.getValueUnsigned(), is(streamReadResults.getLastEventPosition()));
     }
 
     @Test
