@@ -37,7 +37,7 @@ public class DewdropAccountAggregateSubclass extends AggregateRoot {
             throw new IllegalArgumentException("Name cannot be empty");
         }
 
-        DewdropAccountCreated testAccountCreated = new DewdropAccountCreated(command.getAccountId(), command.getName());
+        DewdropAccountCreated testAccountCreated = new DewdropAccountCreated(command.getAccountId(), command.getName(), command.getUserId());
         raise(testAccountCreated);
         return testAccountCreated;
     }

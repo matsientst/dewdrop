@@ -1,14 +1,17 @@
 package com.dewdrop.fixture;
 
 import com.dewdrop.api.result.Result;
-import com.dewdrop.read.readmodel.ReadModel;
+import com.dewdrop.read.readmodel.annotation.ReadModel;
+import com.dewdrop.read.readmodel.annotation.Stream;
 import com.dewdrop.read.readmodel.query.QueryHandler;
 import java.util.Map;
 import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@ReadModel(rootEvent = DewdropAccountEvent.class, aggregateClass = DewdropAccountAggregate.class, resultClass = DewdropAccountDetails.class)
+@ReadModel(resultClass = DewdropAccountDetails.class)
+@Stream(name = "DewdropAccountAggregate", rootEvent = DewdropAccountEvent.class)
+@Stream(name = "DewdropUserAggregate", rootEvent = UserEvent.class, subscribed = false)
 public class DewdropAccountDetailsReadModel {
 
     public void on(DewdropAccountCreated event, Map<UUID, DewdropAccountDetails> cachedItems) {

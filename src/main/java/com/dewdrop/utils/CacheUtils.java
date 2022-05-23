@@ -1,7 +1,11 @@
 package com.dewdrop.utils;
 
+import static java.util.Objects.requireNonNull;
+
 import com.dewdrop.aggregate.AggregateId;
-import com.dewdrop.read.readmodel.CreationEvent;
+import com.dewdrop.read.readmodel.annotation.AlternateCacheKey;
+import com.dewdrop.read.readmodel.annotation.CreationEvent;
+import com.dewdrop.read.readmodel.annotation.PrimaryCacheKey;
 import com.dewdrop.structure.api.Message;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -16,6 +20,24 @@ public class CacheUtils {
     public static boolean isCacheRoot(Message message) {
         return message.getClass()
             .isAnnotationPresent(CreationEvent.class);
+    }
+
+    public static Field getPrimaryCacheKey(Class<?> cacheTarget) {
+        requireNonNull(cacheTarget, "CacheTarget is required");
+
+        List<Field> fields = FieldUtils.getFieldsListWithAnnotation(cacheTarget, PrimaryCacheKey.class);
+        if(fields.size() > 1) {
+            log.error("There were more than one PrimaryCacheKeys in your cached object. This should only be one.");
+        }
+
+        return fields.get(0);
+    }
+
+
+    public static List<Field> getAlternateCacheKeys(Class<?> cacheTarget) {
+        requireNonNull(cacheTarget, "CacheTarget is required");
+
+        return FieldUtils.getFieldsListWithAnnotation(cacheTarget, AlternateCacheKey.class);
     }
 
     public static Optional<UUID> getCacheRootKey(Message message) {

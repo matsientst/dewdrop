@@ -56,7 +56,7 @@ class MessageStoreUtilsTest {
         ReadResult readResult = new ReadResult(resolvedEvents);
         StreamReadResults streamReadResults = EventStoreUtils.toStreamReadResults(readRequest, readResult);
 
-        assertThat(readRequest.getStream(), is(streamReadResults.getStreamName()));
+        assertThat(readRequest.getStreamName(), is(streamReadResults.getStreamName()));
         assertThat(readRequest.getStart(), is(streamReadResults.getFromEventNumber()));
         assertThat(readRequest.getDirection(), is(streamReadResults.getDirection()));
         ReadEventData event = streamReadResults.getEvents().get(0);

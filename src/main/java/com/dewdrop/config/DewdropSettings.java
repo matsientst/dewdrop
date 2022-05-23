@@ -4,11 +4,14 @@ import com.dewdrop.Dewdrop;
 import com.dewdrop.aggregate.AggregateStateOrchestrator;
 import com.dewdrop.command.CommandHandlerMapper;
 import com.dewdrop.command.CommandMapper;
-import com.dewdrop.command.DefaultAggregateCommandMapper;
 import com.dewdrop.config.ascii.Ascii;
 import com.dewdrop.read.readmodel.DefaultAnnotationReadModelMapper;
 import com.dewdrop.read.readmodel.QueryStateOrchestrator;
+import com.dewdrop.read.readmodel.ReadModelFactory;
 import com.dewdrop.read.readmodel.ReadModelMapper;
+import com.dewdrop.read.readmodel.StreamDetailsFactory;
+import com.dewdrop.read.readmodel.cache.CacheManager;
+import com.dewdrop.read.readmodel.cache.ConcurrentHashMapCache;
 import com.dewdrop.streamstore.eventstore.EventStore;
 import com.dewdrop.streamstore.repository.StreamStoreRepository;
 import com.dewdrop.streamstore.serialize.JsonSerializer;
@@ -31,6 +34,7 @@ import lombok.Data;
 
 @Data
 public class DewdropSettings {
+
     private DewdropSettings() {
     }
 
@@ -45,9 +49,12 @@ public class DewdropSettings {
     private QueryStateOrchestrator queryStateOrchestrator;
     private CommandMapper commandMapper;
     private ReadModelMapper readModelMapper;
+    private StreamDetailsFactory streamDetailsFactory;
+    private ReadModelFactory readModelFactory;
+    private CacheManager cacheManager;
 
     @Builder(buildMethodName = "create")
-    public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper) {
+    public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper, CacheManager cacheManager) {
         this.properties = properties;
         this.objectMapper = Optional.ofNullable(objectMapper)
             .orElse(defaultObjectMapper());
@@ -65,13 +72,16 @@ public class DewdropSettings {
         this.eventSerializer = Optional.ofNullable(eventSerializer)
             .orElse(new JsonSerializer(getObjectMapper()));
         this.streamNameGenerator = new PrefixStreamNameGenerator(getProperties().getStreamPrefix());
-        this.streamStoreRepository = new StreamStoreRepository(getStreamStore(), getStreamNameGenerator(), getEventSerializer());
+        this.streamDetailsFactory = new StreamDetailsFactory(getStreamNameGenerator());
+        this.streamStoreRepository = new StreamStoreRepository(getStreamStore(), getEventSerializer(), getStreamDetailsFactory());
         this.commandMapper = Optional.ofNullable(commandMapper)
             .orElse(new CommandHandlerMapper());
         getCommandMapper().init(getStreamStoreRepository());
-        this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getStreamStoreRepository());
+        this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getStreamStoreRepository(), getStreamDetailsFactory());
         this.readModelMapper = Optional.ofNullable(readModelMapper).orElse(new DefaultAnnotationReadModelMapper());
-        getReadModelMapper().init(getStreamStore(), getEventSerializer());
+        this.cacheManager = Optional.ofNullable(cacheManager).orElse(new CacheManager(ConcurrentHashMapCache.class));
+        this.readModelFactory = new ReadModelFactory(getStreamStore(), getEventSerializer(), getStreamDetailsFactory(), getCacheManager());
+        getReadModelMapper().init(getStreamStore(), getEventSerializer(), getStreamDetailsFactory(), getReadModelFactory());
         this.queryStateOrchestrator = new QueryStateOrchestrator(getReadModelMapper());
     }
 

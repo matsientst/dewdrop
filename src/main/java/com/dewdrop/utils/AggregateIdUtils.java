@@ -1,6 +1,7 @@
 package com.dewdrop.utils;
 
 import com.dewdrop.aggregate.AggregateId;
+import com.dewdrop.aggregate.AggregateRoot;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -11,6 +12,10 @@ import org.apache.commons.collections4.CollectionUtils;
 
 @Log4j2
 public class AggregateIdUtils {
+    public static Optional<UUID> getAggregateId(AggregateRoot aggregateRoot) {
+        return getAggregateId(aggregateRoot.getTarget());
+    }
+
     public static Optional<UUID> getAggregateId(Object target) {
         Set<Field> annotatedFields = AnnotationReflection.getAnnotatedFields(target, AggregateId.class);
         Class<?> superclass = target.getClass()

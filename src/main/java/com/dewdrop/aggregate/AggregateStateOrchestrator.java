@@ -3,10 +3,16 @@ package com.dewdrop.aggregate;
 import com.dewdrop.aggregate.proxy.AggregateProxyFactory;
 import com.dewdrop.api.result.Result;
 import com.dewdrop.command.CommandMapper;
+import com.dewdrop.read.StreamDetails;
+import com.dewdrop.read.StreamType;
+import com.dewdrop.read.readmodel.StreamDetailsFactory;
+import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.streamstore.repository.StreamStoreRepository;
 import com.dewdrop.structure.api.Command;
 import com.dewdrop.structure.api.Event;
+import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.events.CorrelationCausation;
+import com.dewdrop.structure.read.Direction;
 import com.dewdrop.utils.AggregateIdUtils;
 import com.dewdrop.utils.AssignCorrelationAndCausation;
 import com.dewdrop.utils.CommandUtils;
@@ -21,12 +27,14 @@ import lombok.extern.log4j.Log4j2;
 public class AggregateStateOrchestrator {
     private CommandMapper commandMapper;
     private StreamStoreRepository streamStoreRepository;
+    private StreamDetailsFactory streamDetailsFactory;
 
     public AggregateStateOrchestrator() {}
 
-    public AggregateStateOrchestrator(CommandMapper commandMapper, StreamStoreRepository streamStoreRepository) {
+    public AggregateStateOrchestrator(CommandMapper commandMapper, StreamStoreRepository streamStoreRepository, StreamDetailsFactory streamDetailsFactory) {
         this.commandMapper = commandMapper;
         this.streamStoreRepository = streamStoreRepository;
+        this.streamDetailsFactory = streamDetailsFactory;
     }
 
     public Result<Object> executeCommand(Command command) {
@@ -76,10 +84,14 @@ public class AggregateStateOrchestrator {
             Object instance = handler.getDeclaringClass()
                 .getDeclaredConstructor()
                 .newInstance();
-            Optional<List<Event>> result = CommandUtils.executeCommand(instance, handler, command, aggregateRoot);
+            Optional<?> result = CommandUtils.executeCommand(instance, handler, command, aggregateRoot);
             if (result.isPresent()) {
-                for (Event event : result.get()) {
-                    aggregateRoot.raise(event);
+                if(result.get() instanceof List) {
+                    for (Event event : (List<Event>) result.get()) {
+                        aggregateRoot.raise(event);
+                    }
+                } else {
+                    aggregateRoot.raise((Event) result.get());
                 }
             }
 
@@ -92,7 +104,14 @@ public class AggregateStateOrchestrator {
     private AggregateRoot getById(Command command, AggregateRoot aggregateRoot) {
         Optional<UUID> aggregateId = AggregateIdUtils.getAggregateId(command);
         if (aggregateId.isPresent()) {
-            aggregateRoot = streamStoreRepository.getById(aggregateId.get(), aggregateRoot, Integer.MAX_VALUE, command);
+            StreamDetails streamDetails = streamDetailsFactory.fromAggregateRoot(aggregateRoot, aggregateId.get());
+            StreamStoreGetByIDRequest request = StreamStoreGetByIDRequest.builder()
+                .streamDetails(streamDetails)
+                .aggregateRoot(aggregateRoot)
+                .id(aggregateId.get())
+                .command(command)
+                .create();
+            aggregateRoot = streamStoreRepository.getById(request);
         }
         return aggregateRoot;
     }

@@ -1,20 +1,25 @@
 package com.dewdrop.structure.read;
 
+import com.dewdrop.read.StreamDetails;
 import java.util.Optional;
 import lombok.Data;
 
 @Data
 
 public class ReadRequest {
-    String stream;
+    String streamName;
     Long start;
     Long count;
     Direction direction;
 
-    public ReadRequest(String stream, Long start, Long count, Direction direction) {
-        this.stream = stream;
+    public ReadRequest(String streamName, Long start, Long count, Direction direction) {
+        this.streamName = streamName;
         this.count = Optional.ofNullable(count).orElse(Long.MAX_VALUE);
         this.start = start;
         this.direction = direction;
+    }
+
+    public static ReadRequest from(StreamDetails streamDetails, Long start, Long count) {
+        return new ReadRequest(streamDetails.getStreamName(), start, count, streamDetails.getDirection());
     }
 }

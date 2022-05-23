@@ -1,28 +1,26 @@
 package com.dewdrop.read.readmodel;
 
-import com.dewdrop.read.StreamType;
-import com.dewdrop.structure.datastore.StreamStore;
+import com.dewdrop.read.readmodel.stream.Stream;
 import com.dewdrop.structure.api.Message;
-import com.dewdrop.structure.read.Handler;
-import com.dewdrop.structure.serialize.EventSerializer;
-import com.dewdrop.streamstore.subscribe.Subscription;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
 
 @Data
-public abstract class AbstractReadModel<T extends Message> implements Handler<T> {
-    protected Subscription<T> subscription;
-    protected Class<?> messageType;
-    protected StreamType streamType;
+public abstract class AbstractReadModel {
+    protected List<Stream<? super Message>> streams = new ArrayList<>();
 
-    protected AbstractReadModel(Class<?> messageType, StreamType streamType, StreamStore streamStoreConnection, EventSerializer eventSerializer) {
-        this.messageType = messageType;
-        this.streamType = streamType;
-        this.subscription = new Subscription<>(this, messageType, streamStoreConnection, eventSerializer);
+    protected AbstractReadModel() {
     }
 
-    @Override
-    public void handle(T event) {
+    public abstract <T extends Message> void handle(T event);
 
+    public void addStream(Stream stream) {
+        this.streams.add(stream);
     }
 
+
+    public void updateState() {
+        streams.forEach(stream -> stream.updateState());
+    }
 }

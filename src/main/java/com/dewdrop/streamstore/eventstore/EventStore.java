@@ -55,7 +55,6 @@ public class EventStore implements StreamStore {
         try {
             client.subscribeToStream(stream, listener, options)
                 .get();
-            log.info("Subscribed to stream:{}", stream);
             return true;
         } catch (InterruptedException e) {
             log.error("Stream was interrupted - name:" + stream, e);
@@ -106,21 +105,23 @@ public class EventStore implements StreamStore {
         try {
             readResult = performRead(readRequest);
         } catch (NoStreamException e) {
-            log.debug("Stream:{} was not found", readRequest.getStream());
+            log.debug("Stream:{} was not found", readRequest.getStreamName());
             return StreamReadResults.noStream();
         }
 
         if (readResult.isEmpty()) {
-            log.debug("Request had not results for Stream:{} - request:{}", readRequest.getStream(), readRequest);
+            log.debug("Request had not results for Stream:{} - request:{}", readRequest.getStreamName(), readRequest);
             return StreamReadResults.empty();
         }
 
-        log.debug("Read message: {}", readResult);
-        return EventStoreUtils.toStreamReadResults(readRequest, readResult.get());
+
+        ReadResult result = readResult.get();
+        log.debug("Read {} messages from stream:{}", result.getEvents().size(), readRequest.getStreamName());
+        return EventStoreUtils.toStreamReadResults(readRequest, result);
     }
 
     private Optional<ReadResult> performRead(ReadRequest readRequest) throws NoStreamException {
-        String streamName = readRequest.getStream();
+        String streamName = readRequest.getStreamName();
         Long count = readRequest.getCount();
         ReadStreamOptions readStreamOptions = EventStoreUtils.options(readRequest);
         try {

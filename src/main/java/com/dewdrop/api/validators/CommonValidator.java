@@ -4,8 +4,9 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.text.WordUtils;
-import org.springframework.util.ReflectionUtils;
+import org.reflections.ReflectionUtils;
 
 @Log4j2
 public abstract class CommonValidator<T extends Serializable> extends ValidationResult {
@@ -60,14 +61,19 @@ public abstract class CommonValidator<T extends Serializable> extends Validation
     }
 
     protected <S> S getValue(Object item, String fieldName) {
-        Field field = ReflectionUtils.findField(item.getClass(), fieldName);
+
+        Field field = FieldUtils.getField(item.getClass(), fieldName);
         if (field == null) {
             add(new ValidationError("Invalid field name '" + fieldName + "' for class " + item.getClass()
                 .getSimpleName()));
             return null;
         }
-        ReflectionUtils.makeAccessible(field);
-        return (S) ReflectionUtils.getField(field, item);
+        field.setAccessible(true);
+        try {
+            return (S) field.get(item);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected String formatFieldName(String field) {

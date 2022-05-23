@@ -7,13 +7,12 @@ import com.dewdrop.read.NameAndPosition;
 import com.dewdrop.read.StreamDetails;
 import com.dewdrop.read.StreamReader;
 import com.dewdrop.structure.NoStreamException;
-import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.api.Message;
+import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.read.Handler;
 import com.dewdrop.structure.serialize.EventSerializer;
 import com.dewdrop.structure.subscribe.EventHandler;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,21 +44,21 @@ public class Subscription<T extends Message> {
         this.handler = handler;
         this.executorService = Executors.newScheduledThreadPool(2);
         this.listener = new StreamListener<>(eventType, streamStoreConnection, eventSerializer);
-        subscribeToAll(handler);
+        registerHandlers(handler);
     }
 
 
     public AutoCloseable subscribe(Handler<T> handler, boolean includeDerived) {
         requireNonNull(handler, "handler");
 
-        EventHandler<T> tEventHandler = new EventHandler<>(handler, handler.getClass().getSimpleName());
-        subscribeHandler(tEventHandler, includeDerived);
-        // ReSharper disable once ConstantConditionalAccessQualifier
+        EventHandler<T> tEventHandler = new EventHandler<>(handler, handler.getClass()
+            .getSimpleName());
+        registerHandler(tEventHandler, includeDerived);
 
         return () -> unsubscribe(handler);
     }
 
-    void subscribeHandler(EventHandler<T> handler, boolean includeDerived) {
+    void registerHandler(EventHandler<T> handler, boolean includeDerived) {
         List<Class<?>> eventTypes;
         if (includeDerived) {
             eventTypes = new ArrayList<>(getMyChildren(handler.getMessageType()));
@@ -68,17 +67,19 @@ public class Subscription<T extends Message> {
 
         }
         for (Class<?> currentMessageType : eventTypes) {
-            subscribeToMessageType(handler, currentMessageType);
+            registerToMessageType(handler, currentMessageType);
         }
     }
 
-    void subscribeToMessageType(EventHandler<T> handler, Class<?> eventType) {
+    void registerToMessageType(EventHandler<T> handler, Class<?> eventType) {
         List<EventHandler<T>> handlesFor = getHandlesFor(eventType);
-        boolean isSame = handlesFor.stream().anyMatch(handle -> handle.isSame(eventType, handler));
+        boolean isSame = handlesFor.stream()
+            .anyMatch(handle -> handle.isSame(eventType, handler));
         if (!isSame) {
             synchronized (this.handlers) {
                 this.handlers.computeIfAbsent(eventType, item -> new ArrayList<>());
-                this.handlers.get(eventType).add(handler);
+                this.handlers.get(eventType)
+                    .add(handler);
             }
         }
     }
@@ -92,28 +93,32 @@ public class Subscription<T extends Message> {
 
             new ArrayList<>(handlesFor).forEach(EventHandler -> {
                 if (EventHandler.isSame(handler.getMessageType(), handler)) {
-                    this.handlers.get(clazz).remove(EventHandler);
+                    this.handlers.get(clazz)
+                        .remove(EventHandler);
                 }
             });
         }
     }
 
     List<EventHandler<T>> getHandlesFor(Class<?> type) {
+        requireNonNull(type, "Type is required");
+
         synchronized (this.handlers) {
-            if (this.handlers.containsKey(type)) { return new ArrayList<>(this.handlers.get(type)); }
+            if (this.handlers.containsKey(type)) {return new ArrayList<>(this.handlers.get(type));}
             return new ArrayList<>();
         }
     }
 
-    public AutoCloseable subscribeToAll(Handler<T> handler) {
+    public AutoCloseable registerHandlers(Handler<T> handler) {
         requireNonNull(handler, "handler is required");
 
-        EventHandler<T> allHandler = new EventHandler<>(handler, handler.getClass().getSimpleName());
+        EventHandler<T> allHandler = new EventHandler<>(handler, handler.getClass()
+            .getSimpleName());
         // THis is BAD? Why traverse all objects?
         Set<Class<?>> eventTypes = EventClassHierarchy.getMyChildren(allHandler.getMessageType());
 
         for (Class<?> currentMessageType : eventTypes) {
-            subscribeToMessageType(allHandler, currentMessageType);
+            registerToMessageType(allHandler, currentMessageType);
         }
 
         return () -> unsubscribe(handler);
@@ -122,15 +127,16 @@ public class Subscription<T extends Message> {
     public void publish(T event) {
         requireNonNull(event, "event is required");
 
-        log.info("Publishing event:{}, handlers: {}", event.getClass().getSimpleName(), this.handlers.size());
+        log.info("Publishing event:{}, handlers: {}", event.getClass()
+            .getSimpleName(), this.handlers.size());
         // Call each handler registered to the event type.
         List<EventHandler<T>> eventHandlers = getHandlesFor(event.getClass());
 
         eventHandlers.forEach(handle -> handle.tryHandle(event));
     }
 
-    public void readAndSubscribe(StreamDetails streamDetails, Consumer<Message> consumer, Class<?> eventType) {
-        StreamReader streamReader = new StreamReader(streamStoreConnection, eventSerializer, consumer, streamDetails, eventType);
+    public void readAndSubscribe(StreamDetails streamDetails) {
+        StreamReader streamReader = new StreamReader(streamStoreConnection, eventSerializer, streamDetails);
 
         try {
             subscribeByNameAndPosition(streamReader);
@@ -139,7 +145,7 @@ public class Subscription<T extends Message> {
         }
     }
 
-    void subscribeByNameAndPosition(StreamReader streamReader) {
+    public void subscribeByNameAndPosition(StreamReader streamReader) {
         NameAndPosition nameAndPosition = streamReader.getNameAndPosition();
         try {
             listener.start(nameAndPosition.getStreamName(), nameAndPosition.getPosition(), this);
@@ -149,7 +155,7 @@ public class Subscription<T extends Message> {
         }
     }
 
-    void pollForCompletion(StreamReader streamReader) {
+    public void pollForCompletion(StreamReader streamReader) {
         NameAndPosition nameAndPosition = streamReader.getNameAndPosition();
         CompletableFuture<NameAndPosition> completionFuture = new CompletableFuture<>();
         Runnable runnable = () -> {
