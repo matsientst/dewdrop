@@ -12,15 +12,17 @@ import java.util.UUID;
 import lombok.Data;
 
 @Data
-public class AggregateRoot extends EventStateMachine  {
+public class AggregateRoot extends EventStateMachine {
     private final List<Message> messages = new ArrayList<>();
     private Object target = null;
     private String targetClassName = null;
+
     public AggregateRoot() {
         super();
         this.target = this;
         this.targetClassName = this.getClass().getName();
     }
+
     public AggregateRoot(Object target, String targetClassName) {
         super();
         this.target = target;
@@ -31,9 +33,7 @@ public class AggregateRoot extends EventStateMachine  {
     private UUID causationId;
 
     public void setSource(CorrelationCausation command) {
-        if (correlationId != null && recorder.hasRecordedEvents()) {
-            throw new IllegalStateException("Cannot change source unless there are no recorded events, or current source is null");
-        }
+        if (correlationId != null && recorder.hasRecordedEvents()) { throw new IllegalStateException("Cannot change source unless there are no recorded events, or current source is null"); }
 
         this.correlationId = command.getCorrelationId();
         this.causationId = command.getMessageId();

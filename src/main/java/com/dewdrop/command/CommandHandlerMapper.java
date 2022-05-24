@@ -41,9 +41,7 @@ public class CommandHandlerMapper extends AbstractCommandHandlerMapper {
 
     public Optional<Method> getCommandHandlersThatSupportCommand(Command command) {
         Method method = commandHandlerToMethod.get(command.getClass());
-        if(method == null) {
-            return Optional.empty();
-        }
+        if (method == null) { return Optional.empty(); }
         return Optional.of(method);
     }
 }

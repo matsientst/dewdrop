@@ -43,7 +43,7 @@ class JsonSerializerTest {
     void setup() throws JsonProcessingException {
         objectMapper = spy(new ObjectMapper());
         jsonSerializer = spy(new JsonSerializer(objectMapper));
-        DewdropAccountCreated test = new DewdropAccountCreated(UUID.randomUUID(), "test");
+        DewdropAccountCreated test = new DewdropAccountCreated(UUID.randomUUID(), "test", UUID.randomUUID());
         message = spy(test);
 
         readEventData = new ReadEventData(UUID.randomUUID().toString(), UUID.randomUUID(), 3L, "TestEvent", objectMapper.writeValueAsBytes(message), objectMapper.writeValueAsBytes(commitHeaders), true, Instant.now());
@@ -118,7 +118,7 @@ class JsonSerializerTest {
 
     @Test
     void deserializeEvent_eventAndClassName_ClassNotFound() throws IOException {
-        Object result = jsonSerializer.deserializeEvent(readEventData, "Test",  new HashedMap<>());
+        Object result = jsonSerializer.deserializeEvent(readEventData, "Test", new HashedMap<>());
         assertThat(result, is(Optional.empty()));
     }
 

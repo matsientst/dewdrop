@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -21,7 +20,10 @@ import com.dewdrop.fixture.DewdropAccountAggregate;
 import com.dewdrop.fixture.DewdropAccountCreated;
 import com.dewdrop.fixture.DewdropAddFundsToAccountCommand;
 import com.dewdrop.fixture.DewdropCreateAccountCommand;
+import com.dewdrop.read.readmodel.StreamDetailsFactory;
+import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.streamstore.repository.StreamStoreRepository;
+import com.dewdrop.structure.StreamNameGenerator;
 import com.dewdrop.structure.api.Command;
 import com.dewdrop.utils.AggregateIdUtils;
 import com.dewdrop.utils.CommandUtils;
@@ -44,23 +46,27 @@ class AggregateStateOrchestratorTest {
     DewdropAccountAggregate dewdropAccountAggregate;
     DewdropCreateAccountCommand dewdropCreateAccountCommand;
     Method handleMethod;
+    StreamDetailsFactory streamDetailsFactory;
     StreamStoreRepository streamStoreRepository;
     String name;
     UUID id;
+    UUID userId;
 
     @BeforeEach
     void setup() throws NoSuchMethodException {
         id = UUID.randomUUID();
+        userId = UUID.randomUUID();
         name = "TestName";
-        dewdropCreateAccountCommand = new DewdropCreateAccountCommand(id, name);
+        dewdropCreateAccountCommand = new DewdropCreateAccountCommand(id, name, userId);
+        streamDetailsFactory = new StreamDetailsFactory(mock(StreamNameGenerator.class));
         streamStoreRepository = mock(StreamStoreRepository.class);
         commandMapper = spy(new CommandHandlerMapper());
-        aggregateStateOrchestrator = spy(new AggregateStateOrchestrator(commandMapper, streamStoreRepository));
+        aggregateStateOrchestrator = spy(new AggregateStateOrchestrator(commandMapper, streamStoreRepository, streamDetailsFactory));
         dewdropAccountAggregate = spy(new DewdropAccountAggregate());
         handleMethod = DewdropAccountAggregate.class.getMethod("handle", DewdropCreateAccountCommand.class);
 
         doReturn(dewdropAccountAggregate).when(streamStoreRepository)
-            .getById(any(UUID.class), any(AggregateRoot.class), anyInt(), any(Command.class));
+            .getById(any(StreamStoreGetByIDRequest.class));
         doNothing().when(streamStoreRepository)
             .save(any(AggregateRoot.class));
     }
@@ -98,11 +104,10 @@ class AggregateStateOrchestratorTest {
     @Test
     @DisplayName("Given a previous command has been executed successfully, a related subsequent command is executed. The aggregate is updated with the new command, and the correlation Id and causation Id are set on the messages.")
     void executeSubsequentCommand() throws ResultException {
-        UUID id = UUID.randomUUID();
-        String name = "test";
+
         BigDecimal depositedAmount = new BigDecimal(100);
 
-        DewdropCreateAccountCommand previous = new DewdropCreateAccountCommand(id, name);
+        DewdropCreateAccountCommand previous = new DewdropCreateAccountCommand(id, name, userId);
         DewdropAddFundsToAccountCommand command = new DewdropAddFundsToAccountCommand(id, depositedAmount);
 
         doReturn(Optional.of(handleMethod)).when(commandMapper)
@@ -192,7 +197,7 @@ class AggregateStateOrchestratorTest {
 
             AggregateRoot result = aggregateStateOrchestrator.getById(dewdropCreateAccountCommand, dewdropAccountAggregate);
 
-            verify(streamStoreRepository, times(0)).getById(any(UUID.class), any(AggregateRoot.class), anyInt(), any(Command.class));
+            verify(streamStoreRepository, times(0)).getById(any(StreamStoreGetByIDRequest.class));
             assertThat(result, is(unmodifiedAggregateRoot));
             assertThat(((DewdropAccountAggregate) result).getBalance(), is(new BigDecimal(0)));
             assertNull(((DewdropAccountAggregate) result).getAccountId());
@@ -212,11 +217,11 @@ class AggregateStateOrchestratorTest {
                 .thenReturn(Optional.of(UUID.randomUUID()));
 
             doReturn(modifiedAggregateRoot).when(streamStoreRepository)
-                .getById(any(UUID.class), any(AggregateRoot.class), anyInt(), any(Command.class));
+                .getById(any(StreamStoreGetByIDRequest.class));
 
             AggregateRoot result = aggregateStateOrchestrator.getById(dewdropCreateAccountCommand, dewdropAccountAggregate);
 
-            verify(streamStoreRepository, times(1)).getById(any(UUID.class), any(AggregateRoot.class), anyInt(), any(Command.class));
+            verify(streamStoreRepository, times(1)).getById(any(StreamStoreGetByIDRequest.class));
             assertThat(result.getVersion(), is(version));
         }
     }

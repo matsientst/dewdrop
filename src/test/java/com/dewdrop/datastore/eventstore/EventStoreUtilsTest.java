@@ -30,7 +30,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-class MessageStoreUtilsTest {
+class EventStoreUtilsTest {
     String streamName = "test";
     long start = 1L;
     long count = 2L;
@@ -56,12 +56,12 @@ class MessageStoreUtilsTest {
         ReadResult readResult = new ReadResult(resolvedEvents);
         StreamReadResults streamReadResults = EventStoreUtils.toStreamReadResults(readRequest, readResult);
 
-        assertThat(readRequest.getStream(), is(streamReadResults.getStreamName()));
+        assertThat(readRequest.getStreamName(), is(streamReadResults.getStreamName()));
         assertThat(readRequest.getStart(), is(streamReadResults.getFromEventNumber()));
         assertThat(readRequest.getDirection(), is(streamReadResults.getDirection()));
         ReadEventData event = streamReadResults.getEvents().get(0);
         assertThat(eventId, is(event.getEventId()));
-        assertThat(streamRevision.getValueUnsigned(), is(streamReadResults.getNextEventPosition()));
+        assertThat(streamRevision.getValueUnsigned() + 1, is(streamReadResults.getNextEventPosition()));
         assertThat(streamRevision.getValueUnsigned(), is(streamReadResults.getLastEventPosition()));
     }
 
@@ -113,6 +113,7 @@ class MessageStoreUtilsTest {
     void createListener() {
         Consumer eventAppeared = recordedEvent -> assertThat(recordedEvent, is(Matchers.notNullValue()));
         Subscription subscription = mock(Subscription.class);
+        doReturn(UUID.randomUUID().toString()).when(subscription).getSubscriptionId();
         ResolvedEvent resolvedEvent = mock(ResolvedEvent.class);
         String eventStreamId = UUID.randomUUID().toString();
         StreamRevision streamRevision = new StreamRevision(3L);
@@ -135,6 +136,7 @@ class MessageStoreUtilsTest {
         listener.onEvent(subscription, resolvedEvent);
 
         listener.onCancelled(subscription);
-        listener.onError(subscription, new IllegalArgumentException());
+        IllegalArgumentException exception = new IllegalArgumentException("", new RuntimeException("Bad things happened"));
+        listener.onError(subscription, exception);
     }
 }

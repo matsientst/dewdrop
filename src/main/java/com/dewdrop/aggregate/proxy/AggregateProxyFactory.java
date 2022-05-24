@@ -15,11 +15,11 @@ public class AggregateProxyFactory {
         // TODO: Do we need to save these comments?
 //        ClassPool pool = ClassPool.getDefault();
         try {
-//            ProxyFactory factory = new ProxyFactory();
-//            factory.setSuperclass(classToProxy);
-//
-//            MethodHandler handler = new AggregateHandler<>();
-//            Object instance = factory.create(null, null, handler);
+            // ProxyFactory factory = new ProxyFactory();
+            // factory.setSuperclass(classToProxy);
+            //
+            // MethodHandler handler = new AggregateHandler<>();
+            // Object instance = factory.create(null, null, handler);
 
 
             return Optional.of((T) new AggregateRoot(classToProxy.getDeclaredConstructor().newInstance(), classToProxy.getName()));

@@ -72,13 +72,13 @@ public class JsonSerializer implements EventSerializer {
     public <T> Optional<T> deserializeEvent(ReadEventData event, String className, Map<String, Object> metadata) {
         try {
             T value = (T) objectMapper.readValue(event.getData(), Class.forName(className));
-            if(value instanceof CorrelationCausation) {
+            if (value instanceof CorrelationCausation) {
                 CorrelationCausation correlationCausation = (CorrelationCausation) value;
-                if(metadata.containsKey(CAUSATION_ID)) {
+                if (metadata.containsKey(CAUSATION_ID)) {
                     String uuid = (String) metadata.get(CAUSATION_ID);
                     correlationCausation.setCausationId(UUID.fromString(uuid));
                 }
-                if(metadata.containsKey(CORRELATION_ID)) {
+                if (metadata.containsKey(CORRELATION_ID)) {
                     String uuid = (String) metadata.get(CORRELATION_ID);
                     correlationCausation.setCorrelationId(UUID.fromString(uuid));
                 }

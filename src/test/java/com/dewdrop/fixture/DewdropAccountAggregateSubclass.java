@@ -33,19 +33,15 @@ public class DewdropAccountAggregateSubclass extends AggregateRoot {
 
 
     public DewdropAccountCreated handle(DewdropCreateAccountCommand command) {
-        if (StringUtils.isEmpty(command.getName())) {
-            throw new IllegalArgumentException("Name cannot be empty");
-        }
+        if (StringUtils.isEmpty(command.getName())) { throw new IllegalArgumentException("Name cannot be empty"); }
 
-        DewdropAccountCreated testAccountCreated = new DewdropAccountCreated(command.getAccountId(), command.getName());
+        DewdropAccountCreated testAccountCreated = new DewdropAccountCreated(command.getAccountId(), command.getName(), command.getUserId());
         raise(testAccountCreated);
         return testAccountCreated;
     }
 
     public DewdropFundsAddedToAccount handle(DewdropAddFundsToAccountCommand command) {
-        if (command.getAccountId() == null) {
-            throw new IllegalArgumentException("Id cannot be empty");
-        }
+        if (command.getAccountId() == null) { throw new IllegalArgumentException("Id cannot be empty"); }
 
         DewdropFundsAddedToAccount testFundsAddedToAccount = new DewdropFundsAddedToAccount(command.getAccountId(), command.getFunds());
         raise(testFundsAddedToAccount);

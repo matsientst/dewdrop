@@ -22,7 +22,7 @@ public class StreamListener<T extends Message> {
     private EventSerializer serializer;
     private String streamName;
     private AtomicLong streamPosition;
-    ScheduledExecutorService es;
+
 
     public StreamListener(Class<?> eventType, StreamStore streamStoreConnection, EventSerializer serializer) {
         this.streamStoreConnection = streamStoreConnection;

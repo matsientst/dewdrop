@@ -1,6 +1,5 @@
 package com.dewdrop.read.readmodel;
 
-import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.serialize.EventSerializer;
 import com.dewdrop.utils.ReadModelUtils;
@@ -19,12 +18,16 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
 
     protected StreamStore streamStore;
     protected EventSerializer eventSerializer;
-    protected Map<Class<?>, CacheableCategoryReadModel<Message, Object>> readModels = new HashMap<>();
-    protected Map<Class<?>, CacheableCategoryReadModel<Message, Object>> queryToReadModelMethod = new HashMap<>();
+    protected StreamDetailsFactory streamDetailsFactory;
+    protected ReadModelFactory readModelFactory;
+    protected Map<Class<?>, ReadModel<Object>> readModels = new HashMap<>();
+    protected Map<Class<?>, ReadModel<Object>> queryToReadModelMethod = new HashMap<>();
 
-    public void init(StreamStore streamStore, EventSerializer eventSerializer) {
+    public void init(StreamStore streamStore, EventSerializer eventSerializer, StreamDetailsFactory streamDetailsFactory, ReadModelFactory readModelFactory) {
         this.streamStore = streamStore;
         this.eventSerializer = eventSerializer;
+        this.streamDetailsFactory = streamDetailsFactory;
+        this.readModelFactory = readModelFactory;
 
         registerReadModels();
     }
@@ -32,11 +35,11 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
     protected void registerReadModels() {
         List<Class<?>> annotatedReadModels = ReadModelUtils.getAnnotatedReadModels();
         annotatedReadModels.forEach(readModelClass -> {
-            Optional<CacheableCategoryReadModel> readModel = ReadModelUtils.constructReadModel(readModelClass, streamStore, eventSerializer);
+            Optional<ReadModel> readModel = readModelFactory.constructReadModel(readModelClass);
             if (readModel.isPresent()) {
-                CacheableCategoryReadModel<Message, Object> value = readModel.get();
-                value.readAndSubscribe();
-                readModels.put(value.getMessageType(), value);
+                ReadModel<Object> value = readModel.get();
+                value.subscribe();
+                value.getStreams().forEach(stream -> readModels.put(stream.getStreamDetails().getMessageType(), value));
 
                 List<Method> methods = getQueryHandlerMethods(value);
                 methods.forEach(method -> {
@@ -47,14 +50,14 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
         });
     }
 
-    public List<Method> getQueryHandlerMethods(CacheableCategoryReadModel<Message, Object> value) {
+    public List<Method> getQueryHandlerMethods(ReadModel<Object> value) {
         Object instance = value.getReadModel();
         List<Method> methods = ReadModelUtils.getQueryMethods(instance);
         return methods;
     }
 
     @Override
-    public CacheableCategoryReadModel<Message, Object> getReadModelByQuery(Object query) {
+    public ReadModel<Object> getReadModelByQuery(Object query) {
         return queryToReadModelMethod.get(query.getClass());
     }
 }

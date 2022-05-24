@@ -1,7 +1,6 @@
 package com.dewdrop.read.readmodel;
 
 import com.dewdrop.api.result.Result;
-import com.dewdrop.structure.api.Message;
 import com.dewdrop.utils.DewdropReflectionUtils;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
@@ -17,11 +16,10 @@ public class QueryStateOrchestrator {
     }
 
     public <T, R> Result<R> executeQuery(T query) {
-        CacheableCategoryReadModel<Message, Object> readModel = readModelMapper.getReadModelByQuery(query);
+        ReadModel<Object> readModel = readModelMapper.getReadModelByQuery(query);
+        readModel.updateState();
         Optional<Result<?>> handle = DewdropReflectionUtils.callMethod(readModel.getReadModel(), "handle", query, readModel.getCachedItems());
-        if (handle.isPresent()) {
-            return (Result<R>) handle.get();
-        }
+        if (handle.isPresent()) { return (Result<R>) handle.get(); }
         return Result.empty();
     }
 }

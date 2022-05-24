@@ -34,7 +34,7 @@ public class EventStoreUtils {
         }).max().orElse(0L);
 
         boolean isEndOfStream = readResult.getEvents().isEmpty() || readResult.getEvents().size() < readRequest.getCount();
-        return new StreamReadResults(readRequest.getStream(), readRequest.getStart(), readRequest.getDirection(), recordedEvents, currentRevision + 1, currentRevision, isEndOfStream);
+        return new StreamReadResults(readRequest.getStreamName(), readRequest.getStart(), readRequest.getDirection(), recordedEvents, currentRevision + 1, currentRevision, isEndOfStream);
     }
 
 
@@ -62,7 +62,7 @@ public class EventStoreUtils {
         return new SubscriptionListener() {
             @Override
             public void onEvent(Subscription subscription, ResolvedEvent event) {
-                log.info("Received event:{}", event.getEvent().getEventType());
+                log.debug("Received event:{}", event.getEvent().getEventType());
                 try {
                     eventAppeared.accept(EventStoreUtils.toReadEventData(event.getEvent()));
                 } catch (Exception e) {

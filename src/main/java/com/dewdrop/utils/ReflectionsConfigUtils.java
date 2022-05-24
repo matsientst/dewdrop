@@ -17,12 +17,9 @@ public class ReflectionsConfigUtils {
 
     public static void init(String packageToScan) {
         REFLECTIONS = new Reflections(packageToScan);
-        FIELDS_REFLECTIONS = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageToScan))
-            .setScanners(FieldsAnnotated));
-        METHODS_REFLECTIONS = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageToScan))
-            .setScanners(MethodsAnnotated));
-        TYPES_REFLECTIONS = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageToScan))
-            .setScanners(TypesAnnotated));
+        FIELDS_REFLECTIONS = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageToScan)).setScanners(FieldsAnnotated));
+        METHODS_REFLECTIONS = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageToScan)).setScanners(MethodsAnnotated));
+        TYPES_REFLECTIONS = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageToScan)).setScanners(TypesAnnotated));
     }
 
 }

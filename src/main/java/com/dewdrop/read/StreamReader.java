@@ -21,48 +21,49 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class StreamReader {
     private static final int READ_PAGE_SIZE = 500;
-    protected AtomicLong streamPosition = new AtomicLong(0L);
+    protected AtomicLong streamPosition;
     protected boolean firstEventRead = false;
     protected String streamName;
     protected StreamDetails streamDetails;
 
-    private StreamStore streamStoreConnection;
-    private Class<?> eventType;
-    private EventSerializer serializer;
-    private Consumer<Message> onEvent;
+    private StreamStore streamStore;
+    private EventSerializer eventSerializer;
 
-    public StreamReader(StreamStore connection, EventSerializer serializer, Consumer<Message> onEvent, StreamDetails streamDetails, Class<?> eventType) {
-        this.streamStoreConnection = connection;
-        this.eventType = eventType;
-        this.serializer = serializer;
-        this.onEvent = onEvent;
+    public StreamReader(StreamStore streamStore, EventSerializer eventSerializer, StreamDetails streamDetails, AtomicLong streamPosition) {
+        this.streamStore = streamStore;
+        this.eventSerializer = eventSerializer;
         this.streamDetails = streamDetails;
         this.streamName = streamDetails.getStreamName();
+        this.streamPosition = streamPosition;
     }
 
-    public boolean read(Long checkpoint, Long count, Direction direction) throws NoStreamException {
-        if (checkpoint != null && checkpoint < 0) { throw new IllegalArgumentException("A negative checkpoint:" + checkpoint + " is not allowed"); }
+    public StreamReader(StreamStore streamStore, EventSerializer eventSerializer, StreamDetails streamDetails) {
+        this.streamStore = streamStore;
+        this.eventSerializer = eventSerializer;
+        this.streamDetails = streamDetails;
+        this.streamName = streamDetails.getStreamName();
+        this.streamPosition = new AtomicLong(0);
+    }
 
-        if (count != null && count < 1) { throw new IllegalArgumentException("A non positive count:" + count + " is not allowed"); }
-
+    public boolean read(Long start, Long count) throws NoStreamException {
         if (!validateStreamName(streamName)) { throw new NoStreamException(streamName); }
 
-        this.firstEventRead = false;
-        direction = Optional.ofNullable(direction).orElse(Direction.FORWARD);
-        long sliceStart = Optional.ofNullable(checkpoint).orElse(direction == Direction.FORWARD ? -1L : 0L);
+        long sliceStart = Optional.ofNullable(start).orElse(streamDetails.getDirection() == Direction.FORWARD ? -1L : 0L);
         long remaining = Optional.ofNullable(count).orElse(Long.MAX_VALUE);
+        log.debug("Reading from:{} starting at position:{} and ending at:{}", streamDetails.getStreamName(), sliceStart, remaining);
         StreamReadResults readResults;
         do {
             long page = remaining < READ_PAGE_SIZE ? remaining : READ_PAGE_SIZE;
 
-            ReadRequest request = new ReadRequest(streamName, sliceStart, page, direction);
-            readResults = streamStoreConnection.read(request);
+            ReadRequest request = new ReadRequest(streamName, sliceStart, page, streamDetails.getDirection());
+            readResults = streamStore.read(request);
 
             this.firstEventRead = true;
             remaining -= readResults.getEvents().size();
             sliceStart = readResults.getNextEventPosition();
 
             readResults.getEvents().forEach(eventRead());
+            streamPosition.setRelease(readResults.getNextEventPosition());
 
         } while (!readResults.isEndOfStream() && remaining != 0);
         return this.firstEventRead;
@@ -84,11 +85,11 @@ public class StreamReader {
     }
 
     protected Consumer<ReadEventData> eventRead() {
-        return recordedEvent -> {
+        return readEventData -> {
             try {
                 while (true) {
                     long existingValue = streamPosition.get();
-                    long newValue = recordedEvent.getEventNumber();
+                    long newValue = readEventData.getEventNumber();
                     if (streamPosition.compareAndSet(existingValue, newValue)) {
                         break;
                     }
@@ -96,9 +97,9 @@ public class StreamReader {
 
                 this.firstEventRead = true;
 
-                Object event = serializer.deserialize(recordedEvent);
-                if (event instanceof Message) {
-                    onEvent.accept((Message) event);
+                Optional<Object> event = eventSerializer.deserialize(readEventData);
+                if (event.get() instanceof Message) {
+                    streamDetails.getEventHandler().accept((Message) event.get());
                 }
             } catch (Exception e) {
                 log.error("problem reading event: ", e);
@@ -111,7 +112,7 @@ public class StreamReader {
         StreamReadResults currentSlice = null;
         try {
             ReadRequest request = new ReadRequest(streamName, 0L, 1L, Direction.FORWARD);
-            currentSlice = streamStoreConnection.read(request);
+            currentSlice = streamStore.read(request);
         } catch (NoStreamException e) {
             return false;
         }
@@ -119,13 +120,13 @@ public class StreamReader {
     }
 
     public Long getPosition() {
-        return this.firstEventRead ? this.streamPosition.get() : null;
+        return this.firstEventRead ? this.streamPosition.get() : -1L;
     }
 
     public NameAndPosition getNameAndPosition() throws NoStreamException {
-        String simpleName = eventType.getSimpleName();
+        String simpleName = streamDetails.getMessageType().getSimpleName();
 
-        NameAndPosition nameAndPosition = NameAndPosition.builder().streamType(streamDetails.getStreamType()).name(streamDetails.getStreamName()).consumer(onEvent).messageType(eventType).create();
+        NameAndPosition nameAndPosition = NameAndPosition.builder().streamType(streamDetails.getStreamType()).name(streamDetails.getStreamName()).consumer(streamDetails.getEventHandler()).messageType(streamDetails.getMessageType()).create();
 
         try {
             Long position = getPosition();

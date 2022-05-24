@@ -1,6 +1,6 @@
 package com.dewdrop.fixture;
 
-import com.dewdrop.read.readmodel.CreationEvent;
+import com.dewdrop.read.readmodel.annotation.CreationEvent;
 import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,9 +10,11 @@ import lombok.NoArgsConstructor;
 @CreationEvent
 public class DewdropAccountCreated extends DewdropAccountEvent {
     private String name;
+    private UUID userId;
 
-    public DewdropAccountCreated(UUID accountId, String name) {
+    public DewdropAccountCreated(UUID accountId, String name, UUID userId) {
         super(accountId);
         this.name = name;
+        this.userId = userId;
     }
 }
