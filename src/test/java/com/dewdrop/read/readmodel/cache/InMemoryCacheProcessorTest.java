@@ -2,16 +2,24 @@ package com.dewdrop.read.readmodel.cache;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+import com.dewdrop.config.DewdropSettings;
 import com.dewdrop.fixture.DewdropAccountCreated;
 import com.dewdrop.fixture.DewdropAccountDetails;
 import com.dewdrop.fixture.DewdropFundsAddedToAccount;
 import com.dewdrop.fixture.DewdropUserCreated;
+import com.dewdrop.structure.api.Message;
 import com.dewdrop.utils.DewdropReflectionUtils;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +36,7 @@ class InMemoryCacheProcessorTest {
     UUID userId = UUID.randomUUID();
 
     DewdropAccountCreated accountCreated = new DewdropAccountCreated(accountId, "test", userId);
+    DewdropUserCreated userCreated = new DewdropUserCreated(userId, "tester guy");
 
     @BeforeEach
     void setup() {
@@ -35,6 +44,35 @@ class InMemoryCacheProcessorTest {
         inMemoryCacheProcessor = spy(new InMemoryCacheProcessor<>(DewdropAccountDetails.class, cacheManager));
         cache = new ConcurrentHashMapCache<>();
         cache.put(accountId, new DewdropAccountDetails());
+    }
+
+    @Test
+    @DisplayName("constructor() - confirm that we construct properly")
+    void constructor() {
+        assertThat(inMemoryCacheProcessor.getCachedStateObjectType(), is(DewdropAccountDetails.class));
+        assertThat(inMemoryCacheProcessor.getPrimaryCacheKeyName(), is("accountId"));
+        assertThat(inMemoryCacheProcessor.getAlternateCacheKeyNames(), is(List.of("userId")));
+        assertThat(inMemoryCacheProcessor.getCache().getAll().size(), is(0));
+        assertThat(inMemoryCacheProcessor.getCacheIndex().size(), is(1));
+        assertThat(inMemoryCacheProcessor.getCacheIndex().get("userId"), is(notNullValue()));
+    }
+
+    @Test
+    @DisplayName("process() - confirm that we call primaryCache()")
+    void process() {
+        doNothing().when(inMemoryCacheProcessor).primaryCache(any(Message.class), any(UUID.class));
+        inMemoryCacheProcessor.process(accountCreated);
+        verify(inMemoryCacheProcessor, times(1)).primaryCache(any(Message.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(0)).alternateCache(any(Message.class), any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("process() - confirm that we call alternateCache()")
+    void process_alternateCache() {
+        doNothing().when(inMemoryCacheProcessor).alternateCache(any(Message.class), any(UUID.class));
+        inMemoryCacheProcessor.process(userCreated);
+        verify(inMemoryCacheProcessor, times(0)).primaryCache(any(Message.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(1)).alternateCache(any(Message.class), any(UUID.class));
     }
 
     @Test
@@ -66,6 +104,21 @@ class InMemoryCacheProcessorTest {
     }
 
     @Test
+    @DisplayName("primaryCache() - Not in cache and no cacheRoot")
+    void primaryCache_notACacheRoot() {
+        doNothing().when(inMemoryCacheProcessor).processCacheIndex(any(Message.class), any(UUID.class));
+        inMemoryCacheProcessor.primaryCache(new Message() {
+            @Override
+            public UUID getMessageId() {
+                return null;
+            }
+        }, UUID.randomUUID());
+        verify(inMemoryCacheProcessor, times(0)).updatePrimaryCache(any(), any(Message.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(0)).updatePrimaryCache(any(), any(Message.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(1)).processCacheIndex(any(Message.class), any(UUID.class));
+    }
+
+    @Test
     @DisplayName("primaryCache() - There's a primary cache and a cacheIndex - confirm that we do nothing when we can't construct the target object")
     void primaryCache_unableToConstruct() {
         UUID id = accountCreated.getAccountId();
@@ -88,36 +141,124 @@ class InMemoryCacheProcessorTest {
         inMemoryCacheProcessor.setCacheIndex(cacheIndex);
         DewdropAccountDetails target = new DewdropAccountDetails();
         inMemoryCacheProcessor.getAll().put(accountId, target);
-        String username = "tester guy";
-        DewdropUserCreated userCreated = new DewdropUserCreated(userId, username);
+
         inMemoryCacheProcessor.processAlternateKeyMessage(userCreated, "userId", userId);
 
-        assertThat(target.getUsername(), is(username));
+        assertThat(target.getUsername(), is(userCreated.getUsername()));
     }
 
     @Test
-    @DisplayName("updateCacheIndex() - Test that we update the cacheIndex correctly")
-    void updateCacheIndex() {
-//        DewdropUserCreated userCreated = new DewdropUserCreated(userId, "tester guy");
-//        Map<UUID, UUID> index = new HashMap<>();
-//        DewdropAccountDetails details = new DewdropAccountDetails();
-//        String id = "userId";
-//        inMemoryCacheProcessor.updateCacheIndex(userCreated, id, userId, index, details, accountId);
-//
-//        assertThat(accountId, is(index.get(userId)));
-//        assertThat(inMemoryCacheProcessor.getCacheIndex().get(id), is(index));
+    void alternateCache() {
+        doNothing().when(inMemoryCacheProcessor).processAlternateCache(any(Message.class), any(UUID.class), anyString());
+        inMemoryCacheProcessor.alternateCache(userCreated, userId);
+        verify(inMemoryCacheProcessor, times(1)).processAlternateCache(any(Message.class), any(UUID.class), anyString());
     }
 
     @Test
-    @DisplayName("notFoundInCacheIndex() - Test that we update the cacheIndex correctly")
+    @DisplayName("processAlternateCache() - Test that we call processAlternateKeyMessage()")
+    void processAlternateCache() {
+        doNothing().when(inMemoryCacheProcessor).processAlternateKeyMessage(any(Message.class), any(String.class), any(UUID.class));
+        inMemoryCacheProcessor.process(accountCreated);
+        inMemoryCacheProcessor.processAlternateCache(userCreated, userId, "userId");
+
+        verify(inMemoryCacheProcessor, times(0)).notFoundInCacheIndex(any(Message.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(1)).processAlternateKeyMessage(any(Message.class), any(String.class), any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("processAlternateCache() - Test that do nothing when we can't find the key")
+    void processAlternateCache_noAlternateKeyInMessage() {
+        inMemoryCacheProcessor.processAlternateCache(new DewdropFundsAddedToAccount(), userId, "userId");
+
+        verify(inMemoryCacheProcessor, times(0)).notFoundInCacheIndex(any(Message.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(0)).processAlternateKeyMessage(any(Message.class), any(String.class), any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("processAlternateCache() - Test that we call notFoundInCacheIndex()")
+    void processAlternateCache_notFoundInCacheIndex() {
+        doNothing().when(inMemoryCacheProcessor).notFoundInCacheIndex(any(Message.class), any(UUID.class));
+        inMemoryCacheProcessor.processAlternateCache(userCreated, userId, "userId");
+
+        verify(inMemoryCacheProcessor, times(1)).notFoundInCacheIndex(any(Message.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(0)).processAlternateKeyMessage(any(Message.class), any(String.class), any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("notFoundInCacheIndex() - Test that we add to unprocessed correctly")
     void notFoundInCacheIndex() {
-//        DewdropUserCreated userCreated = new DewdropUserCreated(userId, "tester guy");
-//        Map<UUID, UUID> index = new HashMap<>();
-//        DewdropAccountDetails details = new DewdropAccountDetails();
-//        String id = "userId";
-//        inMemoryCacheProcessor.updateCacheIndex(userCreated, id, userId, index, details, accountId);
-//
-//        assertThat(accountId, is(index.get(userId)));
-//        assertThat(inMemoryCacheProcessor.getCacheIndex().get(id), is(index));
+        inMemoryCacheProcessor.notFoundInCacheIndex(userCreated, userId);
+        assertThat(inMemoryCacheProcessor.getUnprocessedMessages().containsKey(userId), is(true));
+    }
+
+    @Test
+    @DisplayName("isInCacheIndex() - Test that we can retrieve data from cacheIndex")
+    void isInCacheIndex() {
+        assertThat(inMemoryCacheProcessor.isInCacheIndex("userId", UUID.randomUUID()), is(false));
+        inMemoryCacheProcessor.process(accountCreated);
+        assertThat(inMemoryCacheProcessor.isInCacheIndex("userId", userId), is(true));
+    }
+
+    @Test
+    @DisplayName("processCacheIndex() - Test that we added userId to the cacheIndex")
+    void processCacheIndex() {
+        inMemoryCacheProcessor.processCacheIndex(accountCreated, accountId);
+
+        assertThat(true, is(inMemoryCacheProcessor.getCacheIndex().get("userId").containsKey(accountCreated.getUserId())));
+    }
+
+    @Test
+    @DisplayName("processCacheIndex() - Test that we processed any unprocessedMessages")
+    void processCacheIndex_unprocessedMessages() {
+        inMemoryCacheProcessor.process(userCreated);
+        doNothing().when(inMemoryCacheProcessor).processAlternateKeyMessage(any(Message.class), anyString(), any(UUID.class));
+        inMemoryCacheProcessor.processCacheIndex(accountCreated, accountId);
+
+        assertThat(true, is(inMemoryCacheProcessor.getCacheIndex().get("userId").containsKey(accountCreated.getUserId())));
+
+        verify(inMemoryCacheProcessor, times(1)).processAlternateKeyMessage(any(Message.class), anyString(), any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("initializePrimaryCache() - Test that we call updatePrimaryCache()")
+    void initializePrimaryCache() {
+        doNothing().when(inMemoryCacheProcessor).updatePrimaryCache(any(), any(Message.class), any(UUID.class));
+        inMemoryCacheProcessor.initializePrimaryCache(accountCreated, accountId);
+
+        verify(inMemoryCacheProcessor, times(1)).updatePrimaryCache(any(), any(Message.class), any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("initializePrimaryCache() - Test that we don't call updatePrimaryCache() when we are unable to construct a cachedStateObjectType")
+    void initializePrimaryCache_cantCreate_cachedStateObjectType() {
+        // Add a class that has no default constructor
+        inMemoryCacheProcessor.setCachedStateObjectType(DewdropSettings.class);
+        inMemoryCacheProcessor.initializePrimaryCache(accountCreated, accountId);
+
+        verify(inMemoryCacheProcessor, times(0)).updatePrimaryCache(any(), any(Message.class), any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("updatePrimaryCache() - Test that are able to process and add to cache")
+    public void updatePrimaryCache() {
+        DewdropAccountDetails dto = new DewdropAccountDetails();
+        inMemoryCacheProcessor.updatePrimaryCache(dto, accountCreated, accountId);
+        assertThat(true, is(inMemoryCacheProcessor.getCache().containsKey(accountId)));
+        assertThat(accountId, is(dto.getAccountId()));
+    }
+
+    @Test
+    @DisplayName("processAlternateKeyMessage() - Test that are able to process and add to cache")
+    void processAlternateKeyMessage() {
+        inMemoryCacheProcessor.process(accountCreated);
+        inMemoryCacheProcessor.processAlternateKeyMessage(userCreated, "userId", userId);
+        assertThat(inMemoryCacheProcessor.getCache().get(accountId).getUsername(), is(userCreated.getUsername()));
+    }
+
+    @Test
+    @DisplayName("put() - Test that are able to add to cache")
+    void put() {
+        inMemoryCacheProcessor.put(accountId, new DewdropAccountDetails());
+        assertThat(inMemoryCacheProcessor.getCache().containsKey(accountId), is(true));
     }
 }

@@ -18,7 +18,7 @@ public class DewdropReflectionUtils {
     public static <T> Optional<T> getFieldValue(Object instance, String name) {
         try {
             Field field = FieldUtils.getField(instance.getClass(), name, true);
-            if(field != null) {
+            if (field != null) {
                 T result = (T) field.get(instance);
                 return Optional.of(result);
             }

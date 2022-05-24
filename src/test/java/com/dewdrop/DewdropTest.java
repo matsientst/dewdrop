@@ -23,17 +23,11 @@ import org.junit.jupiter.api.Test;
 
 @Log4j2
 class DewdropTest {
-    DewdropProperties properties = DewdropProperties.builder()
-        .packageToScan("com.dewdrop")
-        .connectionString("esdb://localhost:2113?tls=false")
-        .create();
+    DewdropProperties properties = DewdropProperties.builder().packageToScan("com.dewdrop").connectionString("esdb://localhost:2113?tls=false").create();
 
     @Test
     void test() throws ResultException {
-        Dewdrop dewDrop = DewdropSettings.builder()
-            .properties(properties)
-            .create()
-            .start();
+        Dewdrop dewDrop = DewdropSettings.builder().properties(properties).create().start();
 
         String username = "Dewdropper Funkapuss";
         CreateUserCommand createUserCommand = new CreateUserCommand(UUID.randomUUID(), username);
@@ -52,25 +46,22 @@ class DewdropTest {
 
         DewdropAccountDetails actual = result.get();
         assertThat(actual.getUsername(), is(username));
+        assertThat(actual.getBalance(), is(addFunds.getFunds()));
     }
 
     private void retryUntilComplete(Dewdrop dewDrop, DewdropGetAccountByIdQuery query, Result<DewdropAccountDetails> result) {
         BigDecimal balance = new BigDecimal(100);
-        with().pollInterval(fibonacci(SECONDS))
-            .await()
-            .until(() -> {
-                Result<DewdropAccountDetails> objectResult = dewDrop.executeQuery(query);
-                if (objectResult.isValuePresent()) {
-                    DewdropAccountDetails dewdropAccountDetails = objectResult.get();
-                    if (StringUtils.isNotEmpty(dewdropAccountDetails
-                        .getUsername()) && dewdropAccountDetails.getBalance()
-                        .equals(balance)) {
-                        result.of(objectResult);
-                        return true;
-                    }
+        with().pollInterval(fibonacci(SECONDS)).await().until(() -> {
+            Result<DewdropAccountDetails> objectResult = dewDrop.executeQuery(query);
+            if (objectResult.isValuePresent()) {
+                DewdropAccountDetails dewdropAccountDetails = objectResult.get();
+                if (StringUtils.isNotEmpty(dewdropAccountDetails.getUsername()) && dewdropAccountDetails.getBalance().equals(balance)) {
+                    result.of(objectResult);
+                    return true;
                 }
-                return false;
-            });
+            }
+            return false;
+        });
     }
-    
+
 }

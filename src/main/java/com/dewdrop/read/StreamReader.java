@@ -46,12 +46,10 @@ public class StreamReader {
     }
 
     public boolean read(Long start, Long count) throws NoStreamException {
-        if (!validateStreamName(streamName)) {throw new NoStreamException(streamName);}
+        if (!validateStreamName(streamName)) { throw new NoStreamException(streamName); }
 
-        long sliceStart = Optional.ofNullable(start)
-            .orElse(streamDetails.getDirection() == Direction.FORWARD ? -1L : 0L);
-        long remaining = Optional.ofNullable(count)
-            .orElse(Long.MAX_VALUE);
+        long sliceStart = Optional.ofNullable(start).orElse(streamDetails.getDirection() == Direction.FORWARD ? -1L : 0L);
+        long remaining = Optional.ofNullable(count).orElse(Long.MAX_VALUE);
         log.debug("Reading from:{} starting at position:{} and ending at:{}", streamDetails.getStreamName(), sliceStart, remaining);
         StreamReadResults readResults;
         do {
@@ -61,12 +59,10 @@ public class StreamReader {
             readResults = streamStore.read(request);
 
             this.firstEventRead = true;
-            remaining -= readResults.getEvents()
-                .size();
+            remaining -= readResults.getEvents().size();
             sliceStart = readResults.getNextEventPosition();
 
-            readResults.getEvents()
-                .forEach(eventRead());
+            readResults.getEvents().forEach(eventRead());
             streamPosition.setRelease(readResults.getNextEventPosition());
 
         } while (!readResults.isEndOfStream() && remaining != 0);
@@ -103,8 +99,7 @@ public class StreamReader {
 
                 Optional<Object> event = eventSerializer.deserialize(readEventData);
                 if (event.get() instanceof Message) {
-                    streamDetails.getEventHandler()
-                        .accept((Message) event.get());
+                    streamDetails.getEventHandler().accept((Message) event.get());
                 }
             } catch (Exception e) {
                 log.error("problem reading event: ", e);
@@ -129,15 +124,9 @@ public class StreamReader {
     }
 
     public NameAndPosition getNameAndPosition() throws NoStreamException {
-        String simpleName = streamDetails.getMessageType()
-            .getSimpleName();
+        String simpleName = streamDetails.getMessageType().getSimpleName();
 
-        NameAndPosition nameAndPosition = NameAndPosition.builder()
-            .streamType(streamDetails.getStreamType())
-            .name(streamDetails.getStreamName())
-            .consumer(streamDetails.getEventHandler())
-            .messageType(streamDetails.getMessageType())
-            .create();
+        NameAndPosition nameAndPosition = NameAndPosition.builder().streamType(streamDetails.getStreamType()).name(streamDetails.getStreamName()).consumer(streamDetails.getEventHandler()).messageType(streamDetails.getMessageType()).create();
 
         try {
             Long position = getPosition();
