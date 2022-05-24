@@ -177,13 +177,30 @@ class AggregateStateOrchestratorTest {
 
     @Test
     @DisplayName("Given a valid command, handler method, and AggregateRoot, the state of the AggregateRoot target is updated and the whole AggregateRoot is returned.")
-    void executeCommandOverloaded() {
+    void executeCommand_OverloadedWithList() {
         DewdropAccountAggregate result = (DewdropAccountAggregate) aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand, handleMethod, dewdropAccountAggregate)
             .getTarget();
 
         assertThat(result.getAccountId(), is(id));
         assertThat(result.getName(), is(name));
         assertThat(result.getBalance(), is(new BigDecimal(0)));
+    }
+
+    @Test
+    @DisplayName("Given a single Event is returned after executing a command, the eAggregateRoot target is updated and the whole AggregateRoot is returned. .")
+    void executeCommandOverloaded_SingleEvent() {
+        DewdropAccountCreated event = new DewdropAccountCreated(id, name, userId);
+
+        try (MockedStatic<CommandUtils> utils = mockStatic(CommandUtils.class)) {
+            utils.when(() -> CommandUtils.executeCommand(any(), any(Method.class), any(Command.class), any(AggregateRoot.class)))
+                .thenReturn(Optional.of(event));
+
+            DewdropAccountAggregate result = (DewdropAccountAggregate) aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand, handleMethod, dewdropAccountAggregate)
+                .getTarget();
+
+            assertThat(result.getAccountId(), is(id));
+            assertThat(result.getName(), is(name));
+        }
     }
 
     @Test
