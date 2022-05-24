@@ -1,5 +1,7 @@
 package com.dewdrop.aggregate.proxy;
 
+import static java.util.Objects.isNull;
+
 import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.utils.CommandUtils;
 import java.lang.reflect.InvocationTargetException;
@@ -10,6 +12,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class AggregateProxyFactory {
     public static <T> Optional<T> create(Class<?> classToProxy) {
+        // TODO: Do we need to save these comments?
 //        ClassPool pool = ClassPool.getDefault();
         try {
 //            ProxyFactory factory = new ProxyFactory();
@@ -28,6 +31,10 @@ public class AggregateProxyFactory {
 
     public static Optional<AggregateRoot> createFromCommandHandlerMethod(Method commandHandlerMethod) {
         Class<?> aggregateClass = CommandUtils.getAggregateRootClassFromCommandHandlerMethod(commandHandlerMethod);
+
+        if (isNull(aggregateClass)) {
+            return Optional.empty();
+        }
 
         return create(aggregateClass);
     }

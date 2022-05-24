@@ -2,20 +2,25 @@ package com.dewdrop.fixture;
 
 import com.dewdrop.aggregate.Aggregate;
 import com.dewdrop.aggregate.AggregateId;
+import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.command.CommandHandler;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
+@Data
 @Aggregate
-public class DewdropAccountAggregate {
+public class DewdropAccountAggregate extends AggregateRoot {
+
     @AggregateId
     UUID accountId;
     String name;
     BigDecimal balance = BigDecimal.ZERO;
 
     public DewdropAccountAggregate() {}
+
     @CommandHandler
     public List<DewdropAccountCreated> handle(DewdropCreateAccountCommand command) {
         if (StringUtils.isEmpty(command.getName())) {
@@ -24,6 +29,7 @@ public class DewdropAccountAggregate {
 
         return List.of(new DewdropAccountCreated(command.getAccountId(), command.getName()));
     }
+
     @CommandHandler
     public List<DewdropFundsAddedToAccount> handle(DewdropAddFundsToAccountCommand command) {
         if (command.getAccountId() == null) {
@@ -33,12 +39,14 @@ public class DewdropAccountAggregate {
         DewdropFundsAddedToAccount dewdropFundsAddedToAccount = new DewdropFundsAddedToAccount(command.getAccountId(), command.getFunds());
         return List.of(dewdropFundsAddedToAccount);
     }
+
     public void on(DewdropAccountCreated event) {
         this.accountId = event.getAccountId();
         this.name = event.getName();
     }
 
     public void on(DewdropFundsAddedToAccount event) {
+//        this.accountId = event.getAccountId();
         this.balance = this.balance.add(event.getFunds());
     }
 }

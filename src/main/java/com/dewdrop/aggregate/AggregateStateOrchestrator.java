@@ -36,6 +36,7 @@ public class AggregateStateOrchestrator {
             return Result.of(new ArrayList<>());
         }
 
+        // TODO: Why is this here?
 //        command = AssignCorrelationAndCausation.firstCommand(command);
         log.info("Handling command correlationId:{}, causationId:{}, messageId:{}", command.getCorrelationId(), command.getCausationId(), command.getMessageId());
         return processCommand(command, commandHandlerMethod.get());
@@ -52,26 +53,26 @@ public class AggregateStateOrchestrator {
         return processCommand(command, commandHandlerMethod.get());
     }
 
-    private Result<Object> processCommand(Command command, Method commandHandlerMethod) {
+    Result<Object> processCommand(Command command, Method commandHandlerMethod) {
         Optional<AggregateRoot> optAggregateRoot = AggregateProxyFactory.createFromCommandHandlerMethod(commandHandlerMethod);
 
         if (optAggregateRoot.isPresent()) {
             AggregateRoot aggregateRoot = optAggregateRoot.get();
             aggregateRoot = getById(command, aggregateRoot);
-            aggregateRoot = executeCommand(command, commandHandlerMethod, aggregateRoot);
-            aggregateRoot = save(aggregateRoot);
+            executeCommand(command, commandHandlerMethod, aggregateRoot);
+            save(aggregateRoot);
             return Result.of(aggregateRoot.getTarget());
         }
 
         return Result.empty();
     }
 
-    private AggregateRoot save(AggregateRoot aggregateRoot) {
+    AggregateRoot save(AggregateRoot aggregateRoot) {
         streamStoreRepository.save(aggregateRoot);
         return aggregateRoot;
     }
 
-    private AggregateRoot executeCommand(Command command, Method handler, AggregateRoot aggregateRoot) {
+    AggregateRoot executeCommand(Command command, Method handler, AggregateRoot aggregateRoot) {
         try {
             Object instance = handler.getDeclaringClass()
                 .getDeclaredConstructor()
@@ -84,12 +85,13 @@ public class AggregateStateOrchestrator {
             }
 
         } catch (Exception e) {
+            // TODO: Do we want to create an appender to test all of our logging?
             log.error("Error handling command", e);
         }
         return aggregateRoot;
     }
 
-    private AggregateRoot getById(Command command, AggregateRoot aggregateRoot) {
+    AggregateRoot getById(Command command, AggregateRoot aggregateRoot) {
         Optional<UUID> aggregateId = AggregateIdUtils.getAggregateId(command);
         if (aggregateId.isPresent()) {
             aggregateRoot = streamStoreRepository.getById(aggregateId.get(), aggregateRoot, Integer.MAX_VALUE, command);
