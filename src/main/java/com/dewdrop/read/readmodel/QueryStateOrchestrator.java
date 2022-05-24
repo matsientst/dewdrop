@@ -16,12 +16,10 @@ public class QueryStateOrchestrator {
     }
 
     public <T, R> Result<R> executeQuery(T query) {
-        CacheableReadModel<Object> readModel = readModelMapper.getReadModelByQuery(query);
+        ReadModel<Object> readModel = readModelMapper.getReadModelByQuery(query);
         readModel.updateState();
         Optional<Result<?>> handle = DewdropReflectionUtils.callMethod(readModel.getReadModel(), "handle", query, readModel.getCachedItems());
-        if (handle.isPresent()) {
-            return (Result<R>) handle.get();
-        }
+        if (handle.isPresent()) { return (Result<R>) handle.get(); }
         return Result.empty();
     }
 }

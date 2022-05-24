@@ -5,6 +5,7 @@ import com.dewdrop.structure.serialize.EventSerializer;
 
 public interface ReadModelMapper {
 
-    CacheableReadModel<Object> getReadModelByQuery(Object query);
+    ReadModel<Object> getReadModelByQuery(Object query);
+
     void init(StreamStore streamStore, EventSerializer eventSerializer, StreamDetailsFactory streamDetailsFactory, ReadModelFactory readModelFactory);
 }

@@ -118,7 +118,7 @@ class JsonSerializerTest {
 
     @Test
     void deserializeEvent_eventAndClassName_ClassNotFound() throws IOException {
-        Object result = jsonSerializer.deserializeEvent(readEventData, "Test",  new HashedMap<>());
+        Object result = jsonSerializer.deserializeEvent(readEventData, "Test", new HashedMap<>());
         assertThat(result, is(Optional.empty()));
     }
 

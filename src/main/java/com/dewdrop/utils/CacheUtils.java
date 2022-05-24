@@ -18,17 +18,17 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 @Log4j2
 public class CacheUtils {
     public static boolean isCacheRoot(Message message) {
-        return message.getClass()
-            .isAnnotationPresent(CreationEvent.class);
+        return message.getClass().isAnnotationPresent(CreationEvent.class);
     }
 
     public static Field getPrimaryCacheKey(Class<?> cacheTarget) {
         requireNonNull(cacheTarget, "CacheTarget is required");
 
         List<Field> fields = FieldUtils.getFieldsListWithAnnotation(cacheTarget, PrimaryCacheKey.class);
-        if(fields.size() > 1) {
+        if (fields.size() > 1) {
             log.error("There were more than one PrimaryCacheKeys in your cached object. This should only be one.");
         }
+        if (fields.isEmpty()) { throw new IllegalArgumentException(String.format("Cache target:%s doesn't have a key annotated with @PrimaryCacheKey - This allows the cache to know what the primary key is", cacheTarget.getSimpleName())); }
 
         return fields.get(0);
     }

@@ -15,30 +15,27 @@ public class DewdropReflectionUtils {
         return hasField != null;
     }
 
-    public static Object getFieldValue(Object instance, String name) {
+    public static <T> Optional<T> getFieldValue(Object instance, String name) {
         try {
-            Object result = FieldUtils.getField(instance.getClass(), name, true)
-                .get(instance);
-            return Optional.of(result);
+            Field field = FieldUtils.getField(instance.getClass(), name, true);
+            if(field != null) {
+                T result = (T) field.get(instance);
+                return Optional.of(result);
+            }
         } catch (IllegalAccessException e) {
-            log.error("Unable to access field:{} on instance:{}", name, instance.getClass()
-                .getName(), e);
-            return Optional.empty();
+            log.error("Unable to access field:{} on instance:{}", name, instance.getClass().getName(), e);
         }
+        return Optional.empty();
     }
 
     public static <T> Optional<T> callMethod(Object object, String method, Object... args) {
         try {
             T result = (T) MethodUtils.invokeMethod(object, true, method, args);
-            if (result != null) {
-                return Optional.of(result);
-            }
+            if (result != null) { return Optional.of(result); }
         } catch (IllegalArgumentException | InvocationTargetException e) {
-            log.error("Unable to invoke {} on {} with args:{} - message: {}", method, object.getClass()
-                .getSimpleName(), args, e.getMessage(), e);
+            log.error("Unable to invoke {} on {} with args:{} - message: {}", method, object.getClass().getSimpleName(), args, e.getMessage(), e);
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            log.error("We were unable to find the method:{}() on {} with args:{} - message: {}", method, object.getClass()
-                .getSimpleName(), args, e.getMessage(), e);
+            log.error("We were unable to find the method:{}() on {} with args:{} - message: {}", method, object.getClass().getSimpleName(), args, e.getMessage(), e);
         }
         return Optional.empty();
     }
@@ -47,8 +44,7 @@ public class DewdropReflectionUtils {
         try {
             Constructor<?> constructor = clazz.getConstructor();
             constructor.setAccessible(true);
-            R instance = (R) constructor
-                .newInstance();
+            R instance = (R) constructor.newInstance();
             return Optional.of(instance);
         } catch (InstantiationException | IllegalArgumentException | InvocationTargetException | SecurityException e) {
             log.error("Unable to create instance of {} - message: {}", clazz.getSimpleName(), e.getMessage(), e);

@@ -14,7 +14,7 @@ public class AggregateUtils {
     private static final List<Class<?>> AGGREGATE_ROOTS_CACHE = new ArrayList<>();
 
     public static List<Class<?>> getAggregateRootsThatSupportCommand(Command command) {
-        if(AGGREGATE_ROOTS_CACHE.isEmpty()) {
+        if (AGGREGATE_ROOTS_CACHE.isEmpty()) {
             getAnnotatedAggregateRoots();
         }
 
@@ -27,17 +27,14 @@ public class AggregateUtils {
         });
 
         if (CollectionUtils.isEmpty(result)) {
-            log.error("No AggregateRoots found that have a method handle({} command)", command.getClass()
-                .getSimpleName());
+            log.error("No AggregateRoots found that have a method handle({} command)", command.getClass().getSimpleName());
         }
 
         return result;
     }
 
     public static List<Class<?>> getAnnotatedAggregateRoots() {
-        if (!AGGREGATE_ROOTS_CACHE.isEmpty()) {
-            return AGGREGATE_ROOTS_CACHE;
-        }
+        if (!AGGREGATE_ROOTS_CACHE.isEmpty()) { return AGGREGATE_ROOTS_CACHE; }
 
         Set<Class<?>> aggregates = AnnotationReflection.getAnnotatedClasses(Aggregate.class);
 

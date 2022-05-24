@@ -14,6 +14,7 @@ public @interface Stream {
     String name();
 
     Direction direction() default Direction.FORWARD;
+
     Class<?> rootEvent();
 
     boolean subscribed() default true;

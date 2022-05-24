@@ -34,21 +34,21 @@ public abstract class CommonValidator<T extends Serializable> extends Validation
 
 
     protected ValidationResult notBlank(Object item, String field) {
-        if (item == null) {return ValidationResult.of(new ValidationError(formatFieldName(field) + IS_REQUIRED));}
+        if (item == null) { return ValidationResult.of(new ValidationError(formatFieldName(field) + IS_REQUIRED)); }
 
         String value = getValue(item, field);
 
-        if (StringUtils.isBlank(value)) {return ValidationResult.of(new ValidationError(formatFieldName(field) + IS_REQUIRED));}
+        if (StringUtils.isBlank(value)) { return ValidationResult.of(new ValidationError(formatFieldName(field) + IS_REQUIRED)); }
 
         return this;
     }
 
     protected ValidationResult notNull(Object item, String field) {
-        if (item == null) {return ValidationResult.of(new ValidationError(formatFieldName(field) + IS_REQUIRED));}
+        if (item == null) { return ValidationResult.of(new ValidationError(formatFieldName(field) + IS_REQUIRED)); }
 
         Object value = getValue(item, field);
 
-        if (value == null) {return ValidationResult.of(new ValidationError(formatFieldName(field) + IS_REQUIRED));}
+        if (value == null) { return ValidationResult.of(new ValidationError(formatFieldName(field) + IS_REQUIRED)); }
 
         return this;
     }
@@ -64,8 +64,7 @@ public abstract class CommonValidator<T extends Serializable> extends Validation
 
         Field field = FieldUtils.getField(item.getClass(), fieldName);
         if (field == null) {
-            add(new ValidationError("Invalid field name '" + fieldName + "' for class " + item.getClass()
-                .getSimpleName()));
+            add(new ValidationError("Invalid field name '" + fieldName + "' for class " + item.getClass().getSimpleName()));
             return null;
         }
         field.setAccessible(true);

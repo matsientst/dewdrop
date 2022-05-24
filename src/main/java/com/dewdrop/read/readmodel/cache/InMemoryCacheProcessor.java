@@ -7,14 +7,15 @@ import com.dewdrop.utils.CacheUtils;
 import com.dewdrop.utils.DewdropReflectionUtils;
 import com.dewdrop.utils.ReadModelUtils;
 import java.lang.reflect.Field;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections4.map.HashedMap;
-import org.apache.commons.lang3.reflect.FieldUtils;
+
 @Log4j2
 @Data
 public class InMemoryCacheProcessor<R> {
@@ -24,105 +25,118 @@ public class InMemoryCacheProcessor<R> {
     private Map<String, Map<UUID, UUID>> cacheIndex;
     private String primaryCacheKeyName;
     private List<String> alternateCacheKeyNames;
-
+    private Map<UUID, LinkedList<Message>> unprocessedMessages;
     public InMemoryCacheProcessor(Class<?> cachedStateObjectType, CacheManager cacheManager) {
         this.cachedStateObjectType = cachedStateObjectType;
         this.cacheManager = cacheManager;
         this.cache = cacheManager.createCache(this);
-        this.primaryCacheKeyName = CacheUtils.getPrimaryCacheKey(cachedStateObjectType).getName();
-        this.alternateCacheKeyNames = CacheUtils.getAlternateCacheKeys(cachedStateObjectType).stream().map(Field::getName).collect(toList());
-        this.cacheIndex = new HashedMap<>();
+        this.primaryCacheKeyName = CacheUtils.getPrimaryCacheKey(cachedStateObjectType)
+            .getName();
+        this.alternateCacheKeyNames = CacheUtils.getAlternateCacheKeys(cachedStateObjectType)
+            .stream()
+            .map(Field::getName)
+            .collect(toList());
+        this.cacheIndex = new ConcurrentHashMap<>();
+        this.unprocessedMessages = new ConcurrentHashMap<>();
     }
 
     public <T extends Message> void process(T message) {
-        log.info("processing message {}", message);
+        log.info("Received message: {} to cache ", message);
 
         Optional<UUID> optId = CacheUtils.getCacheRootKey(message);
-        if (optId.isPresent()) {
-            UUID id = optId.get();
-            if(DewdropReflectionUtils.hasField(message, primaryCacheKeyName)) {
+        optId.ifPresent(uuid -> {
+            UUID id = uuid;
+            if (DewdropReflectionUtils.hasField(message, primaryCacheKeyName)) {
                 primaryCache(message, id);
             } else {
                 alternateCache(message, id);
             }
-
-
-        }
-    }
-
-    private <T extends Message> void alternateCache(T message, UUID id) {
-        alternateCacheKeyNames.stream().forEach(alternateCacheKeyName ->{
-            processAlternateCache(message, id, alternateCacheKeyName);
         });
     }
 
+    private <T extends Message> void alternateCache(T message, UUID id) {
+        alternateCacheKeyNames
+            .forEach(alternateCacheKeyName -> processAlternateCache(message, id, alternateCacheKeyName));
+    }
+
     private <T extends Message> void processAlternateCache(T message, UUID id, String alternateCacheKeyName) {
-        Field field = FieldUtils.getField(message.getClass(), alternateCacheKeyName, true);
-        if(field != null) {
-            Optional<UUID> optAlternateCacheKey = (Optional<UUID>) DewdropReflectionUtils.getFieldValue(message, alternateCacheKeyName);
-            if(optAlternateCacheKey.isPresent() && cacheIndex.containsKey(alternateCacheKeyName)) {
-                foundInCacheIndex(message, alternateCacheKeyName, optAlternateCacheKey);
+        log.info("Received message: {} in alternate cache", message);
+        Optional<UUID> optAlternateCacheKey = DewdropReflectionUtils.getFieldValue(message, alternateCacheKeyName);
+
+        if (optAlternateCacheKey.isPresent()) {
+            UUID alternateCacheKey = optAlternateCacheKey.get();
+            if(isInCacheIndex(alternateCacheKeyName, alternateCacheKey)) {
+                processAlternateKeyMessage(message, alternateCacheKeyName, alternateCacheKey);
             } else {
                 notFoundInCacheIndex(message, id, alternateCacheKeyName);
             }
         }
     }
 
+    protected boolean isInCacheIndex(String alternateCacheKeyName, UUID alternateCacheKey) {
+        if(!cacheIndex.containsKey(alternateCacheKeyName)) {
+            cacheIndex.put(alternateCacheKeyName, new ConcurrentHashMap<>());
+            return false;
+        }
+        return cacheIndex.get(alternateCacheKeyName).containsKey(alternateCacheKey);
+    }
+
     private <T extends Message> void notFoundInCacheIndex(T message, UUID id, String alternateCacheKeyName) {
-        Map<UUID, UUID> index = new HashedMap<>();
-        cache.getAll().values().stream().forEach(dto -> {
-            Optional<UUID> dtoAlternateId = (Optional<UUID>) DewdropReflectionUtils.getFieldValue(dto, alternateCacheKeyName);
-            if(dtoAlternateId.isPresent()) {
-                UUID alternateId = dtoAlternateId.get();
-                log.info("alternateId:{}, id:{}", alternateId, id);
-                if(alternateId.equals(id)) {
-                    index.put(alternateId, id);
-                    ReadModelUtils.processOnEvent(dto, message);
-                }
-            }
-        });
-    }
-
-    private <T extends Message> void foundInCacheIndex(T message, String alternateCacheKeyName, Optional<UUID> optAlternateCacheKey) {
-        Map<UUID, UUID> index = cacheIndex.get(alternateCacheKeyName);
-        UUID key = optAlternateCacheKey.get();
-        if(index.containsKey(key)) {
-            R dto =  cache.get(index.get(key));
-            ReadModelUtils.processOnEvent(dto, message);
+        log.info("Key not found in CacheIndex - adding to unpublished", message);
+        List<Message> unprocessed = unprocessedMessages.computeIfAbsent(id, key -> new LinkedList<>());
+        if(cacheIndex.get(alternateCacheKeyName).containsKey(id)) {
+            processAlternateCache(message, id, alternateCacheKeyName);
         } else {
-            cache.getAll().values().stream().forEach(dto -> {
-                Optional<UUID> dtoAlternateId = (Optional<UUID>) DewdropReflectionUtils.getFieldValue(dto, alternateCacheKeyName);
-                if(dtoAlternateId.isPresent()) {
-                    UUID primaryId = (UUID) DewdropReflectionUtils.getFieldValue(dto, primaryCacheKeyName);
-                    index.put(dtoAlternateId.get(), primaryId);
-                    ReadModelUtils.processOnEvent(dto, message);
-                }
+            unprocessed.add(message);
+        }
+    }
+
+    <T extends Message> void processAlternateKeyMessage(T message, String alternateCacheKeyName, UUID alternateCacheKey) {
+        Map<UUID, UUID> index = cacheIndex.get(alternateCacheKeyName);
+        R dto = cache.get(index.get(alternateCacheKey));
+        log.info("Processing alternateKey message:{}", message);
+        ReadModelUtils.processOnEvent(dto, message);
+    }
+
+    <T extends Message> void primaryCache(T message, UUID id) {
+        if (cache.containsKey(id)) {
+            updatePrimaryCache(cache.get(id), message, id);
+        } else if (CacheUtils.isCacheRoot(message)) {
+            initializePrimaryCache(message, id);
+        }
+        processCacheIndex(message, id);
+    }
+
+    private <T extends Message> void updatePrimaryCache(R dto, T message, UUID id) {
+        log.info("Processing message: {} for primary cache", message);
+        ReadModelUtils.processOnEvent(dto, message);
+        cache.put(id, dto);
+    }
+
+    private <T extends Message> void initializePrimaryCache(T message, UUID id) {
+        Optional<R> instance = DewdropReflectionUtils.createInstance(cachedStateObjectType);
+        if (instance.isPresent()) {
+            updatePrimaryCache(instance.get(), message, id);
+        } else {
+            log.error("Skipping processing of message:{} due to inability to create cachedStateObjectType:{} - Is it missing a default empty constructor?", message.getClass()
+                .getSimpleName(), cachedStateObjectType.getName());
+        }
+    }
+
+    private <T extends Message> void processCacheIndex(T message, UUID id) {
+        alternateCacheKeyNames
+            .forEach(keyName -> {
+                cacheIndex.computeIfAbsent(keyName, key -> new ConcurrentHashMap<>());
+                Optional<UUID> alternateKeyValue = DewdropReflectionUtils.getFieldValue(message, keyName);
+                alternateKeyValue.ifPresent(uuid -> {
+                    cacheIndex.get(keyName).put(uuid, id);
+                    unprocessedMessages.computeIfPresent(uuid, (key, messages) -> {
+                        log.info("Processing unprocessed message:{}, primaryKey:{}, alternateKey:{}", message.getClass().getSimpleName(), id, uuid);
+                        processAlternateKeyMessage(messages.poll(), keyName, uuid);
+                        return null;
+                    });
+                });
             });
-        }
-    }
-
-    private <T extends Message> void primaryCache(T message, UUID id) {
-        if (CacheUtils.isCacheRoot(message)) {
-            Optional<Object> instance = DewdropReflectionUtils.createInstance(cachedStateObjectType);
-            if (instance.isPresent()) {
-                R dto = (R) instance.get();
-                ReadModelUtils.processOnEvent(dto, message);
-                addToCache(id, dto);
-            } else {
-                log.error("skipping processing of message:{} due to inability to create cachedStateObjectType:{}", message.getClass()
-                    .getSimpleName(), cachedStateObjectType);
-            }
-
-        } else if (cache.containsKey(id)) {
-            R dto = cache.get(id);
-            ReadModelUtils.processOnEvent(dto, message);
-        }
-    }
-
-    public void addToCache(UUID id, R item) {
-        if (id != null) {
-            cache.put(id, item);
-        }
     }
 
     public void put(UUID id, R item) {

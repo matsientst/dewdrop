@@ -62,7 +62,7 @@ public class EventStoreUtils {
         return new SubscriptionListener() {
             @Override
             public void onEvent(Subscription subscription, ResolvedEvent event) {
-                log.info("Received event:{}", event.getEvent().getEventType());
+                log.debug("Received event:{}", event.getEvent().getEventType());
                 try {
                     eventAppeared.accept(EventStoreUtils.toReadEventData(event.getEvent()));
                 } catch (Exception e) {

@@ -31,8 +31,7 @@ public class DewdropAccountDetails {
         this.balance = this.balance.add(event.getFunds());
     }
 
-    public void on(UserCreated userCreated) {
-        log.info("UserCreated accountId:{}, userId:{}, new userId:{}", accountId, userId, userCreated.getUserId());
+    public void on(DewdropUserCreated userCreated) {
         this.username = userCreated.getUsername();
     }
 }

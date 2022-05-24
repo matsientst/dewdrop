@@ -36,12 +36,8 @@ public class StreamDetails {
                 this.streamName = streamNameGenerator.generateForEvent(name);
                 break;
             case AGGREGATE:
-                UUID verifiedId = Optional.ofNullable(id)
-                    .orElseGet(() -> AggregateIdUtils.getAggregateId(aggregateRoot)
-                        .orElse(null));
-
-                this.streamName = streamNameGenerator.generateForAggregate(aggregateRoot.getTarget()
-                    .getClass(), verifiedId);
+                UUID verifiedId = Optional.ofNullable(id).orElseGet(() -> AggregateIdUtils.getAggregateId(aggregateRoot).orElse(null));
+                this.streamName = streamNameGenerator.generateForAggregate(aggregateRoot.getTarget().getClass(), verifiedId);
                 break;
             case CATEGORY:
             default:

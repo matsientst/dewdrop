@@ -27,33 +27,29 @@ public class ReadModelFactory {
         this.cacheManager = cacheManager;
     }
 
-    public Optional<CacheableReadModel> constructReadModel(Class<?> target) {
+    public Optional<com.dewdrop.read.readmodel.ReadModel> constructReadModel(Class<?> target) {
         Object instance;
         try {
-            instance = target
-                .getConstructor()
-                .newInstance();
+            instance = target.getConstructor().newInstance();
         } catch (InstantiationException | InvocationTargetException e) {
             log.error("Error instantiating read model", e);
             return Optional.empty();
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            log.error("No default constructor found for:{}", target.getClass()
-                .getName(), e);
+            log.error("No default constructor found for:{}", target.getClass().getName(), e);
             return Optional.empty();
         }
 
-        CacheableReadModel<Object> value = contruct(instance).get();
-        if (value != null) {return Optional.ofNullable(value);}
+        com.dewdrop.read.readmodel.ReadModel<Object> value = contruct(instance).get();
+        if (value != null) { return Optional.ofNullable(value); }
 
         return Optional.empty();
     }
 
-    public <T extends Message> Supplier<CacheableReadModel<Object>> contruct(java.lang.Object target) {
+    public <T extends Message> Supplier<com.dewdrop.read.readmodel.ReadModel<Object>> contruct(java.lang.Object target) {
         return () -> {
-            ReadModel annotation = target.getClass()
-                .getAnnotation(ReadModel.class);
+            ReadModel annotation = target.getClass().getAnnotation(ReadModel.class);
             Class<?> resultClass = annotation.resultClass();
-            CacheableReadModel<Object> readModel = new CacheableReadModel<>(target, resultClass, cacheManager);
+            com.dewdrop.read.readmodel.ReadModel<Object> readModel = new com.dewdrop.read.readmodel.ReadModel(target, resultClass, cacheManager);
             Stream[] streams = target.getClass().getAnnotationsByType(Stream.class);
 
             Arrays.stream(streams).forEach(streamAnnotation -> {

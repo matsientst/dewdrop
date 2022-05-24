@@ -8,10 +8,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @CreationEvent
-public class UserCreated extends UserEvent {
+public class DewdropUserCreated extends UserEvent {
     String username;
 
-    public UserCreated(UUID userId, String username) {
+    public DewdropUserCreated(UUID userId, String username) {
         super(userId);
         this.username = username;
     }

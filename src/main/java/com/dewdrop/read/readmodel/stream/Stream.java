@@ -32,14 +32,12 @@ public class Stream<T extends Message> implements Handler<T> {
         this.streamStore = streamStore;
         this.eventSerializer = eventSerializer;
         this.streamPosition = new AtomicLong(0L);
-        log.info("Creating Stream for stream:{} - subscribed:{}", streamDetails.getStreamName(), streamDetails.isSubscribed());
+        log.debug("Creating Stream for stream:{} - subscribed:{}", streamDetails.getStreamName(), streamDetails.isSubscribed());
     }
 
     public void subscribe() {
-        if (!streamDetails.isSubscribed()) {
-            return;
-        }
-        log.info("Creating subscription for:{} - direction: {}, type: {}, messageType:{}", streamDetails.getStreamName(), streamDetails.getDirection(),  streamDetails.getStreamType(), streamDetails.getMessageType().getSimpleName());
+        if (!streamDetails.isSubscribed()) { return; }
+        log.debug("Creating subscription for:{} - direction: {}, type: {}, messageType:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(), streamDetails.getMessageType().getSimpleName());
         subscription = new Subscription<>(this, streamDetails.getMessageType(), streamStore, eventSerializer);
         StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails);
 
@@ -58,8 +56,7 @@ public class Stream<T extends Message> implements Handler<T> {
 
     @Override
     public void handle(T event) {
-        streamDetails.getEventHandler()
-            .accept(event);
+        streamDetails.getEventHandler().accept(event);
     }
 
     @Override
@@ -67,7 +64,8 @@ public class Stream<T extends Message> implements Handler<T> {
         return streamDetails.getMessageType();
     }
 
-    // If we don't have a subscription we can call read to catch up to where we need to be in our version
+    // If we don't have a subscription we can call read to catch up to where we need to be in our
+    // version
     public void updateState() {
         if (!streamDetails.isSubscribed()) {
             this.read(this.streamPosition.get(), null);

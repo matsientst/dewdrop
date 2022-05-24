@@ -28,19 +28,12 @@ public class DewdropStandaloneCommandService {
         DewdropAccountAggregateSubclass accountAggregate = new DewdropAccountAggregateSubclass();
 
         Optional<UUID> optId = AggregateIdUtils.getAggregateId(command);
-        if (optId.isEmpty()) {
-            return accountAggregate;
-        }
+        if (optId.isEmpty()) { return accountAggregate; }
 
         UUID id = optId.get();
         StreamDetails streamDetails = streamDetailsFactory.fromAggregateRoot(accountAggregate, id);
 
-        StreamStoreGetByIDRequest request = StreamStoreGetByIDRequest.builder()
-            .streamDetails(streamDetails)
-            .aggregateRoot(accountAggregate)
-            .id(id)
-            .command(command)
-            .create();
+        StreamStoreGetByIDRequest request = StreamStoreGetByIDRequest.builder().streamDetails(streamDetails).aggregateRoot(accountAggregate).id(id).command(command).create();
 
         AggregateRoot aggregateRoot = streamStoreRepository.getById(request);
         accountAggregate.handle(command);

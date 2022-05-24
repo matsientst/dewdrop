@@ -21,8 +21,7 @@ public class StreamStoreGetByIDRequest {
         this.streamName = streamDetails.getStreamName();
         this.aggregateRoot = aggregateRoot;
         this.id = id;
-        this.version = Optional.ofNullable(version)
-            .orElse(Integer.MAX_VALUE);
+        this.version = Optional.ofNullable(version).orElse(Integer.MAX_VALUE);
         this.command = command;
     }
 }

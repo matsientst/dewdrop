@@ -30,16 +30,17 @@ public abstract class EventStateMachine {
     public void restoreFromEvents(List<Message> messages) {
         requireNonNull(messages);
 
-        if (recorder.hasRecordedEvents()) {throw new IllegalStateException("Restoring from events is not possible when an instance has recorded events.");}
+        if (recorder.hasRecordedEvents()) { throw new IllegalStateException("Restoring from events is not possible when an instance has recorded events."); }
 
-        messages.stream()
-            .forEach(message -> {
-                if (version < 0) // new aggregates have an expected version of -1 or -2
-                {
-                    version = 0; // got first message (zero based)
-                } else {version++;}
-                applyState(message);
-            });
+        messages.stream().forEach(message -> {
+            if (version < 0) // new aggregates have an expected version of -1 or -2
+            {
+                version = 0; // got first message (zero based)
+            } else {
+                version++;
+            }
+            applyState(message);
+        });
     }
 
 
@@ -47,15 +48,10 @@ public abstract class EventStateMachine {
         try {
             Object target = getTarget();
             MethodUtils.invokeMethod(target, true, "on", event);
-            // log.info("successfully applied " + event.getClass().getSimpleName());
         } catch (IllegalAccessException | NoSuchMethodException e) {
-            log.error("Unable to invoke on({} event) on {} - Make sure the method exists", event.getClass()
-                .getSimpleName(), getTarget().getClass()
-                .getSimpleName(), e);
+            log.error("Unable to invoke on({} event) on {} - Make sure the method exists", event.getClass().getSimpleName(), getTarget().getClass().getSimpleName(), e);
         } catch (InvocationTargetException e) {
-            log.error("Unable to invoke on({} event) on {}", event.getClass()
-                .getSimpleName(), getTarget().getClass()
-                .getSimpleName(), e);
+            log.error("Unable to invoke on({} event) on {}", event.getClass().getSimpleName(), getTarget().getClass().getSimpleName(), e);
         }
     }
 
@@ -63,14 +59,13 @@ public abstract class EventStateMachine {
     public void updateWithEvents(List<Message> messages, long expectedVersion) {
         requireNonNull(messages);
 
-        if (version < 0) {throw new IllegalArgumentException("Updating with events is not possible when an instance has no historical events");}
-        if (version != expectedVersion) {throw new IllegalArgumentException("Expected version mismatch when updating - actual version:" + version + ", expectedVersion:" + expectedVersion);}
+        if (version < 0) { throw new IllegalArgumentException("Updating with events is not possible when an instance has no historical events"); }
+        if (version != expectedVersion) { throw new IllegalArgumentException("Expected version mismatch when updating - actual version:" + version + ", expectedVersion:" + expectedVersion); }
 
-        messages.stream()
-            .forEach(event -> {
-                version++;
-                applyState(event);
-            });
+        messages.stream().forEach(event -> {
+            version++;
+            applyState(event);
+        });
     }
 
 

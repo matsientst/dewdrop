@@ -12,10 +12,10 @@
         <Root level="INFO">
             <AppenderRef ref="Console"/>
         </Root>
-        <Logger name="com.dewdrop" level="DEBUG" additivity="false">
+        <Logger name="com.dewdrop" level="INFO" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="com.dewdrop.config.ascii" level="DEBUG" additivity="false">
+        <Logger name="com.dewdrop.config.ascii" level="INFO" additivity="false">
             <AppenderRef ref="NoPatternConsole"/>
         </Logger>
     </Loggers>

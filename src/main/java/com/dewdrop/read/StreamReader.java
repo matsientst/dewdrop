@@ -50,8 +50,9 @@ public class StreamReader {
 
         long sliceStart = Optional.ofNullable(start)
             .orElse(streamDetails.getDirection() == Direction.FORWARD ? -1L : 0L);
-        long remaining = Optional.ofNullable(count).orElse(Long.MAX_VALUE);
-        log.info("Reading from:{} starting at position:{} and ending at:{}", streamDetails.getStreamName(), sliceStart, remaining);
+        long remaining = Optional.ofNullable(count)
+            .orElse(Long.MAX_VALUE);
+        log.debug("Reading from:{} starting at position:{} and ending at:{}", streamDetails.getStreamName(), sliceStart, remaining);
         StreamReadResults readResults;
         do {
             long page = remaining < READ_PAGE_SIZE ? remaining : READ_PAGE_SIZE;
@@ -102,7 +103,8 @@ public class StreamReader {
 
                 Optional<Object> event = eventSerializer.deserialize(readEventData);
                 if (event.get() instanceof Message) {
-                    streamDetails.getEventHandler().accept((Message) event.get());
+                    streamDetails.getEventHandler()
+                        .accept((Message) event.get());
                 }
             } catch (Exception e) {
                 log.error("problem reading event: ", e);
@@ -123,11 +125,12 @@ public class StreamReader {
     }
 
     public Long getPosition() {
-        return this.firstEventRead ? this.streamPosition.get() : null;
+        return this.firstEventRead ? this.streamPosition.get() : -1L;
     }
 
     public NameAndPosition getNameAndPosition() throws NoStreamException {
-        String simpleName = streamDetails.getMessageType().getSimpleName();
+        String simpleName = streamDetails.getMessageType()
+            .getSimpleName();
 
         NameAndPosition nameAndPosition = NameAndPosition.builder()
             .streamType(streamDetails.getStreamType())

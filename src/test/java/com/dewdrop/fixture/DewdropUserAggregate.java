@@ -14,22 +14,17 @@ public class DewdropUserAggregate {
     UUID userId;
     private String username;
 
-    public DewdropUserAggregate() {
-    }
+    public DewdropUserAggregate() {}
 
     @CommandHandler
-    public UserCreated handle(CreateUserCommand command) {
-        if (StringUtils.isEmpty(command.getUsername())) {
-            throw new IllegalArgumentException("Username cannot be empty");
-        }
-        if (command.getUserId() == null) {
-            throw new IllegalArgumentException("UserId cannot be empty");
-        }
+    public DewdropUserCreated handle(CreateUserCommand command) {
+        if (StringUtils.isEmpty(command.getUsername())) { throw new IllegalArgumentException("Username cannot be empty"); }
+        if (command.getUserId() == null) { throw new IllegalArgumentException("UserId cannot be empty"); }
 
-        return new UserCreated(command.getUserId(), command.getUsername());
+        return new DewdropUserCreated(command.getUserId(), command.getUsername());
     }
 
-    public void on(UserCreated userCreated) {
+    public void on(DewdropUserCreated userCreated) {
         this.userId = userCreated.getUserId();
         this.username = userCreated.getUsername();
     }

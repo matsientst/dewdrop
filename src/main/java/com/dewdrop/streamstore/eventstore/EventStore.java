@@ -46,42 +46,36 @@ public class EventStore implements StreamStore {
         options.fromRevision(subscribeRequest.getLastCheckpoint());
         options.resolveLinkTos();
 
-        if (subscribeTo(subscribeRequest.getStreamName(), listener, options)) {return;}
+        if (subscribeTo(subscribeRequest.getStreamName(), listener, options)) { return; }
 
         subscribeTo(subscribeRequest.getStreamName(), listener, options);
     }
 
     boolean subscribeTo(String stream, SubscriptionListener listener, SubscribeToStreamOptions options) throws NoStreamException {
         try {
-            client.subscribeToStream(stream, listener, options)
-                .get();
+            client.subscribeToStream(stream, listener, options).get();
             return true;
         } catch (InterruptedException e) {
             log.error("Stream was interrupted - name:" + stream, e);
-            Thread.currentThread()
-                .interrupt();
+            Thread.currentThread().interrupt();
             return false;
         } catch (ExecutionException e) {
             log.error("There was an execution exception - name:" + stream, e);
-            if (e.getCause() instanceof StreamNotFoundException) {throw new NoStreamException(stream);}
+            if (e.getCause() instanceof StreamNotFoundException) { throw new NoStreamException(stream); }
             return false;
         }
     }
 
     @Override
     public void appendToStream(WriteRequest writeRequest) {
-        AppendToStreamOptions options = AppendToStreamOptions.get()
-            .expectedRevision(writeRequest.getExpectedVersion());
+        AppendToStreamOptions options = AppendToStreamOptions.get().expectedRevision(writeRequest.getExpectedVersion());
         String streamName = writeRequest.getStreamName();
         List<WriteEventData> events = writeRequest.getEvents();
-        List<EventData> data = events.stream()
-            .map(EventStoreUtils::toEventData)
-            .collect(toList());
+        List<EventData> data = events.stream().map(EventStoreUtils::toEventData).collect(toList());
         try {
             if (events.size() < BATCH_SIZE) {
                 ListIterator<EventData> iterator = data.listIterator();
-                client.appendToStream(streamName, options, iterator)
-                    .get();
+                client.appendToStream(streamName, options, iterator).get();
             } else {
                 final List<List<EventData>> batch = ListUtils.partition(data, BATCH_SIZE);
 
@@ -92,8 +86,7 @@ public class EventStore implements StreamStore {
             }
         } catch (InterruptedException e) {
             log.error("Append was interrupted", e);
-            Thread.currentThread()
-                .interrupt();
+            Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
             log.error("Append had an issue", e);
         }
@@ -125,16 +118,14 @@ public class EventStore implements StreamStore {
         Long count = readRequest.getCount();
         ReadStreamOptions readStreamOptions = EventStoreUtils.options(readRequest);
         try {
-            ReadResult readResult = client.readStream(streamName, count, readStreamOptions)
-                .get();
+            ReadResult readResult = client.readStream(streamName, count, readStreamOptions).get();
             return Optional.of(readResult);
         } catch (InterruptedException e) {
             log.error("Stream interrupted", e);
-            Thread.currentThread()
-                .interrupt();
+            Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (ExecutionException e) {
-            if (e.getCause() instanceof StreamNotFoundException) {throw new NoStreamException(streamName);}
+            if (e.getCause() instanceof StreamNotFoundException) { throw new NoStreamException(streamName); }
 
             log.error("There was an issue reading from stream: {}", streamName, e);
             return Optional.empty();

@@ -15,15 +15,13 @@ import lombok.extern.log4j.Log4j2;
 public class DewdropAccountDetailsReadModel {
 
     public void on(DewdropAccountCreated event, Map<UUID, DewdropAccountDetails> cachedItems) {
-        log.info("on: {}", event);
+
     }
 
     @QueryHandler
     public Result<DewdropAccountDetails> handle(DewdropGetAccountByIdQuery query, Map<UUID, DewdropAccountDetails> cachedItems) {
         DewdropAccountDetails dewdropAccountDetails = cachedItems.get(query.getAccountId());
-        if(dewdropAccountDetails != null) {
-            return Result.of(dewdropAccountDetails);
-        }
+        if (dewdropAccountDetails != null) { return Result.of(dewdropAccountDetails); }
         return Result.empty();
     }
 }

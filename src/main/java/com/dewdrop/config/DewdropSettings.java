@@ -35,8 +35,7 @@ import lombok.Data;
 @Data
 public class DewdropSettings {
 
-    private DewdropSettings() {
-    }
+    private DewdropSettings() {}
 
     private DewdropProperties properties;
     private ObjectMapper objectMapper;
@@ -56,26 +55,20 @@ public class DewdropSettings {
     @Builder(buildMethodName = "create")
     public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper, CacheManager cacheManager) {
         this.properties = properties;
-        this.objectMapper = Optional.ofNullable(objectMapper)
-            .orElse(defaultObjectMapper());
+        this.objectMapper = Optional.ofNullable(objectMapper).orElse(defaultObjectMapper());
         try {
-            if (properties == null) {
-                throw new IllegalArgumentException("properties cannot be null");
-            }
-            this.eventStoreDBClient = Optional.ofNullable(eventStoreDBClient)
-                .orElse(eventStoreDBClient(properties));
+            if (properties == null) { throw new IllegalArgumentException("properties cannot be null"); }
+            this.eventStoreDBClient = Optional.ofNullable(eventStoreDBClient).orElse(eventStoreDBClient(properties));
             this.streamStore = new EventStore(getEventStoreDBClient());
         } catch (ParseError e) {
             throw new IllegalArgumentException("Unable to parse EventStore connection", e);
         }
         ReflectionsConfigUtils.init(getProperties().getPackageToScan());
-        this.eventSerializer = Optional.ofNullable(eventSerializer)
-            .orElse(new JsonSerializer(getObjectMapper()));
+        this.eventSerializer = Optional.ofNullable(eventSerializer).orElse(new JsonSerializer(getObjectMapper()));
         this.streamNameGenerator = new PrefixStreamNameGenerator(getProperties().getStreamPrefix());
         this.streamDetailsFactory = new StreamDetailsFactory(getStreamNameGenerator());
         this.streamStoreRepository = new StreamStoreRepository(getStreamStore(), getEventSerializer(), getStreamDetailsFactory());
-        this.commandMapper = Optional.ofNullable(commandMapper)
-            .orElse(new CommandHandlerMapper());
+        this.commandMapper = Optional.ofNullable(commandMapper).orElse(new CommandHandlerMapper());
         getCommandMapper().init(getStreamStoreRepository());
         this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getStreamStoreRepository(), getStreamDetailsFactory());
         this.readModelMapper = Optional.ofNullable(readModelMapper).orElse(new DefaultAnnotationReadModelMapper());

@@ -6,6 +6,5 @@ import lombok.Data;
 
 @Data
 public abstract class Event extends CorrelationCausation {
-    public Event() {
-    }
+    public Event() {}
 }

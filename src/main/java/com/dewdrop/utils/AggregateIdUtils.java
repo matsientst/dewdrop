@@ -18,34 +18,30 @@ public class AggregateIdUtils {
 
     public static Optional<UUID> getAggregateId(Object target) {
         Set<Field> annotatedFields = AnnotationReflection.getAnnotatedFields(target, AggregateId.class);
-        Class<?> superclass = target.getClass()
-            .getSuperclass();
+        Class<?> superclass = target.getClass().getSuperclass();
 
         while (CollectionUtils.isEmpty(annotatedFields)) {
             annotatedFields = AnnotationReflection.getAnnotatedFields(superclass, AggregateId.class);
             superclass = superclass.getSuperclass();
-            if(superclass.getSimpleName().equals("Object")) {
+            if (superclass.getSimpleName().equals("Object")) {
                 break;
             }
         }
 
         if (CollectionUtils.isEmpty(annotatedFields)) {
-            log.error("No field was marked @AggregateId on {}", target.getClass()
-                .getSimpleName());
+            log.error("No field was marked @AggregateId on {}", target.getClass().getSimpleName());
             throw new IllegalArgumentException("Missing @AggregateId annotation");
         }
 
         if (annotatedFields.size() > 1) {
-            log.error("Too many @AggregateId annotations were found on {}", target.getClass()
-                .getSimpleName());
+            log.error("Too many @AggregateId annotations were found on {}", target.getClass().getSimpleName());
             throw new IllegalArgumentException("Too many @AggregateId annotations");
         }
 
         try {
             Field field = new ArrayList<>(annotatedFields).get(0);
             field.setAccessible(true);
-            UUID uuid = (UUID) field
-                .get(target);
+            UUID uuid = (UUID) field.get(target);
             return Optional.ofNullable(uuid);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);

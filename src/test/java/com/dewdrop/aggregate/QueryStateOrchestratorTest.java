@@ -10,7 +10,7 @@ class QueryStateOrchestratorTest {
     @Disabled
     void create() {
         AggregateStateOrchestrator orchestrator = new AggregateStateOrchestrator();
-        DewdropCreateAccountCommand command = new DewdropCreateAccountCommand(UUID.randomUUID(),"test", UUID.randomUUID());
+        DewdropCreateAccountCommand command = new DewdropCreateAccountCommand(UUID.randomUUID(), "test", UUID.randomUUID());
         orchestrator.executeCommand(command);
     }
 

@@ -5,6 +5,8 @@ import com.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
 import com.dewdrop.read.readmodel.stream.Stream;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.utils.ReadModelUtils;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -12,27 +14,27 @@ import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
-@Log4j2
 @Data
-public class CacheableReadModel<R> extends AbstractReadModel {
+@Log4j2
+public class ReadModel<T> {
     private Class<?> cachedStateObjectType;
     private Object readModel;
-    private InMemoryCacheProcessor<R> inMemoryCacheProcessor;
+    private InMemoryCacheProcessor<T> inMemoryCacheProcessor;
+    protected List<Stream<? super Message>> streams = new ArrayList<>();
 
-    public CacheableReadModel(Object readModel, Class<?> cachedStateObjectType, CacheManager cacheManager) {
-        super();
+    protected ReadModel(Object readModel, Class<?> cachedStateObjectType, CacheManager cacheManager) {
         this.cachedStateObjectType = cachedStateObjectType;
         this.readModel = readModel;
         this.inMemoryCacheProcessor = new InMemoryCacheProcessor<>(cachedStateObjectType, cacheManager);
-
     }
+
 
     protected void subscribe() {
         getStreams().forEach(Stream::subscribe);
     }
 
     protected <T extends Message> void process(T message) {
-        log.info("handling message {}", message);
+        log.debug("handling message {}", message);
 
         inMemoryCacheProcessor.process(message);
 
@@ -41,26 +43,34 @@ public class CacheableReadModel<R> extends AbstractReadModel {
         }
     }
 
-    public <T extends Message> Consumer<T> handler() {
+    public <R extends Message> Consumer<R> handler() {
         return message -> process(message);
     }
 
-    @Override
-    public <T extends Message> void handle(T message) {
+    public <R extends Message> void handle(R message) {
         process(message);
     }
 
-    protected void addToCache(UUID id, R item) {
+    protected void addToCache(UUID id, T item) {
         if (id != null) {
             inMemoryCacheProcessor.put(id, item);
         }
     }
 
-    public Map<UUID, R> getCachedItems() {
-        return (Map<UUID, R>) inMemoryCacheProcessor.getAll();
+    public Map<UUID, T> getCachedItems() {
+        return (Map<UUID, T>) inMemoryCacheProcessor.getAll();
     }
 
     public Object getReadModel() {
         return readModel;
+    }
+
+    public void addStream(Stream stream) {
+        this.streams.add(stream);
+    }
+
+
+    public void updateState() {
+        streams.forEach(stream -> stream.updateState());
     }
 }

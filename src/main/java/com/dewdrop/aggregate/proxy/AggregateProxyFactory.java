@@ -10,13 +10,13 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class AggregateProxyFactory {
     public static <T> Optional<T> create(Class<?> classToProxy) {
-//        ClassPool pool = ClassPool.getDefault();
+        // ClassPool pool = ClassPool.getDefault();
         try {
-//            ProxyFactory factory = new ProxyFactory();
-//            factory.setSuperclass(classToProxy);
-//
-//            MethodHandler handler = new AggregateHandler<>();
-//            Object instance = factory.create(null, null, handler);
+            // ProxyFactory factory = new ProxyFactory();
+            // factory.setSuperclass(classToProxy);
+            //
+            // MethodHandler handler = new AggregateHandler<>();
+            // Object instance = factory.create(null, null, handler);
 
 
             return Optional.of((T) new AggregateRoot(classToProxy.getDeclaredConstructor().newInstance(), classToProxy.getName()));

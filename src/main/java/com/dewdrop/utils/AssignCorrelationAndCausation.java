@@ -26,7 +26,7 @@ public class AssignCorrelationAndCausation {
         return command;
     }
 
-    public  <T extends CorrelationCausation> T nextCommand(T message) {
+    public <T extends CorrelationCausation> T nextCommand(T message) {
         message.setCorrelationId(message.getCorrelationId());
         message.setCausationId(causationId == null ? null : causationId);
         return message;

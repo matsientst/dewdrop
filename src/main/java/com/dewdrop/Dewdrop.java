@@ -12,18 +12,15 @@ public class Dewdrop {
     }
 
     public Result<Object> executeCommand(Command command) {
-        return settings.getAggregateStateOrchestrator()
-            .executeCommand(command);
+        return settings.getAggregateStateOrchestrator().executeCommand(command);
     }
 
     public Result<Object> executeSubsequentCommand(Command command, Command previous) {
-        return settings.getAggregateStateOrchestrator()
-            .executeSubsequentCommand(command, previous);
+        return settings.getAggregateStateOrchestrator().executeSubsequentCommand(command, previous);
     }
 
     public <T, R> Result<R> executeQuery(T query) {
-        return settings.getQueryStateOrchestrator()
-            .executeQuery(query);
+        return settings.getQueryStateOrchestrator().executeQuery(query);
     }
 
     public DewdropSettings getSettings() {

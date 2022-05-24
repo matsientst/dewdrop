@@ -18,9 +18,7 @@ public class ReadModelUtils {
     private static final List<Class<?>> READ_MODEL_CACHE = new ArrayList<>();
 
     public static List<Class<?>> getAnnotatedReadModels() {
-        if (!READ_MODEL_CACHE.isEmpty()) {
-            return READ_MODEL_CACHE;
-        }
+        if (!READ_MODEL_CACHE.isEmpty()) { return READ_MODEL_CACHE; }
 
         Set<Class<?>> readModelClasses = AnnotationReflection.getAnnotatedClasses(ReadModel.class);
 

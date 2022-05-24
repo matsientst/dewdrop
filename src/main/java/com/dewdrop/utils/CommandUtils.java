@@ -23,22 +23,19 @@ public class CommandUtils {
         Class<?>[] parameterTypes = commandHandlerMethod.getParameterTypes();
 
         if (parameterTypes.length > 1) {
-            log.debug("Calling method decorated with @{} {}.{}({} command, {} aggregateRoot)", simpleName, commandHandlerMethod.getDeclaringClass()
-                .getSimpleName(), commandHandlerMethod.getName(), parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName());
+            log.debug("Calling method decorated with @{} {}.{}({} command, {} aggregateRoot)", simpleName, commandHandlerMethod.getDeclaringClass().getSimpleName(), commandHandlerMethod.getName(), parameterTypes[0].getSimpleName(),
+                            parameterTypes[1].getSimpleName());
             return DewdropReflectionUtils.callMethod(target, commandHandlerMethod.getName(), command, aggregateRoot.getTarget());
         }
 
-        log.debug("Calling method decorated with @{} {}.{}({} command)", simpleName, commandHandlerMethod.getDeclaringClass()
-            .getSimpleName(), commandHandlerMethod.getName(), parameterTypes[0].getSimpleName());
+        log.debug("Calling method decorated with @{} {}.{}({} command)", simpleName, commandHandlerMethod.getDeclaringClass().getSimpleName(), commandHandlerMethod.getName(), parameterTypes[0].getSimpleName());
         return DewdropReflectionUtils.callMethod(target, commandHandlerMethod.getName(), command);
     }
 
     public static Class<?> getAggregateRootClassFromCommandHandlerMethod(Method commandHandlerMethod) {
         CommandHandler annotation = commandHandlerMethod.getAnnotation(CommandHandler.class);
 
-        if (annotation.value() == void.class) {
-            return commandHandlerMethod.getDeclaringClass();
-        }
+        if (annotation.value() == void.class) { return commandHandlerMethod.getDeclaringClass(); }
 
         return annotation.value();
     }

@@ -21,9 +21,7 @@ public class CacheManager {
     public <T, R> Cache<T, R> createCache(Object key) {
         requireNonNull(key, "Key object required");
 
-        if (caches.containsKey(key)) {
-            return getCache(key);
-        }
+        if (caches.containsKey(key)) { return getCache(key); }
 
         Optional<Cache<T, R>> instance = DewdropReflectionUtils.createInstance(cacheType);
         if (instance.isPresent()) {
