@@ -12,6 +12,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.dewdrop.aggregate.proxy.AggregateProxyFactory;
 import com.dewdrop.api.result.Result;
 import com.dewdrop.api.result.ResultException;
 import com.dewdrop.command.CommandHandlerMapper;
@@ -41,6 +42,7 @@ import org.mockito.MockedStatic;
 @Log4j2
 class AggregateStateOrchestratorTest {
 
+    AggregateRoot aggregateRootProxy;
     AggregateStateOrchestrator aggregateStateOrchestrator;
     CommandMapper commandMapper;
     DewdropAccountAggregate dewdropAccountAggregate;
@@ -54,6 +56,7 @@ class AggregateStateOrchestratorTest {
 
     @BeforeEach
     void setup() throws NoSuchMethodException {
+        aggregateRootProxy = (AggregateRoot) AggregateProxyFactory.create(DewdropAccountAggregate.class).orElse(null);
         id = UUID.randomUUID();
         userId = UUID.randomUUID();
         name = "TestName";
@@ -65,7 +68,7 @@ class AggregateStateOrchestratorTest {
         dewdropAccountAggregate = spy(new DewdropAccountAggregate());
         handleMethod = DewdropAccountAggregate.class.getMethod("handle", DewdropCreateAccountCommand.class);
 
-        doReturn(dewdropAccountAggregate).when(streamStoreRepository)
+        doReturn(aggregateRootProxy).when(streamStoreRepository)
             .getById(any(StreamStoreGetByIDRequest.class));
         doNothing().when(streamStoreRepository)
             .save(any(AggregateRoot.class));
@@ -151,34 +154,34 @@ class AggregateStateOrchestratorTest {
     @Test
     @DisplayName("Given a valid AggregateRoot, save is called on the StreamStoreRepository and the AggregateRoot is returned.")
     void save() {
-        AggregateRoot result = aggregateStateOrchestrator.save(dewdropAccountAggregate);
+        AggregateRoot result = aggregateStateOrchestrator.save(aggregateRootProxy);
 
         verify(streamStoreRepository, times(1)).save(any(result.getClass()));
-        assertThat(result, is(dewdropAccountAggregate));
+        assertThat(result, is(aggregateRootProxy));
     }
 
     @Test
     @DisplayName("Given no events are returned when executing a command, the unmodified AggregateRoot is returned.")
     void executeCommandOverloaded_EmptyEvents() {
-        AggregateRoot unmodifiedAggregateRoot = dewdropAccountAggregate;
+        AggregateRoot unmodifiedAggregateRoot = aggregateRootProxy;
 
         try (MockedStatic<CommandUtils> utils = mockStatic(CommandUtils.class)) {
             utils.when(() -> CommandUtils.executeCommand(any(), any(Method.class), any(Command.class), any(AggregateRoot.class)))
                 .thenReturn(Optional.empty());
 
-            AggregateRoot result = aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand, handleMethod, dewdropAccountAggregate);
+            AggregateRoot result = aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand, handleMethod, aggregateRootProxy);
 
             assertThat(result, is(unmodifiedAggregateRoot));
-            assertThat(((DewdropAccountAggregate) result).getBalance(), is(new BigDecimal(0)));
-            assertNull(((DewdropAccountAggregate) result).getAccountId());
-            assertNull(((DewdropAccountAggregate) result).getName());
+            assertThat(((DewdropAccountAggregate) result.getTarget()).getBalance(), is(new BigDecimal(0)));
+            assertNull(((DewdropAccountAggregate) result.getTarget()).getAccountId());
+            assertNull(((DewdropAccountAggregate) result.getTarget()).getName());
         }
     }
 
     @Test
     @DisplayName("Given a valid command, handler method, and AggregateRoot, the state of the AggregateRoot target is updated and the whole AggregateRoot is returned.")
     void executeCommand_OverloadedWithList() {
-        DewdropAccountAggregate result = (DewdropAccountAggregate) aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand, handleMethod, dewdropAccountAggregate)
+        DewdropAccountAggregate result = (DewdropAccountAggregate) aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand, handleMethod, aggregateRootProxy)
             .getTarget();
 
         assertThat(result.getAccountId(), is(id));
@@ -195,7 +198,7 @@ class AggregateStateOrchestratorTest {
             utils.when(() -> CommandUtils.executeCommand(any(), any(Method.class), any(Command.class), any(AggregateRoot.class)))
                 .thenReturn(Optional.of(event));
 
-            DewdropAccountAggregate result = (DewdropAccountAggregate) aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand, handleMethod, dewdropAccountAggregate)
+            DewdropAccountAggregate result = (DewdropAccountAggregate) aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand, handleMethod, aggregateRootProxy)
                 .getTarget();
 
             assertThat(result.getAccountId(), is(id));
@@ -206,19 +209,19 @@ class AggregateStateOrchestratorTest {
     @Test
     @DisplayName("Given AggregateIdUtils.getAggregateId cannot find an AggregateRoot, the StreamStore is not called and the unmodified AggregateRoot is returned.")
     void getById_OptionalEmpty() {
-        AggregateRoot unmodifiedAggregateRoot = dewdropAccountAggregate;
+        AggregateRoot unmodifiedAggregateRoot = aggregateRootProxy;
 
         try (MockedStatic<AggregateIdUtils> utils = mockStatic(AggregateIdUtils.class)) {
             utils.when(() -> AggregateIdUtils.getAggregateId(any(Command.class)))
                 .thenReturn(Optional.empty());
 
-            AggregateRoot result = aggregateStateOrchestrator.getById(dewdropCreateAccountCommand, dewdropAccountAggregate);
+            AggregateRoot result = aggregateStateOrchestrator.getById(dewdropCreateAccountCommand, aggregateRootProxy);
 
             verify(streamStoreRepository, times(0)).getById(any(StreamStoreGetByIDRequest.class));
             assertThat(result, is(unmodifiedAggregateRoot));
-            assertThat(((DewdropAccountAggregate) result).getBalance(), is(new BigDecimal(0)));
-            assertNull(((DewdropAccountAggregate) result).getAccountId());
-            assertNull(((DewdropAccountAggregate) result).getName());
+            assertThat(((DewdropAccountAggregate) result.getTarget()).getBalance(), is(new BigDecimal(0)));
+            assertNull(((DewdropAccountAggregate) result.getTarget()).getAccountId());
+            assertNull(((DewdropAccountAggregate) result.getTarget()).getName());
         }
     }
 
@@ -236,7 +239,7 @@ class AggregateStateOrchestratorTest {
             doReturn(modifiedAggregateRoot).when(streamStoreRepository)
                 .getById(any(StreamStoreGetByIDRequest.class));
 
-            AggregateRoot result = aggregateStateOrchestrator.getById(dewdropCreateAccountCommand, dewdropAccountAggregate);
+            AggregateRoot result = aggregateStateOrchestrator.getById(dewdropCreateAccountCommand, aggregateRootProxy);
 
             verify(streamStoreRepository, times(1)).getById(any(StreamStoreGetByIDRequest.class));
             assertThat(result.getVersion(), is(version));

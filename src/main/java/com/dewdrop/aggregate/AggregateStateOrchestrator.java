@@ -22,6 +22,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class AggregateStateOrchestrator {
+
     private CommandMapper commandMapper;
     private StreamStoreRepository streamStoreRepository;
     private StreamDetailsFactory streamDetailsFactory;
@@ -41,8 +42,6 @@ public class AggregateStateOrchestrator {
             return Result.of(new ArrayList<>());
         }
 
-        // TODO: Why is this here?
-//        command = AssignCorrelationAndCausation.firstCommand(command);
         log.info("Handling command correlationId:{}, causationId:{}, messageId:{}", command.getCorrelationId(), command.getCausationId(), command.getMessageId());
         return processCommand(command, commandHandlerMethod.get());
     }
@@ -63,7 +62,8 @@ public class AggregateStateOrchestrator {
 
         if (optAggregateRoot.isPresent()) {
             AggregateRoot aggregateRoot = optAggregateRoot.get();
-            log.debug("Processing command {}", command.getClass().getSimpleName());
+            log.debug("Processing command {}", command.getClass()
+                .getSimpleName());
             aggregateRoot = getById(command, aggregateRoot);
             executeCommand(command, commandHandlerMethod, aggregateRoot);
             save(aggregateRoot);
@@ -80,7 +80,9 @@ public class AggregateStateOrchestrator {
 
     AggregateRoot executeCommand(Command command, Method handler, AggregateRoot aggregateRoot) {
         try {
-            Object instance = handler.getDeclaringClass().getDeclaredConstructor().newInstance();
+            Object instance = handler.getDeclaringClass()
+                .getDeclaredConstructor()
+                .newInstance();
             Optional<?> result = CommandUtils.executeCommand(instance, handler, command, aggregateRoot);
             if (result.isPresent()) {
                 if (result.get() instanceof List) {
@@ -93,7 +95,6 @@ public class AggregateStateOrchestrator {
             }
 
         } catch (Exception e) {
-            // TODO: Do we want to create an appender to test all of our logging?
             log.error("Error handling command", e);
         }
         return aggregateRoot;
@@ -103,7 +104,12 @@ public class AggregateStateOrchestrator {
         Optional<UUID> aggregateId = AggregateIdUtils.getAggregateId(command);
         if (aggregateId.isPresent()) {
             StreamDetails streamDetails = streamDetailsFactory.fromAggregateRoot(aggregateRoot, aggregateId.get());
-            StreamStoreGetByIDRequest request = StreamStoreGetByIDRequest.builder().streamDetails(streamDetails).aggregateRoot(aggregateRoot).id(aggregateId.get()).command(command).create();
+            StreamStoreGetByIDRequest request = StreamStoreGetByIDRequest.builder()
+                .streamDetails(streamDetails)
+                .aggregateRoot(aggregateRoot)
+                .id(aggregateId.get())
+                .command(command)
+                .create();
             aggregateRoot = streamStoreRepository.getById(request);
         }
         return aggregateRoot;

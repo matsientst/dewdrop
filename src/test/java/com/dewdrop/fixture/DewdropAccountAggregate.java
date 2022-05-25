@@ -2,7 +2,6 @@ package com.dewdrop.fixture;
 
 import com.dewdrop.aggregate.Aggregate;
 import com.dewdrop.aggregate.AggregateId;
-import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.command.CommandHandler;
 import java.math.BigDecimal;
 import java.util.List;
@@ -12,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 
 @Data
 @Aggregate
-public class DewdropAccountAggregate extends AggregateRoot {
+public class DewdropAccountAggregate {
 
     @AggregateId
     UUID accountId;
@@ -23,16 +22,16 @@ public class DewdropAccountAggregate extends AggregateRoot {
 
     @CommandHandler
     public List<DewdropAccountCreated> handle(DewdropCreateAccountCommand command) {
-        if (StringUtils.isEmpty(command.getName())) { throw new IllegalArgumentException("Name cannot be empty"); }
-        if (command.getAccountId() == null) { throw new IllegalArgumentException("AccountId cannot be empty"); }
-        if (command.getUserId() == null) { throw new IllegalArgumentException("UserId cannot be empty"); }
+        if (StringUtils.isEmpty(command.getName())) {throw new IllegalArgumentException("Name cannot be empty");}
+        if (command.getAccountId() == null) {throw new IllegalArgumentException("AccountId cannot be empty");}
+        if (command.getUserId() == null) {throw new IllegalArgumentException("UserId cannot be empty");}
 
         return List.of(new DewdropAccountCreated(command.getAccountId(), command.getName(), command.getUserId()));
     }
 
     @CommandHandler
     public List<DewdropFundsAddedToAccount> handle(DewdropAddFundsToAccountCommand command) {
-        if (command.getAccountId() == null) { throw new IllegalArgumentException("Id cannot be empty"); }
+        if (command.getAccountId() == null) {throw new IllegalArgumentException("Id cannot be empty");}
 
         DewdropFundsAddedToAccount dewdropFundsAddedToAccount = new DewdropFundsAddedToAccount(command.getAccountId(), command.getFunds());
         return List.of(dewdropFundsAddedToAccount);

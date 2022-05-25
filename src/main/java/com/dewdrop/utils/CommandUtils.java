@@ -41,7 +41,7 @@ public class CommandUtils {
 
         if (isNull(annotation)) {
             String parameters = Arrays.stream(commandHandlerMethod.getParameters()).map(p -> p.getType().getSimpleName()).collect(Collectors.toList()).toString();
-            log.warn("No CommandHandler has been annotated for: " + commandHandlerMethod.getDeclaringClass() + "\n  Method Name: " + commandHandlerMethod.getName() + "\n  Parameters: " + parameters);
+            log.debug("No CommandHandler has been annotated for: {}\n  Method Name: {}\n  Parameters: {}", commandHandlerMethod.getDeclaringClass(), commandHandlerMethod.getName(), parameters);
           return null;
         }
 
