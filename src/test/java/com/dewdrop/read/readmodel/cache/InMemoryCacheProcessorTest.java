@@ -12,10 +12,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.dewdrop.config.DewdropSettings;
-import com.dewdrop.fixture.DewdropAccountCreated;
-import com.dewdrop.fixture.DewdropAccountDetails;
-import com.dewdrop.fixture.DewdropFundsAddedToAccount;
-import com.dewdrop.fixture.DewdropUserCreated;
+import com.dewdrop.fixture.events.DewdropAccountCreated;
+import com.dewdrop.fixture.events.DewdropFundsAddedToAccount;
+import com.dewdrop.fixture.events.DewdropUserCreated;
+import com.dewdrop.fixture.readmodel.DewdropAccountDetails;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.utils.DewdropReflectionUtils;
 import java.math.BigDecimal;
@@ -51,7 +51,7 @@ class InMemoryCacheProcessorTest {
     void constructor() {
         assertThat(inMemoryCacheProcessor.getCachedStateObjectType(), is(DewdropAccountDetails.class));
         assertThat(inMemoryCacheProcessor.getPrimaryCacheKeyName(), is("accountId"));
-        assertThat(inMemoryCacheProcessor.getAlternateCacheKeyNames(), is(List.of("userId")));
+        assertThat(inMemoryCacheProcessor.getForeignCacheKeyNames(), is(List.of("userId")));
         assertThat(inMemoryCacheProcessor.getCache().getAll().size(), is(0));
         assertThat(inMemoryCacheProcessor.getCacheIndex().size(), is(1));
         assertThat(inMemoryCacheProcessor.getCacheIndex().get("userId"), is(notNullValue()));
@@ -63,16 +63,16 @@ class InMemoryCacheProcessorTest {
         doNothing().when(inMemoryCacheProcessor).primaryCache(any(Message.class), any(UUID.class));
         inMemoryCacheProcessor.process(accountCreated);
         verify(inMemoryCacheProcessor, times(1)).primaryCache(any(Message.class), any(UUID.class));
-        verify(inMemoryCacheProcessor, times(0)).alternateCache(any(Message.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(0)).foreignCache(any(Message.class), any(UUID.class));
     }
 
     @Test
-    @DisplayName("process() - confirm that we call alternateCache()")
-    void process_alternateCache() {
-        doNothing().when(inMemoryCacheProcessor).alternateCache(any(Message.class), any(UUID.class));
+    @DisplayName("process() - confirm that we call foreignCache()")
+    void process_foreignCache() {
+        doNothing().when(inMemoryCacheProcessor).foreignCache(any(Message.class), any(UUID.class));
         inMemoryCacheProcessor.process(userCreated);
         verify(inMemoryCacheProcessor, times(0)).primaryCache(any(Message.class), any(UUID.class));
-        verify(inMemoryCacheProcessor, times(1)).alternateCache(any(Message.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(1)).foreignCache(any(Message.class), any(UUID.class));
     }
 
     @Test
@@ -142,46 +142,46 @@ class InMemoryCacheProcessorTest {
         DewdropAccountDetails target = new DewdropAccountDetails();
         inMemoryCacheProcessor.getAll().put(accountId, target);
 
-        inMemoryCacheProcessor.processAlternateKeyMessage(userCreated, "userId", userId);
+        inMemoryCacheProcessor.processForeignKeyMessage(userCreated, "userId", userId);
 
         assertThat(target.getUsername(), is(userCreated.getUsername()));
     }
 
     @Test
-    void alternateCache() {
-        doNothing().when(inMemoryCacheProcessor).processAlternateCache(any(Message.class), any(UUID.class), anyString());
-        inMemoryCacheProcessor.alternateCache(userCreated, userId);
-        verify(inMemoryCacheProcessor, times(1)).processAlternateCache(any(Message.class), any(UUID.class), anyString());
+    void foreignCache() {
+        doNothing().when(inMemoryCacheProcessor).processForeignCache(any(Message.class), any(UUID.class), anyString());
+        inMemoryCacheProcessor.foreignCache(userCreated, userId);
+        verify(inMemoryCacheProcessor, times(1)).processForeignCache(any(Message.class), any(UUID.class), anyString());
     }
 
     @Test
-    @DisplayName("processAlternateCache() - Test that we call processAlternateKeyMessage()")
-    void processAlternateCache() {
-        doNothing().when(inMemoryCacheProcessor).processAlternateKeyMessage(any(Message.class), any(String.class), any(UUID.class));
+    @DisplayName("processForeignCache() - Test that we call processForeignKeyMessage()")
+    void processForeignCache() {
+        doNothing().when(inMemoryCacheProcessor).processForeignKeyMessage(any(Message.class), any(String.class), any(UUID.class));
         inMemoryCacheProcessor.process(accountCreated);
-        inMemoryCacheProcessor.processAlternateCache(userCreated, userId, "userId");
+        inMemoryCacheProcessor.processForeignCache(userCreated, userId, "userId");
 
         verify(inMemoryCacheProcessor, times(0)).notFoundInCacheIndex(any(Message.class), any(UUID.class));
-        verify(inMemoryCacheProcessor, times(1)).processAlternateKeyMessage(any(Message.class), any(String.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(1)).processForeignKeyMessage(any(Message.class), any(String.class), any(UUID.class));
     }
 
     @Test
-    @DisplayName("processAlternateCache() - Test that do nothing when we can't find the key")
-    void processAlternateCache_noAlternateKeyInMessage() {
-        inMemoryCacheProcessor.processAlternateCache(new DewdropFundsAddedToAccount(), userId, "userId");
+    @DisplayName("processForeignCache() - Test that do nothing when we can't find the key")
+    void processForeignCache_noForeignKeyInMessage() {
+        inMemoryCacheProcessor.processForeignCache(new DewdropFundsAddedToAccount(), userId, "userId");
 
         verify(inMemoryCacheProcessor, times(0)).notFoundInCacheIndex(any(Message.class), any(UUID.class));
-        verify(inMemoryCacheProcessor, times(0)).processAlternateKeyMessage(any(Message.class), any(String.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(0)).processForeignKeyMessage(any(Message.class), any(String.class), any(UUID.class));
     }
 
     @Test
-    @DisplayName("processAlternateCache() - Test that we call notFoundInCacheIndex()")
-    void processAlternateCache_notFoundInCacheIndex() {
+    @DisplayName("processForeignCache() - Test that we call notFoundInCacheIndex()")
+    void processForeignCache_notFoundInCacheIndex() {
         doNothing().when(inMemoryCacheProcessor).notFoundInCacheIndex(any(Message.class), any(UUID.class));
-        inMemoryCacheProcessor.processAlternateCache(userCreated, userId, "userId");
+        inMemoryCacheProcessor.processForeignCache(userCreated, userId, "userId");
 
         verify(inMemoryCacheProcessor, times(1)).notFoundInCacheIndex(any(Message.class), any(UUID.class));
-        verify(inMemoryCacheProcessor, times(0)).processAlternateKeyMessage(any(Message.class), any(String.class), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(0)).processForeignKeyMessage(any(Message.class), any(String.class), any(UUID.class));
     }
 
     @Test
@@ -211,12 +211,12 @@ class InMemoryCacheProcessorTest {
     @DisplayName("processCacheIndex() - Test that we processed any unprocessedMessages")
     void processCacheIndex_unprocessedMessages() {
         inMemoryCacheProcessor.process(userCreated);
-        doNothing().when(inMemoryCacheProcessor).processAlternateKeyMessage(any(Message.class), anyString(), any(UUID.class));
+        doNothing().when(inMemoryCacheProcessor).processForeignKeyMessage(any(Message.class), anyString(), any(UUID.class));
         inMemoryCacheProcessor.processCacheIndex(accountCreated, accountId);
 
         assertThat(true, is(inMemoryCacheProcessor.getCacheIndex().get("userId").containsKey(accountCreated.getUserId())));
 
-        verify(inMemoryCacheProcessor, times(1)).processAlternateKeyMessage(any(Message.class), anyString(), any(UUID.class));
+        verify(inMemoryCacheProcessor, times(1)).processForeignKeyMessage(any(Message.class), anyString(), any(UUID.class));
     }
 
     @Test
@@ -248,10 +248,10 @@ class InMemoryCacheProcessorTest {
     }
 
     @Test
-    @DisplayName("processAlternateKeyMessage() - Test that are able to process and add to cache")
-    void processAlternateKeyMessage() {
+    @DisplayName("processForeignKeyMessage() - Test that are able to process and add to cache")
+    void processForeignKeyMessage() {
         inMemoryCacheProcessor.process(accountCreated);
-        inMemoryCacheProcessor.processAlternateKeyMessage(userCreated, "userId", userId);
+        inMemoryCacheProcessor.processForeignKeyMessage(userCreated, "userId", userId);
         assertThat(inMemoryCacheProcessor.getCache().get(accountId).getUsername(), is(userCreated.getUsername()));
     }
 

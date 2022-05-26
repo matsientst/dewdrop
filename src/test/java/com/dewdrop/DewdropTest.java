@@ -10,11 +10,11 @@ import com.dewdrop.api.result.Result;
 import com.dewdrop.api.result.ResultException;
 import com.dewdrop.config.DewdropProperties;
 import com.dewdrop.config.DewdropSettings;
-import com.dewdrop.fixture.CreateUserCommand;
-import com.dewdrop.fixture.DewdropAccountDetails;
-import com.dewdrop.fixture.DewdropAddFundsToAccountCommand;
-import com.dewdrop.fixture.DewdropCreateAccountCommand;
-import com.dewdrop.fixture.DewdropGetAccountByIdQuery;
+import com.dewdrop.fixture.command.DewdropCreateUserCommand;
+import com.dewdrop.fixture.readmodel.DewdropAccountDetails;
+import com.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;
+import com.dewdrop.fixture.command.DewdropCreateAccountCommand;
+import com.dewdrop.fixture.readmodel.DewdropGetAccountByIdQuery;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
@@ -23,14 +23,14 @@ import org.junit.jupiter.api.Test;
 
 @Log4j2
 class DewdropTest {
-    DewdropProperties properties = DewdropProperties.builder().packageToScan("com.dewdrop").connectionString("esdb://localhost:2113?tls=false").create();
+    DewdropProperties properties = DewdropProperties.builder().packageToScan("com.dewdrop").packageToExclude("com.dewdrop.fixture.customized").connectionString("esdb://localhost:2113?tls=false").create();
 
     @Test
     void test() throws ResultException {
         Dewdrop dewDrop = DewdropSettings.builder().properties(properties).create().start();
 
         String username = "Dewdropper Funkapuss";
-        CreateUserCommand createUserCommand = new CreateUserCommand(UUID.randomUUID(), username);
+        DewdropCreateUserCommand createUserCommand = new DewdropCreateUserCommand(UUID.randomUUID(), username);
         dewDrop.executeCommand(createUserCommand);
 
         DewdropCreateAccountCommand command = new DewdropCreateAccountCommand(UUID.randomUUID(), "test", createUserCommand.getUserId());

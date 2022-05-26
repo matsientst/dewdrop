@@ -1,4 +1,4 @@
-package com.dewdrop.fixture;
+package com.dewdrop.fixture.readmodel;
 
 import java.util.UUID;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.dewdrop.fixture;
+package com.dewdrop.fixture.events;
 
 import com.dewdrop.aggregate.AggregateId;
 import com.dewdrop.read.readmodel.annotation.CreationEvent;

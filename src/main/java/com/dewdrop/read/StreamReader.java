@@ -1,18 +1,15 @@
 package com.dewdrop.read;
 
 import com.dewdrop.structure.NoStreamException;
-import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.api.Message;
+import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.events.ReadEventData;
 import com.dewdrop.structure.events.StreamReadResults;
 import com.dewdrop.structure.read.Direction;
 import com.dewdrop.structure.read.ReadRequest;
 import com.dewdrop.structure.serialize.EventSerializer;
-import com.dewdrop.utils.WaitUntilUtils;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
@@ -67,21 +64,6 @@ public class StreamReader {
 
         } while (!readResults.isEndOfStream() && remaining != 0);
         return this.firstEventRead;
-    }
-
-    boolean isReadComplete(BooleanSupplier completionCheck) {
-        if (this.firstEventRead && completionCheck != null) {
-            try {
-                // Is this right?
-                WaitUntilUtils.waitUntil(completionCheck, 200);
-            } catch (TimeoutException e) {
-                log.error("Timeout! ", e);
-                return true;
-            }
-
-            return true;
-        }
-        return false;
     }
 
     protected Consumer<ReadEventData> eventRead() {

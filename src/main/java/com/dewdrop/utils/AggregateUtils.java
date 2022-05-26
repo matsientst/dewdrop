@@ -11,6 +11,8 @@ import org.apache.commons.lang3.reflect.MethodUtils;
 
 @Log4j2
 public class AggregateUtils {
+    private AggregateUtils() {}
+
     private static final List<Class<?>> AGGREGATE_ROOTS_CACHE = new ArrayList<>();
 
     public static List<Class<?>> getAggregateRootsThatSupportCommand(Command command) {
@@ -27,7 +29,7 @@ public class AggregateUtils {
         });
 
         if (CollectionUtils.isEmpty(result)) {
-            log.error("No AggregateRoots found that have a method handle({} command)", command.getClass().getSimpleName());
+            log.error("No AggregateRoots found that have an @CommandHandler for handle({} command)", command.getClass().getSimpleName());
         }
 
         return result;
@@ -46,5 +48,9 @@ public class AggregateUtils {
             log.error("No AggregateRoots found - Make sure to annotate your aggregateRoots with @Aggregate");
         }
         return AGGREGATE_ROOTS_CACHE;
+    }
+
+    static void clear() {
+        AGGREGATE_ROOTS_CACHE.clear();
     }
 }

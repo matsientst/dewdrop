@@ -1,6 +1,9 @@
-package com.dewdrop.fixture;
+package com.dewdrop.fixture.readmodel;
 
 import com.dewdrop.api.result.Result;
+import com.dewdrop.fixture.events.DewdropAccountCreated;
+import com.dewdrop.fixture.events.DewdropAccountEvent;
+import com.dewdrop.fixture.events.UserEvent;
 import com.dewdrop.read.readmodel.annotation.ReadModel;
 import com.dewdrop.read.readmodel.annotation.Stream;
 import com.dewdrop.read.readmodel.query.QueryHandler;

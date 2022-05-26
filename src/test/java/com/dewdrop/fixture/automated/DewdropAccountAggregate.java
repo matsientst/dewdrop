@@ -1,8 +1,12 @@
-package com.dewdrop.fixture;
+package com.dewdrop.fixture.automated;
 
 import com.dewdrop.aggregate.Aggregate;
 import com.dewdrop.aggregate.AggregateId;
 import com.dewdrop.command.CommandHandler;
+import com.dewdrop.fixture.events.DewdropAccountCreated;
+import com.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;
+import com.dewdrop.fixture.command.DewdropCreateAccountCommand;
+import com.dewdrop.fixture.events.DewdropFundsAddedToAccount;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;

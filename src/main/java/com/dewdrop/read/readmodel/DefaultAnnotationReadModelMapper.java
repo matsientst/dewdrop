@@ -1,5 +1,7 @@
 package com.dewdrop.read.readmodel;
 
+import static java.util.stream.Collectors.joining;
+
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.serialize.EventSerializer;
 import com.dewdrop.utils.ReadModelUtils;
@@ -44,6 +46,8 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
                 List<Method> methods = getQueryHandlerMethods(value);
                 methods.forEach(method -> {
                     Class<?> parameterType = method.getParameterTypes()[0];
+                    String streams = value.getStreams().stream().map(stream -> stream.getStreamDetails().getStreamName()).collect(joining(","));
+                    log.info("Registering @QueryHandler for {} to be handled by {}", parameterType.getSimpleName(), streams);
                     queryToReadModelMethod.computeIfAbsent(parameterType, k -> value);
                 });
             }
@@ -52,7 +56,7 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
 
     public List<Method> getQueryHandlerMethods(ReadModel<Object> value) {
         Object instance = value.getReadModel();
-        List<Method> methods = ReadModelUtils.getQueryMethods(instance);
+        List<Method> methods = ReadModelUtils.getQueryHandlerMethods(instance);
         return methods;
     }
 

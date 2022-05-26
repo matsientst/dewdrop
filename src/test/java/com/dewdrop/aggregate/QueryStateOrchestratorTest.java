@@ -1,6 +1,6 @@
 package com.dewdrop.aggregate;
 
-import com.dewdrop.fixture.DewdropCreateAccountCommand;
+import com.dewdrop.fixture.command.DewdropCreateAccountCommand;
 import java.util.UUID;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
