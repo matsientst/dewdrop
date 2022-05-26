@@ -17,6 +17,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 
 @Log4j2
 public class CacheUtils {
+    private CacheUtils() {}
     public static boolean isCacheRoot(Message message) {
         return message.getClass().isAnnotationPresent(CreationEvent.class);
     }
