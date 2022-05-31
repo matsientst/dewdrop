@@ -11,8 +11,8 @@ import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class CommandUtils {
-    private CommandUtils() {}
+public class CommandHandlerUtils {
+    private CommandHandlerUtils() {}
 
     private static final String COMMAND_HANDLER = CommandHandler.class.getSimpleName();
 
@@ -42,6 +42,6 @@ public class CommandUtils {
     }
 
     public static Set<Method> getCommandHandlerMethods() {
-        return AnnotationReflection.getAnnotatedMethods(CommandHandler.class);
+        return DewdropAnnotationUtils.getAnnotatedMethods(CommandHandler.class);
     }
 }

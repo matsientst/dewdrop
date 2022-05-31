@@ -12,7 +12,7 @@ import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.events.CorrelationCausation;
 import com.dewdrop.utils.AggregateIdUtils;
 import com.dewdrop.utils.AssignCorrelationAndCausation;
-import com.dewdrop.utils.CommandUtils;
+import com.dewdrop.utils.CommandHandlerUtils;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ public class AggregateStateOrchestrator {
     public Result<Object> executeCommand(Command command) {
         Optional<Method> commandHandlerMethod = commandMapper.getCommandHandlersThatSupportCommand(command);
 
-        if (commandHandlerMethod.isEmpty()) { return Result.of(new ArrayList<>()); }
+        if (commandHandlerMethod.isEmpty()) {return Result.of(new ArrayList<>());}
 
         return processCommand(command, commandHandlerMethod.get());
     }
@@ -45,7 +45,7 @@ public class AggregateStateOrchestrator {
     public Result<Object> executeSubsequentCommand(Command command, CorrelationCausation previous) {
         Optional<Method> commandHandlerMethod = commandMapper.getCommandHandlersThatSupportCommand(command);
 
-        if (commandHandlerMethod.isEmpty()) { return Result.of(new ArrayList<>()); }
+        if (commandHandlerMethod.isEmpty()) {return Result.of(new ArrayList<>());}
 
         command = AssignCorrelationAndCausation.assignTo(previous, command);
         return processCommand(command, commandHandlerMethod.get());
@@ -56,7 +56,8 @@ public class AggregateStateOrchestrator {
 
         if (optAggregateRoot.isPresent()) {
             AggregateRoot aggregateRoot = optAggregateRoot.get();
-            log.debug("Processing command {}", command.getClass().getSimpleName());
+            log.debug("Processing command {}", command.getClass()
+                .getSimpleName());
             aggregateRoot = getById(command, aggregateRoot);
             aggregateRoot = executeCommand(command, commandHandlerMethod, aggregateRoot);
             aggregateRoot = save(aggregateRoot);
@@ -73,8 +74,10 @@ public class AggregateStateOrchestrator {
 
     private AggregateRoot executeCommand(Command command, Method handler, AggregateRoot aggregateRoot) {
         try {
-            Object instance = handler.getDeclaringClass().getDeclaredConstructor().newInstance();
-            Optional<?> result = CommandUtils.executeCommand(instance, handler, command, aggregateRoot);
+            Object instance = handler.getDeclaringClass()
+                .getDeclaredConstructor()
+                .newInstance();
+            Optional<?> result = CommandHandlerUtils.executeCommand(instance, handler, command, aggregateRoot);
             if (result.isPresent()) {
                 if (result.get() instanceof List) {
                     for (Event event : (List<Event>) result.get()) {
@@ -95,7 +98,12 @@ public class AggregateStateOrchestrator {
         Optional<UUID> aggregateId = AggregateIdUtils.getAggregateId(command);
         if (aggregateId.isPresent()) {
             StreamDetails streamDetails = streamDetailsFactory.fromAggregateRoot(aggregateRoot, aggregateId.get());
-            StreamStoreGetByIDRequest request = StreamStoreGetByIDRequest.builder().streamDetails(streamDetails).aggregateRoot(aggregateRoot).id(aggregateId.get()).command(command).create();
+            StreamStoreGetByIDRequest request = StreamStoreGetByIDRequest.builder()
+                .streamDetails(streamDetails)
+                .aggregateRoot(aggregateRoot)
+                .id(aggregateId.get())
+                .command(command)
+                .create();
             aggregateRoot = streamStoreRepository.getById(request);
         }
         return aggregateRoot;

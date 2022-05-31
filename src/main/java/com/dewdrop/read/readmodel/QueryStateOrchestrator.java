@@ -1,25 +1,21 @@
 package com.dewdrop.read.readmodel;
 
 import com.dewdrop.api.result.Result;
-import com.dewdrop.utils.DewdropReflectionUtils;
-import java.util.Optional;
+import com.dewdrop.structure.api.Message;
+import com.dewdrop.utils.QueryHandlerUtils;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class QueryStateOrchestrator {
-    private ReadModelMapper readModelMapper;
-
-    public QueryStateOrchestrator() {}
+    private final ReadModelMapper readModelMapper;
 
     public QueryStateOrchestrator(ReadModelMapper readModelMapper) {
         this.readModelMapper = readModelMapper;
     }
 
     public <T, R> Result<R> executeQuery(T query) {
-        ReadModel<Object> readModel = readModelMapper.getReadModelByQuery(query);
+        ReadModel<Message> readModel = readModelMapper.getReadModelByQuery(query);
         readModel.updateState();
-        Optional<Result<?>> handle = DewdropReflectionUtils.callMethod(readModel.getReadModel(), "handle", query, readModel.getCachedItems());
-        if (handle.isPresent()) { return (Result<R>) handle.get(); }
-        return Result.empty();
+        return QueryHandlerUtils.callQueryHandler(readModel.getReadModel(), query);
     }
 }

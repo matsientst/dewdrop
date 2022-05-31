@@ -1,9 +1,6 @@
 package com.dewdrop.read.readmodel.cache;
 
-import java.util.List;
-import java.util.Map;
-
-public interface Cache<T, R> {
+public interface Cache<T, R, U> {
 
     boolean containsKey(T key);
 
@@ -11,5 +8,5 @@ public interface Cache<T, R> {
 
     R get(T key);
 
-    Map<T, R> getAll();
+    U getAll();
 }

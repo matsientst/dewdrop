@@ -9,7 +9,7 @@ import com.dewdrop.structure.write.WriteRequest;
 public interface StreamStore {
     StreamReadResults read(ReadRequest readRequest) throws NoStreamException;
 
-    void subscribeToStream(SubscribeRequest subscribeRequest) throws NoStreamException;
+    boolean subscribeToStream(SubscribeRequest subscribeRequest) throws NoStreamException;
 
     void appendToStream(WriteRequest writeRequest);
 }

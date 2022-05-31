@@ -25,12 +25,11 @@ public class StreamReader {
 
     private StreamStore streamStore;
     private EventSerializer eventSerializer;
+    private boolean streamExists = false;
+    private NameAndPosition nameAndPosition;
 
     public StreamReader(StreamStore streamStore, EventSerializer eventSerializer, StreamDetails streamDetails, AtomicLong streamPosition) {
-        this.streamStore = streamStore;
-        this.eventSerializer = eventSerializer;
-        this.streamDetails = streamDetails;
-        this.streamName = streamDetails.getStreamName();
+        this(streamStore, eventSerializer, streamDetails);
         this.streamPosition = streamPosition;
     }
 
@@ -40,13 +39,19 @@ public class StreamReader {
         this.streamDetails = streamDetails;
         this.streamName = streamDetails.getStreamName();
         this.streamPosition = new AtomicLong(0);
+        this.nameAndPosition = NameAndPosition.builder()
+            .streamType(streamDetails.getStreamType())
+            .name(streamDetails.getStreamName())
+            .consumer(streamDetails.getEventHandler())
+            .create();
     }
 
-    public boolean read(Long start, Long count) throws NoStreamException {
-        if (!validateStreamName(streamName)) { throw new NoStreamException(streamName); }
 
-        long sliceStart = Optional.ofNullable(start).orElse(streamDetails.getDirection() == Direction.FORWARD ? -1L : 0L);
-        long remaining = Optional.ofNullable(count).orElse(Long.MAX_VALUE);
+    public boolean read(Long start, Long count) {
+        long sliceStart = Optional.ofNullable(start)
+            .orElse(streamDetails.getDirection() == Direction.FORWARD ? -1L : 0L);
+        long remaining = Optional.ofNullable(count)
+            .orElse(Long.MAX_VALUE);
         log.debug("Reading from:{} starting at position:{} and ending at:{}", streamDetails.getStreamName(), sliceStart, remaining);
         StreamReadResults readResults;
         do {
@@ -54,12 +59,18 @@ public class StreamReader {
 
             ReadRequest request = new ReadRequest(streamName, sliceStart, page, streamDetails.getDirection());
             readResults = streamStore.read(request);
-
+            if (!readResults.isStreamExists()) {
+                this.streamExists = false;
+                return false;
+            }
+            this.streamExists = true;
             this.firstEventRead = true;
-            remaining -= readResults.getEvents().size();
+            remaining -= readResults.getEvents()
+                .size();
             sliceStart = readResults.getNextEventPosition();
 
-            readResults.getEvents().forEach(eventRead());
+            readResults.getEvents()
+                .forEach(eventRead());
             streamPosition.setRelease(readResults.getNextEventPosition());
 
         } while (!readResults.isEndOfStream() && remaining != 0);
@@ -81,7 +92,8 @@ public class StreamReader {
 
                 Optional<Object> event = eventSerializer.deserialize(readEventData);
                 if (event.get() instanceof Message) {
-                    streamDetails.getEventHandler().accept((Message) event.get());
+                    streamDetails.getEventHandler()
+                        .accept((Message) event.get());
                 }
             } catch (Exception e) {
                 log.error("problem reading event: ", e);
@@ -91,32 +103,26 @@ public class StreamReader {
     }
 
     public boolean validateStreamName(String streamName) {
-        StreamReadResults currentSlice = null;
-        try {
-            ReadRequest request = new ReadRequest(streamName, 0L, 1L, Direction.FORWARD);
-            currentSlice = streamStore.read(request);
-        } catch (NoStreamException e) {
-            return false;
-        }
-        return !(currentSlice.isEmpty());
+        ReadRequest request = new ReadRequest(streamName, 0L, 1L, Direction.FORWARD);
+        StreamReadResults readResults = streamStore.read(request);
+        this.streamExists = readResults.isStreamExists();
+        return this.streamExists;
     }
 
     public Long getPosition() {
-        return this.firstEventRead ? this.streamPosition.get() : -1L;
+        return this.firstEventRead ? this.streamPosition.get() : 0L;
     }
 
-    public NameAndPosition getNameAndPosition() throws NoStreamException {
-        String simpleName = streamDetails.getMessageType().getSimpleName();
-
-        NameAndPosition nameAndPosition = NameAndPosition.builder().streamType(streamDetails.getStreamType()).name(streamDetails.getStreamName()).consumer(streamDetails.getEventHandler()).messageType(streamDetails.getMessageType()).create();
-
+    public NameAndPosition nameAndPosition() throws NoStreamException {
         try {
             Long position = getPosition();
-            return nameAndPosition.completeTask(streamName, position);
-        } catch (NoStreamException e) {
-            throw e;
+            if (validateStreamName(streamName)) {
+                read(getPosition(), null);
+                return nameAndPosition.completeTask(streamName, getPosition());
+            }
+            return nameAndPosition;
         } catch (Exception e) {
-            log.error("There was a problem reading from: {} for: {}", streamName, simpleName, e);
+            log.error("There was a problem reading from: {}", streamName, e);
             return nameAndPosition;
         }
     }

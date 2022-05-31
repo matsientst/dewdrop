@@ -7,10 +7,8 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import javax.swing.text.html.Option;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 
 @Log4j2
 public class AggregateIdUtils {
@@ -21,11 +19,11 @@ public class AggregateIdUtils {
     }
 
     public static Optional<UUID> getAggregateId(Object target) {
-        Set<Field> annotatedFields = AnnotationReflection.getAnnotatedFields(target, AggregateId.class);
+        Set<Field> annotatedFields = DewdropAnnotationUtils.getAnnotatedFields(target, AggregateId.class);
         Class<?> superclass = target.getClass();
 
         while (CollectionUtils.isEmpty(annotatedFields)) {
-            annotatedFields = AnnotationReflection.getAnnotatedFields(superclass, AggregateId.class);
+            annotatedFields = DewdropAnnotationUtils.getAnnotatedFields(superclass, AggregateId.class);
             superclass = superclass.getSuperclass();
             if (superclass == null || superclass.getSimpleName().equals("Object")) {
                 break;

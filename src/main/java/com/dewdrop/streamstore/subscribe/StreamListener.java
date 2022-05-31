@@ -1,15 +1,14 @@
 package com.dewdrop.streamstore.subscribe;
 
 import com.dewdrop.structure.NoStreamException;
-import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.api.Message;
+import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.events.ReadEventData;
 import com.dewdrop.structure.read.Direction;
 import com.dewdrop.structure.read.ReadRequest;
 import com.dewdrop.structure.serialize.EventSerializer;
 import com.dewdrop.structure.subscribe.SubscribeRequest;
 import java.util.Optional;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import lombok.Data;
@@ -24,15 +23,15 @@ public class StreamListener<T extends Message> {
     private AtomicLong streamPosition;
 
 
-    public StreamListener(Class<?> eventType, StreamStore streamStoreConnection, EventSerializer serializer) {
+    public StreamListener(StreamStore streamStoreConnection, EventSerializer serializer) {
         this.streamStoreConnection = streamStoreConnection;
         this.serializer = serializer;
         this.streamPosition = new AtomicLong(0L);
     }
 
-    public void start(String streamName, Long checkpoint, Subscription subscription) throws NoStreamException {
+    public boolean start(String streamName, Long checkpoint, Subscription subscription) throws NoStreamException {
         this.streamName = streamName;
-        subscribe(checkpoint, onEvent(subscription));
+        return subscribe(checkpoint, onEvent(subscription));
     }
 
 
@@ -64,8 +63,8 @@ public class StreamListener<T extends Message> {
     }
 
 
-    private void subscribe(Long lastCheckpoint, Consumer<ReadEventData> eventHandler) throws NoStreamException {
+    private boolean subscribe(Long lastCheckpoint, Consumer<ReadEventData> eventHandler) throws NoStreamException {
         SubscribeRequest subscribeRequest = new SubscribeRequest(streamName, lastCheckpoint, eventHandler);
-        streamStoreConnection.subscribeToStream(subscribeRequest);
+        return streamStoreConnection.subscribeToStream(subscribeRequest);
     }
 }

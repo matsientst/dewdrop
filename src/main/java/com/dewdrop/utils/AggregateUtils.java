@@ -38,7 +38,7 @@ public class AggregateUtils {
     public static List<Class<?>> getAnnotatedAggregateRoots() {
         if (!AGGREGATE_ROOTS_CACHE.isEmpty()) { return AGGREGATE_ROOTS_CACHE; }
 
-        Set<Class<?>> aggregates = AnnotationReflection.getAnnotatedClasses(Aggregate.class);
+        Set<Class<?>> aggregates = DewdropAnnotationUtils.getAnnotatedClasses(Aggregate.class);
 
         aggregates.forEach(aggregate -> {
             AGGREGATE_ROOTS_CACHE.add(aggregate);

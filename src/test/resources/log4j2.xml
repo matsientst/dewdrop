@@ -1,22 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="INFO">
-    <Appenders>
-        <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
-        </Console>
-        <Console name="NoPatternConsole" target="SYSTEM_OUT">
-            <PatternLayout pattern="%msg%n"/>
-        </Console>
-    </Appenders>
-    <Loggers>
-        <Root level="INFO">
-            <AppenderRef ref="Console"/>
-        </Root>
-        <Logger name="com.dewdrop" level="INFO" additivity="false">
-            <AppenderRef ref="Console"/>
-        </Logger>
-        <Logger name="com.dewdrop.config.ascii" level="INFO" additivity="false">
-            <AppenderRef ref="NoPatternConsole"/>
-        </Logger>
-    </Loggers>
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+    </Console>
+    <Console name="NoPatternConsole" target="SYSTEM_OUT">
+      <PatternLayout pattern="%msg%n"/>
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Root level="INFO">
+      <AppenderRef ref="Console"/>
+    </Root>
+    <Logger name="com.dewdrop" level="INFO" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
+<!--    <Logger name="com.dewdrop.streamstore.eventstore" level="DEBUG" additivity="false">-->
+<!--      <AppenderRef ref="Console"/>-->
+<!--    </Logger>-->
+    <Logger name="com.dewdrop.config.ascii" level="INFO" additivity="false">
+      <AppenderRef ref="NoPatternConsole"/>
+    </Logger>
+  </Loggers>
 </Configuration>
