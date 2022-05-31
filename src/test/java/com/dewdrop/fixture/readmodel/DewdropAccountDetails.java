@@ -1,6 +1,9 @@
-package com.dewdrop.fixture;
+package com.dewdrop.fixture.readmodel;
 
-import com.dewdrop.read.readmodel.annotation.AlternateCacheKey;
+import com.dewdrop.fixture.events.DewdropAccountCreated;
+import com.dewdrop.fixture.events.DewdropFundsAddedToAccount;
+import com.dewdrop.fixture.events.DewdropUserCreated;
+import com.dewdrop.read.readmodel.annotation.ForeignCacheKey;
 import com.dewdrop.read.readmodel.annotation.PrimaryCacheKey;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -12,12 +15,11 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 @Log4j2
 public class DewdropAccountDetails {
-
     @PrimaryCacheKey
     private UUID accountId;
     private String name;
     private BigDecimal balance = BigDecimal.ZERO;
-    @AlternateCacheKey
+    @ForeignCacheKey
     private UUID userId;
     private String username;
 

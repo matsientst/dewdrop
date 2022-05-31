@@ -15,9 +15,14 @@ import org.apache.commons.lang3.reflect.MethodUtils;
 
 @Log4j2
 public class ReadModelUtils {
-    private static final List<Class<?>> READ_MODEL_CACHE = new ArrayList<>();
+    ReadModelUtils() {}
+
+    private static ReadModelUtils instance;
+    private final List<Class<?>> READ_MODEL_CACHE = new ArrayList<>();
 
     public static List<Class<?>> getAnnotatedReadModels() {
+        ReadModelUtils local = getInstance();
+        List<Class<?>> READ_MODEL_CACHE = local.READ_MODEL_CACHE;
         if (!READ_MODEL_CACHE.isEmpty()) { return READ_MODEL_CACHE; }
 
         Set<Class<?>> readModelClasses = AnnotationReflection.getAnnotatedClasses(ReadModel.class);
@@ -25,7 +30,7 @@ public class ReadModelUtils {
         READ_MODEL_CACHE.addAll(readModelClasses);
 
         if (CollectionUtils.isEmpty(READ_MODEL_CACHE)) {
-            log.error("No ReadModelClasses found - Make sure to annotate your ReadModels with @ReadModel");
+            log.error("No classes annotated with @ReadModel - Without a ReadModel you cannot query");
         }
         return READ_MODEL_CACHE;
     }
@@ -35,9 +40,20 @@ public class ReadModelUtils {
     }
 
 
-    public static List<Method> getQueryMethods(Object instance) {
+    public static List<Method> getQueryHandlerMethods(Object instance) {
         requireNonNull(instance, "Object is required");
 
         return MethodUtils.getMethodsListWithAnnotation(instance.getClass(), QueryHandler.class);
+    }
+
+    static void clear() {
+        getInstance().READ_MODEL_CACHE.clear();
+    }
+
+    public static ReadModelUtils getInstance() {
+        if (instance == null) {
+            instance = new ReadModelUtils();
+        }
+        return instance;
     }
 }

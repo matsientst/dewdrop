@@ -32,12 +32,12 @@ public class Stream<T extends Message> implements Handler<T> {
         this.streamStore = streamStore;
         this.eventSerializer = eventSerializer;
         this.streamPosition = new AtomicLong(0L);
-        log.debug("Creating Stream for stream:{} - subscribed:{}", streamDetails.getStreamName(), streamDetails.isSubscribed());
+        log.info("Creating Stream for stream:{} - subscribed:{}", streamDetails.getStreamName(), streamDetails.isSubscribed());
     }
 
     public void subscribe() {
         if (!streamDetails.isSubscribed()) { return; }
-        log.debug("Creating subscription for:{} - direction: {}, type: {}, messageType:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(), streamDetails.getMessageType().getSimpleName());
+        log.info("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(), streamDetails.getMessageType().getSimpleName());
         subscription = new Subscription<>(this, streamDetails.getMessageType(), streamStore, eventSerializer);
         StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails);
 

@@ -35,6 +35,7 @@ public class CommandHandlerMapper extends AbstractCommandHandlerMapper {
                 return;
             }
 
+            log.info("Registering @CommandHandler for {} to be handled by {}", commandClass.getSimpleName(), commandHandlerMethod.getDeclaringClass().getSimpleName());
             commandHandlerToMethod.put(commandClass, commandHandlerMethod);
         });
     }

@@ -2,24 +2,33 @@ package com.dewdrop.utils;
 
 import static org.reflections.scanners.Scanners.FieldsAnnotated;
 import static org.reflections.scanners.Scanners.MethodsAnnotated;
+import static org.reflections.scanners.Scanners.SubTypes;
 import static org.reflections.scanners.Scanners.TypesAnnotated;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 
 public class ReflectionsConfigUtils {
-    public static Reflections REFLECTIONS;
-    public static Reflections FIELDS_REFLECTIONS;
-    public static Reflections METHODS_REFLECTIONS;
-    public static Reflections TYPES_REFLECTIONS;
+    private ReflectionsConfigUtils() {}
 
+    public static Reflections REFLECTIONS;
+    public static List<String> EXCLUDE_PACKAGES;
 
     public static void init(String packageToScan) {
-        REFLECTIONS = new Reflections(packageToScan);
-        FIELDS_REFLECTIONS = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageToScan)).setScanners(FieldsAnnotated));
-        METHODS_REFLECTIONS = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageToScan)).setScanners(MethodsAnnotated));
-        TYPES_REFLECTIONS = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageToScan)).setScanners(TypesAnnotated));
+        init(packageToScan, new ArrayList<>());
+    }
+
+    public static void init(String packageToScan, List<String> excludePackages) {
+        if (StringUtils.isEmpty(packageToScan)) { throw new IllegalArgumentException("There is no package to scan for the annotations needed for dewdrop"); }
+        EXCLUDE_PACKAGES = excludePackages;
+        FilterBuilder filters = new FilterBuilder();
+        excludePackages.forEach(packageToExclude -> filters.excludePackage(packageToExclude));
+        REFLECTIONS = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(packageToScan)).filterInputsBy(filters).setScanners(FieldsAnnotated, MethodsAnnotated, TypesAnnotated, SubTypes));
     }
 
 }

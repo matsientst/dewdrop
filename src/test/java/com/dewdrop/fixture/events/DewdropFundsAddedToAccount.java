@@ -1,4 +1,4 @@
-package com.dewdrop.fixture;
+package com.dewdrop.fixture.events;
 
 import java.math.BigDecimal;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package com.dewdrop.fixture;
+package com.dewdrop.fixture.command;
 
 import com.dewdrop.aggregate.AggregateId;
 import com.dewdrop.structure.api.Command;

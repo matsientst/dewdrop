@@ -11,7 +11,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
-import com.dewdrop.fixture.DewdropAccountCreated;
+import com.dewdrop.fixture.events.DewdropAccountCreated;
 import com.dewdrop.streamstore.serialize.JsonSerializer;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.events.ReadEventData;

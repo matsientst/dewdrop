@@ -1,6 +1,8 @@
-package com.dewdrop.fixture;
+package com.dewdrop.fixture.customized;
 
 import com.dewdrop.aggregate.AggregateRoot;
+import com.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;
+import com.dewdrop.fixture.command.DewdropCreateAccountCommand;
 import com.dewdrop.read.StreamDetails;
 import com.dewdrop.read.readmodel.StreamDetailsFactory;
 import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;

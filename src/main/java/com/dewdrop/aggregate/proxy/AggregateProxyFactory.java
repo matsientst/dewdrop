@@ -6,6 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.reflect.ConstructorUtils;
 
 @Log4j2
 public class AggregateProxyFactory {
@@ -18,8 +19,8 @@ public class AggregateProxyFactory {
             // MethodHandler handler = new AggregateHandler<>();
             // Object instance = factory.create(null, null, handler);
 
-
-            return Optional.of((T) new AggregateRoot(classToProxy.getDeclaredConstructor().newInstance(), classToProxy.getName()));
+            Object instance = ConstructorUtils.invokeConstructor(classToProxy);
+            return Optional.of((T) new AggregateRoot(instance, classToProxy.getName()));
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             log.error("Failed to assign AggregateRoot superclass", e);
             return Optional.empty();

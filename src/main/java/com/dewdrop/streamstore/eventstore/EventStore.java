@@ -60,9 +60,9 @@ public class EventStore implements StreamStore {
             Thread.currentThread().interrupt();
             return false;
         } catch (ExecutionException e) {
-            log.error("There was an execution exception - name:" + stream, e);
+            log.error("There was an execution exception for streamName:{}, Is EventStore up?", stream, e);
             if (e.getCause() instanceof StreamNotFoundException) { throw new NoStreamException(stream); }
-            return false;
+            throw new RuntimeException(e);
         }
     }
 
