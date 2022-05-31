@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
 
 import com.dewdrop.fixture.events.DewdropUserCreated;
-import com.dewdrop.fixture.readmodel.DewdropAccountDetails;
-import com.dewdrop.fixture.readmodel.DewdropAccountDetailsReadModel;
+import com.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetails;
+import com.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetailsReadModel;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.List;
@@ -37,8 +37,8 @@ class ReadModelUtilsTest {
     @DisplayName("getAnnotatedReadModels() - If we have no methods annotated with @ReadModel we return an empty set")
     void getAnnotatedReadModels_verifyCacheIsUsed() {
         ReadModelUtils.clear();
-        try (MockedStatic<AnnotationReflection> utilities = mockStatic(AnnotationReflection.class)) {
-            utilities.when(() -> AnnotationReflection.getAnnotatedClasses(any())).thenReturn(new HashSet<>());
+        try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
+            utilities.when(() -> DewdropAnnotationUtils.getAnnotatedClasses(any())).thenReturn(new HashSet<>());
 
             assertThat(ReadModelUtils.getAnnotatedReadModels().isEmpty(), is(true));
         }

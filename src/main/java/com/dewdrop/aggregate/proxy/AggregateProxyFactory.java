@@ -1,7 +1,7 @@
 package com.dewdrop.aggregate.proxy;
 
 import com.dewdrop.aggregate.AggregateRoot;
-import com.dewdrop.utils.CommandUtils;
+import com.dewdrop.utils.CommandHandlerUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Optional;
@@ -28,7 +28,7 @@ public class AggregateProxyFactory {
     }
 
     public static Optional<AggregateRoot> createFromCommandHandlerMethod(Method commandHandlerMethod) {
-        Class<?> aggregateClass = CommandUtils.getAggregateRootClassFromCommandHandlerMethod(commandHandlerMethod);
+        Class<?> aggregateClass = CommandHandlerUtils.getAggregateRootClassFromCommandHandlerMethod(commandHandlerMethod);
 
         return create(aggregateClass);
     }

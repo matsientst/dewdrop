@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class ConcurrentHashMapCache<T, R> implements Cache<T, R> {
+public class ConcurrentHashMapCache<T, R> implements Cache<T, R, Map<T, R>> {
     private final ConcurrentMap<T, R> cacheMap = new ConcurrentHashMap();
 
     @Override

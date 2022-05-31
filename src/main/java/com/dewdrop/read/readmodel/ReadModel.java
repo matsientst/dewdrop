@@ -1,9 +1,9 @@
 package com.dewdrop.read.readmodel;
 
-import com.dewdrop.read.readmodel.cache.CacheManager;
 import com.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
 import com.dewdrop.read.readmodel.stream.Stream;
 import com.dewdrop.structure.api.Message;
+import com.dewdrop.utils.EventHandlerUtils;
 import com.dewdrop.utils.ReadModelUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,65 +12,61 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.reflect.MethodUtils;
 
 @Data
 @Log4j2
-public class ReadModel<T> {
+public class ReadModel<T extends Message> {
     private Class<?> cachedStateObjectType;
     private Object readModel;
-    private InMemoryCacheProcessor<T> inMemoryCacheProcessor;
-    protected List<Stream<? super Message>> streams = new ArrayList<>();
+    private InMemoryCacheProcessor inMemoryCacheProcessor;
+    protected List<Stream<T>> streams = new ArrayList<>();
 
-    protected ReadModel(Object readModel, Class<?> cachedStateObjectType, CacheManager cacheManager) {
+    public ReadModel(Object readModel, Class<?> cachedStateObjectType, InMemoryCacheProcessor inMemoryCacheProcessor) {
         this.cachedStateObjectType = cachedStateObjectType;
         this.readModel = readModel;
-        this.inMemoryCacheProcessor = new InMemoryCacheProcessor<>(cachedStateObjectType, cacheManager);
+        this.inMemoryCacheProcessor = inMemoryCacheProcessor;
     }
+    // on demand read through cache
+    // live subscription to category stream and throw away any events for account not currently in cache.
+    // Only create the read model when we are querying for that specific accountId
 
 
     protected void subscribe() {
         getStreams().forEach(Stream::subscribe);
     }
 
-    protected <T extends Message> void process(T message) {
+    protected void process(T message) {
         log.debug("handling message {}", message);
 
         inMemoryCacheProcessor.process(message);
 
-        if (MethodUtils.getMatchingMethod(readModel.getClass(), "on", message.getClass()) != null) {
-            ReadModelUtils.processOnEvent(readModel, message);
-        }
+        EventHandlerUtils.callEventHandler(readModel, message, inMemoryCacheProcessor.getCache()
+            .getAll());
     }
 
-    public <R extends Message> Consumer<R> handler() {
-        return message -> process(message);
+    public Consumer<T> handler() {
+        return this::process;
     }
 
-    public <R extends Message> void handle(R message) {
+    public void handle(T message) {
         process(message);
     }
 
-    protected void addToCache(UUID id, T item) {
-        if (id != null) {
-            inMemoryCacheProcessor.put(id, item);
-        }
-    }
-
-    public Map<UUID, T> getCachedItems() {
-        return (Map<UUID, T>) inMemoryCacheProcessor.getAll();
+    public <R> R getCachedItems() {
+        return inMemoryCacheProcessor.getAll();
     }
 
     public Object getReadModel() {
         return readModel;
     }
 
-    public void addStream(Stream stream) {
+    public void addStream(Stream<T> stream) {
         this.streams.add(stream);
     }
 
 
     public void updateState() {
         streams.forEach(stream -> stream.updateState());
+        ReadModelUtils.updateReadModelCacheField(readModel, inMemoryCacheProcessor);
     }
 }

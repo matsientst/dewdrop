@@ -1,4 +1,4 @@
-package com.dewdrop.fixture.readmodel;
+package com.dewdrop.fixture.readmodel.accountdetails.details;
 
 import java.util.UUID;
 import lombok.AllArgsConstructor;

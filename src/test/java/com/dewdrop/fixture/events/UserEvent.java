@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class UserEvent extends Event {
+public abstract class UserEvent extends Event {
     @AggregateId
     private UUID userId;
 

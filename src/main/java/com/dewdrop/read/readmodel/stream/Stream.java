@@ -1,15 +1,16 @@
 package com.dewdrop.read.readmodel.stream;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 
 import com.dewdrop.read.StreamDetails;
 import com.dewdrop.read.StreamReader;
 import com.dewdrop.streamstore.subscribe.Subscription;
-import com.dewdrop.structure.NoStreamException;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.read.Handler;
 import com.dewdrop.structure.serialize.EventSerializer;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
@@ -36,15 +37,19 @@ public class Stream<T extends Message> implements Handler<T> {
     }
 
     public void subscribe() {
-        if (!streamDetails.isSubscribed()) { return; }
-        log.info("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(), streamDetails.getMessageType().getSimpleName());
-        subscription = new Subscription<>(this, streamDetails.getMessageType(), streamStore, eventSerializer);
+        if (!streamDetails.isSubscribed()) {return;}
+        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}, from position:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(), streamDetails.getMessageTypes()
+            .stream()
+            .map(Class::getSimpleName)
+            .collect(
+                joining(",")));
+        subscription = new Subscription<>(this, streamDetails.getMessageTypes(), streamStore, eventSerializer);
         StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails);
 
-        try {
-            subscription.subscribeByNameAndPosition(streamReader);
-        } catch (NoStreamException e) {
+        if (!subscription.subscribeByNameAndPosition(streamReader)) {
+            log.info("Unable to find stream:{} will poll until we find then subscribe", streamDetails.getStreamName());
             subscription.pollForCompletion(streamReader);
+            return;
         }
     }
 
@@ -56,12 +61,12 @@ public class Stream<T extends Message> implements Handler<T> {
 
     @Override
     public void handle(T event) {
-        streamDetails.getEventHandler().accept(event);
+        streamDetails.getEventHandler()
+            .accept(event);
     }
 
-    @Override
-    public Class<?> getMessageType() {
-        return streamDetails.getMessageType();
+    public List<Class<?>> getMessageTypes() {
+        return streamDetails.getMessageTypes();
     }
 
     // If we don't have a subscription we can call read to catch up to where we need to be in our

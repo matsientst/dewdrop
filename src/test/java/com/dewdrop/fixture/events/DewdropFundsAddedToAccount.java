@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @NoArgsConstructor
+@ToString(callSuper = true)
 public class DewdropFundsAddedToAccount extends DewdropAccountEvent {
     private BigDecimal funds;
 

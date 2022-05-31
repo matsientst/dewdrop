@@ -55,8 +55,8 @@ class AggregateUtilsTest {
     @DisplayName("getAnnotatedAggregateRoots() - This should return empty since there are no annotated @AggregateRoot classes")
     void getAnnotatedAggregateRoots_noneFound() throws ReflectiveOperationException {
         AggregateUtils.clear();
-        try (MockedStatic<AnnotationReflection> utilities = mockStatic(AnnotationReflection.class)) {
-            utilities.when(() -> AnnotationReflection.getAnnotatedClasses(any(Class.class))).thenReturn(new HashSet());
+        try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
+            utilities.when(() -> DewdropAnnotationUtils.getAnnotatedClasses(any(Class.class))).thenReturn(new HashSet());
 
             List<Class<?>> aggregateRoots = AggregateUtils.getAnnotatedAggregateRoots();
             assertThat(aggregateRoots, is(empty()));

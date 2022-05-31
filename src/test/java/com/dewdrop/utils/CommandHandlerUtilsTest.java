@@ -25,14 +25,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-class CommandUtilsTest {
+class CommandHandlerUtilsTest {
     DewdropUserAggregate target = new DewdropUserAggregate();
     Map<Class<?>, Method> commandMethods;
 
     @BeforeEach
     void setup() {
         ReflectionsConfigUtils.init("com.dewdrop");
-        commandMethods = CommandUtils.getCommandHandlerMethods().stream().filter(item -> item.getDeclaringClass().getSimpleName().equals(DewdropUserAggregate.class.getSimpleName()))
+        commandMethods = CommandHandlerUtils.getCommandHandlerMethods().stream().filter(item -> item.getDeclaringClass().getSimpleName().equals(DewdropUserAggregate.class.getSimpleName()))
                         .collect(toMap((key) -> key.getParameterTypes()[0], Function.identity()));
     }
 
@@ -43,7 +43,7 @@ class CommandUtilsTest {
 
         Method method = commandMethods.get(DewdropCreateUserCommand.class);
         Optional<AggregateRoot> aggregateRoot = AggregateProxyFactory.createFromCommandHandlerMethod(method);
-        Optional<DewdropUserCreated> events = (Optional<DewdropUserCreated>) CommandUtils.executeCommand(target, method, command, aggregateRoot.get());
+        Optional<DewdropUserCreated> events = (Optional<DewdropUserCreated>) CommandHandlerUtils.executeCommand(target, method, command, aggregateRoot.get());
         assertThat(events.get().getUserId(), is(command.getUserId()));
     }
 
@@ -55,7 +55,7 @@ class CommandUtilsTest {
 
         Method method = MethodUtils.getMethodsWithAnnotation(DewdropCommandService.class, CommandHandler.class)[0];
         Optional<AggregateRoot> aggregateRoot = AggregateProxyFactory.createFromCommandHandlerMethod(method);
-        Optional<List<DewdropFundsAddedToAccount>> events = (Optional<List<DewdropFundsAddedToAccount>>) CommandUtils.executeCommand(new DewdropCommandService(), method, command, aggregateRoot.get());
+        Optional<List<DewdropFundsAddedToAccount>> events = (Optional<List<DewdropFundsAddedToAccount>>) CommandHandlerUtils.executeCommand(new DewdropCommandService(), method, command, aggregateRoot.get());
         assertThat(events.get().get(0).getFunds(), is(command.getFunds()));
     }
 }

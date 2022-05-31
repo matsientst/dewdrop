@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.dewdrop.fixture.events.DewdropFundsAddedToAccount;
 import com.dewdrop.fixture.events.DewdropUserCreated;
-import com.dewdrop.fixture.readmodel.DewdropAccountDetails;
+import com.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetails;
 import com.dewdrop.read.readmodel.annotation.PrimaryCacheKey;
 import com.dewdrop.structure.api.Message;
 import java.lang.reflect.Field;
