@@ -1,6 +1,6 @@
 package com.dewdrop.utils;
 
-import com.dewdrop.aggregate.AggregateId;
+import com.dewdrop.aggregate.annotation.AggregateId;
 import com.dewdrop.aggregate.AggregateRoot;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ public class AggregateIdUtils {
     }
 
     public static Optional<UUID> getAggregateId(Object target) {
-        Set<Field> annotatedFields = DewdropAnnotationUtils.getAnnotatedFields(target, AggregateId.class);
+        Set<Field> annotatedFields = DewdropAnnotationUtils.getAnnotatedFields(target.getClass(), AggregateId.class);
         Class<?> superclass = target.getClass();
 
         while (CollectionUtils.isEmpty(annotatedFields)) {

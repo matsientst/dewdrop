@@ -1,10 +1,8 @@
 package com.dewdrop.fixture.command;
 
-import com.dewdrop.aggregate.AggregateId;
+import com.dewdrop.aggregate.annotation.AggregateId;
 import com.dewdrop.structure.api.Command;
-import com.dewdrop.structure.api.Message;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data

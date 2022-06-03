@@ -1,12 +1,17 @@
 package com.dewdrop.utils;
 
-import com.dewdrop.aggregate.Aggregate;
+import com.dewdrop.aggregate.AggregateRoot;
+import com.dewdrop.aggregate.annotation.Aggregate;
 import com.dewdrop.structure.api.Command;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
 @Log4j2
@@ -52,5 +57,28 @@ public class AggregateUtils {
 
     static void clear() {
         AGGREGATE_ROOTS_CACHE.clear();
+    }
+
+    public static <T> Optional<T> create(Class<?> classToProxy) {
+        // ClassPool pool = ClassPool.getDefault();
+        try {
+            // ProxyFactory factory = new ProxyFactory();
+            // factory.setSuperclass(classToProxy);
+            //
+            // MethodHandler handler = new AggregateHandler<>();
+            // Object instance = factory.create(null, null, handler);
+
+            Object instance = ConstructorUtils.invokeConstructor(classToProxy);
+            return Optional.of((T) new AggregateRoot(instance));
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            log.error("Failed to assign AggregateRoot", e);
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<AggregateRoot> createFromCommandHandlerMethod(Method commandHandlerMethod) {
+        Class<?> aggregateClass = CommandHandlerUtils.getAggregateRootClassFromCommandHandlerMethod(commandHandlerMethod);
+
+        return create(aggregateClass);
     }
 }

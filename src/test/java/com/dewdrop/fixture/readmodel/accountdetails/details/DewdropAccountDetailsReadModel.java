@@ -20,8 +20,10 @@ public class DewdropAccountDetailsReadModel {
     @DewdropCache
     Map<UUID, DewdropAccountDetails> cache;
     // list of users - listen to the usercreated event type, user deleted or user disabled
-    // accounts per user - listen to account created user assignment (create two events in aggregate) - listen for events
-    // account detail - aggregate stream account-id stream - Need to have this be constructed real time as we need it.
+    // accounts per user - listen to account created user assignment (create two events in aggregate) -
+    // listen for events
+    // account detail - aggregate stream account-id stream - Need to have this be constructed real time
+    // as we need it.
 
     @EventHandler
     public void on(DewdropAccountCreated event, Map<UUID, DewdropAccountDetails> cachedItems) {
@@ -31,7 +33,7 @@ public class DewdropAccountDetailsReadModel {
     @QueryHandler
     public Result<DewdropAccountDetails> handle(DewdropGetAccountByIdQuery query) {
         DewdropAccountDetails dewdropAccountDetails = cache.get(query.getAccountId());
-        if (dewdropAccountDetails != null) {return Result.of(dewdropAccountDetails);}
+        if (dewdropAccountDetails != null) { return Result.of(dewdropAccountDetails); }
         return Result.empty();
     }
 }

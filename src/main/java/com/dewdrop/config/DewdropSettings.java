@@ -10,7 +10,6 @@ import com.dewdrop.read.readmodel.QueryStateOrchestrator;
 import com.dewdrop.read.readmodel.ReadModelFactory;
 import com.dewdrop.read.readmodel.ReadModelMapper;
 import com.dewdrop.read.readmodel.StreamDetailsFactory;
-import com.dewdrop.read.readmodel.cache.CacheManager;
 import com.dewdrop.streamstore.eventstore.EventStore;
 import com.dewdrop.streamstore.repository.StreamStoreRepository;
 import com.dewdrop.streamstore.serialize.JsonSerializer;
@@ -50,37 +49,29 @@ public class DewdropSettings {
     private ReadModelMapper readModelMapper;
     private StreamDetailsFactory streamDetailsFactory;
     private ReadModelFactory readModelFactory;
-    private CacheManager cacheManager;
 
     @Builder(buildMethodName = "create")
-    public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper, CacheManager cacheManager) {
+    public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper) {
         Ascii.writeAscii();
         this.properties = properties;
-        this.objectMapper = Optional.ofNullable(objectMapper)
-            .orElse(defaultObjectMapper());
+        this.objectMapper = Optional.ofNullable(objectMapper).orElse(defaultObjectMapper());
         try {
-            if (properties == null) {throw new IllegalArgumentException("properties cannot be null");}
-            this.eventStoreDBClient = Optional.ofNullable(eventStoreDBClient)
-                .orElse(eventStoreDBClient(properties));
+            if (properties == null) { throw new IllegalArgumentException("properties cannot be null"); }
+            this.eventStoreDBClient = Optional.ofNullable(eventStoreDBClient).orElse(eventStoreDBClient(properties));
             this.streamStore = new EventStore(getEventStoreDBClient());
         } catch (ParseError e) {
             throw new IllegalArgumentException("Unable to parse EventStore connection", e);
         }
         ReflectionsConfigUtils.init(getProperties().getPackageToScan(), getProperties().getPackageToExclude());
-        this.eventSerializer = Optional.ofNullable(eventSerializer)
-            .orElse(new JsonSerializer(getObjectMapper()));
+        this.eventSerializer = Optional.ofNullable(eventSerializer).orElse(new JsonSerializer(getObjectMapper()));
         this.streamNameGenerator = new PrefixStreamNameGenerator(getProperties().getStreamPrefix());
         this.streamDetailsFactory = new StreamDetailsFactory(getStreamNameGenerator());
         this.streamStoreRepository = new StreamStoreRepository(getStreamStore(), getEventSerializer(), getStreamDetailsFactory());
-        this.commandMapper = Optional.ofNullable(commandMapper)
-            .orElse(new CommandHandlerMapper());
+        this.commandMapper = Optional.ofNullable(commandMapper).orElse(new CommandHandlerMapper());
         getCommandMapper().init(getStreamStoreRepository());
         this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getStreamStoreRepository(), getStreamDetailsFactory());
-        this.readModelMapper = Optional.ofNullable(readModelMapper)
-            .orElse(new DefaultAnnotationReadModelMapper());
-        this.cacheManager = Optional.ofNullable(cacheManager)
-            .orElse(new CacheManager());
-        this.readModelFactory = new ReadModelFactory(getStreamStore(), getEventSerializer(), getStreamDetailsFactory(), getCacheManager());
+        this.readModelMapper = Optional.ofNullable(readModelMapper).orElse(new DefaultAnnotationReadModelMapper());
+        this.readModelFactory = new ReadModelFactory(getStreamStore(), getEventSerializer(), getStreamDetailsFactory());
         getReadModelMapper().init(getStreamStore(), getEventSerializer(), getStreamDetailsFactory(), getReadModelFactory());
         this.queryStateOrchestrator = new QueryStateOrchestrator(getReadModelMapper());
     }

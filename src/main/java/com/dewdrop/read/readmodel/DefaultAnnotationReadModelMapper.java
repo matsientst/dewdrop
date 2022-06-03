@@ -21,7 +21,7 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
     protected EventSerializer eventSerializer;
     protected StreamDetailsFactory streamDetailsFactory;
     protected ReadModelFactory readModelFactory;
-    //    protected Map<Class<?>, ReadModel<Object>> readModels = new HashMap<>();
+    // protected Map<Class<?>, ReadModel<Object>> readModels = new HashMap<>();
     protected Map<Class<?>, ReadModel<Message>> queryToReadModelMethod = new HashMap<>();
 
     public void init(StreamStore streamStore, EventSerializer eventSerializer, StreamDetailsFactory streamDetailsFactory, ReadModelFactory readModelFactory) {
@@ -44,9 +44,7 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
                 List<Method> methods = getQueryHandlerMethods(value);
                 methods.forEach(method -> {
                     Class<?> parameterType = method.getParameterTypes()[0];
-                    log.info("Registering @QueryHandler for {} to be handled by {}", parameterType.getSimpleName(), value.getReadModel()
-                        .getClass()
-                        .getSimpleName());
+                    log.info("Registering @QueryHandler for {} to be handled by {}", parameterType.getSimpleName(), value.getReadModel().getClass().getSimpleName());
                     queryToReadModelMethod.computeIfAbsent(parameterType, k -> value);
                 });
             }

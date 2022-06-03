@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import com.dewdrop.read.readmodel.annotation.DewdropCache;
 import com.dewdrop.read.readmodel.annotation.ReadModel;
-import com.dewdrop.read.readmodel.cache.CacheManager;
 import com.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
 import com.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
 import com.dewdrop.read.readmodel.cache.SingleItemInMemoryCache;
@@ -31,51 +30,48 @@ public class ReadModelUtils {
     public static List<Class<?>> getAnnotatedReadModels() {
         ReadModelUtils local = getInstance();
         List<Class<?>> READ_MODEL_CACHE = local.READ_MODEL_CACHE;
-        if (!READ_MODEL_CACHE.isEmpty()) {return READ_MODEL_CACHE;}
+        if (!READ_MODEL_CACHE.isEmpty()) { return READ_MODEL_CACHE; }
 
         Set<Class<?>> readModelClasses = DewdropAnnotationUtils.getAnnotatedClasses(ReadModel.class);
 
         READ_MODEL_CACHE.addAll(readModelClasses);
 
         if (CollectionUtils.isEmpty(READ_MODEL_CACHE)) {
-            log.error("No classes annotated with @ReadModel - Without a ReadModel you cannot query");
+            log.info("No classes annotated with @ReadModel - Without a ReadModel you cannot query");
         }
         return READ_MODEL_CACHE;
     }
 
-    public static <T extends Message> com.dewdrop.read.readmodel.ReadModel createReadModel(Object target, CacheManager cacheManager) {
-        ReadModel annotation = target.getClass()
-            .getAnnotation(ReadModel.class);
+    public static <T extends Message> com.dewdrop.read.readmodel.ReadModel createReadModel(Object target) {
+        ReadModel annotation = target.getClass().getAnnotation(ReadModel.class);
         Class<?> resultClass = annotation.resultClass();
-        InMemoryCacheProcessor inMemoryCacheProcessor = createInMemoryCache(target, cacheManager, resultClass);
+        InMemoryCacheProcessor inMemoryCacheProcessor = createInMemoryCache(target.getClass(), resultClass);
 
         return new com.dewdrop.read.readmodel.ReadModel(target, resultClass, inMemoryCacheProcessor);
     }
 
-    private static InMemoryCacheProcessor createInMemoryCache(Object target, CacheManager cacheManager, Class<?> resultClass) {
-        Field field = getReadModelCacheField(target);
+    private static InMemoryCacheProcessor createInMemoryCache(Class<?> targetClass, Class<?> resultClass) {
+        Field field = getReadModelCacheField(targetClass);
         InMemoryCacheProcessor inMemoryCacheProcessor;
         if (Map.class.equals(field.getType())) {
-            inMemoryCacheProcessor = new MapBackedInMemoryCacheProcessor<>(resultClass, cacheManager);
+            inMemoryCacheProcessor = new MapBackedInMemoryCacheProcessor<>(resultClass);
         } else {
-            inMemoryCacheProcessor = new SingleItemInMemoryCache(resultClass, cacheManager);
+            inMemoryCacheProcessor = new SingleItemInMemoryCache(resultClass);
         }
         return inMemoryCacheProcessor;
     }
 
-    private static Field getReadModelCacheField(Object target) {
-        Set<Field> fields = DewdropAnnotationUtils.getAnnotatedFields(target, DewdropCache.class);
+    static Field getReadModelCacheField(Class<?> targetClass) {
+        Set<Field> fields = DewdropAnnotationUtils.getAnnotatedFields(targetClass, DewdropCache.class);
         if (fields.isEmpty()) {
-            throw new IllegalArgumentException(String.format("There is no field marked with @DewdropCache on the ReadModel: %s - This allows the framework to inject the ReadModel state and is required", target.getClass()
-                .getName()));
+            log.info("There is no field marked with @DewdropCache on the ReadModel: {} - This allows the framework to inject the ReadModel state and is required", targetClass.getName());
+            return null;
         }
         if (fields.size() > 1) {
-            throw new IllegalArgumentException(String.format("We have more than 1 field marked with @DewdropCache on the ReadModel: %s - The frameworks needs 1 cache item to inject the ReadModel state", target.getClass()
-                .getName()));
+            log.info("There are more than 1 fields marked with @DewdropCache on the ReadModel: {}} - The frameworks needs 1 cache item to inject the ReadModel state", targetClass.getName());
+            return null;
         }
-        Field field = fields.stream()
-            .findAny()
-            .orElse(null);
+        Field field = fields.stream().findAny().orElse(null);
         return field;
     }
 
@@ -101,13 +97,12 @@ public class ReadModelUtils {
         return instance;
     }
 
-    public static void updateReadModelCacheField(Object readModel, InMemoryCacheProcessor inMemoryCacheProcessor) {
-        Field field = getReadModelCacheField(readModel);
+    public static <T> void updateReadModelCacheField(Object readModel, T item) {
+        Field field = getReadModelCacheField(readModel.getClass());
         try {
-            FieldUtils.writeField(field, readModel, inMemoryCacheProcessor.getAll(), true);
+            FieldUtils.writeField(field, readModel, item, true);
         } catch (IllegalAccessException e) {
-            log.error("Unable to write to the field annotated with the @DewdropCache on the ReadModel: {}", readModel.getClass()
-                .getName(), e);
+            log.warn("Unable to write to the field annotated with the @DewdropCache on the ReadModel: {}", readModel.getClass().getName(), e);
         }
     }
 }

@@ -27,34 +27,21 @@ public class EventStoreUtils {
         requireNonNull(readResult);
 
         List<ResolvedEvent> events = readResult.getEvents();
-        List<ReadEventData> recordedEvents = events.stream()
-            .map(ResolvedEvent::getEvent)
-            .map(EventStoreUtils::toReadEventData)
-            .collect(toList());
+        List<ReadEventData> recordedEvents = events.stream().map(ResolvedEvent::getEvent).map(EventStoreUtils::toReadEventData).collect(toList());
 
-        Long currentRevision = events.stream()
-            .map(ResolvedEvent::getLink)
-            .mapToLong(link -> {
-                if(link == null)
-                    return 0L;
-                return link.getStreamRevision()
-                    .getValueUnsigned();
-            })
-            .max()
-            .orElse(0L);
+        Long currentRevision = events.stream().map(ResolvedEvent::getLink).mapToLong(link -> {
+            if (link == null) return 0L;
+            return link.getStreamRevision().getValueUnsigned();
+        }).max().orElse(0L);
 
-        boolean isEndOfStream = readResult.getEvents()
-            .isEmpty() || readResult.getEvents()
-            .size() < readRequest.getCount();
+        boolean isEndOfStream = readResult.getEvents().isEmpty() || readResult.getEvents().size() < readRequest.getCount();
         return new StreamReadResults(readRequest.getStreamName(), readRequest.getStart(), readRequest.getDirection(), recordedEvents, currentRevision + 1, currentRevision, isEndOfStream);
     }
 
 
     public static ReadEventData toReadEventData(RecordedEvent recordedEvent) {
-        return new ReadEventData(recordedEvent.getStreamId(), UUID.fromString(recordedEvent.getEventId()
-            .toString()), recordedEvent.getStreamRevision()
-            .getValueUnsigned(), recordedEvent.getEventType(), recordedEvent.getEventData(),
-            recordedEvent.getUserMetadata(), true, recordedEvent.getCreated());
+        return new ReadEventData(recordedEvent.getStreamId(), UUID.fromString(recordedEvent.getEventId().toString()), recordedEvent.getStreamRevision().getValueUnsigned(), recordedEvent.getEventType(), recordedEvent.getEventData(),
+                        recordedEvent.getUserMetadata(), true, recordedEvent.getCreated());
     }
 
 
@@ -76,25 +63,18 @@ public class EventStoreUtils {
         return new SubscriptionListener() {
             @Override
             public void onEvent(Subscription subscription, ResolvedEvent event) {
-                log.debug("Received event:{}, from stream:{}, position:{}", event.getEvent()
-                        .getEventType(),
-                    event.getEvent()
-                        .getStreamId(), event.getEvent()
-                        .getStreamRevision()
-                        .getValueUnsigned());
+                log.debug("Received event:{}, from stream:{}, position:{}", event.getEvent().getEventType(), event.getEvent().getStreamId(), event.getEvent().getStreamRevision().getValueUnsigned());
                 try {
                     eventAppeared.accept(EventStoreUtils.toReadEventData(event.getEvent()));
                 } catch (Exception e) {
-                    log.error("Unable to accept event:{}", event.getEvent()
-                        .getEventType(), e);
+                    log.error("Unable to accept event:{}", event.getEvent().getEventType(), e);
                 }
 
             }
 
             @Override
             public void onError(Subscription subscription, Throwable throwable) {
-                log.error("There was an error receiving the event? the subscription id:{}", subscription.getSubscriptionId(), throwable.getCause()
-                    .getMessage());
+                log.error("There was an error receiving the event? the subscription id:{}", subscription.getSubscriptionId(), throwable.getCause().getMessage());
             }
 
             @Override

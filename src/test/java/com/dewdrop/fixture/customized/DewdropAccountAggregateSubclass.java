@@ -1,6 +1,6 @@
 package com.dewdrop.fixture.customized;
 
-import com.dewdrop.aggregate.AggregateId;
+import com.dewdrop.aggregate.annotation.AggregateId;
 import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.fixture.events.DewdropAccountCreated;
 import com.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;

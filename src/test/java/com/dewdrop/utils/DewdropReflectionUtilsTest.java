@@ -10,21 +10,29 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-import com.dewdrop.fixture.command.DewdropCreateUserCommand;
 import com.dewdrop.fixture.automated.DewdropUserAggregate;
+import com.dewdrop.fixture.command.DewdropCreateUserCommand;
 import com.dewdrop.fixture.events.DewdropUserCreated;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
+@Log4j2
 class DewdropReflectionUtilsTest {
+    @BeforeEach
+    void setup() {
+        ReflectionsConfigUtils.init("com.dewdrop");
+    }
+
     Field field = FieldUtils.getField(DewdropCreateUserCommand.class, "userId", true);
 
     @Test
@@ -57,11 +65,11 @@ class DewdropReflectionUtilsTest {
     }
 
     @Test
-    @DisplayName("readFieldValue() - Given a valid field, we get null when there is available field")
+    @DisplayName("readFieldValue() - Given a valid field, we get null when there is no available field")
     void readFieldValue_passField_problemField() {
         DewdropCreateUserCommand command = new DewdropCreateUserCommand(UUID.randomUUID(), "test");
         try (MockedStatic<FieldUtils> utilities = mockStatic(FieldUtils.class)) {
-            utilities.when(() -> FieldUtils.readField(any(Field.class), any(Object.class), anyBoolean())).thenThrow(new IllegalAccessException());
+            utilities.when(() -> FieldUtils.readField(any(Field.class), any(DewdropCreateUserCommand.class), anyBoolean())).thenThrow(new IllegalAccessException());
 
             assertThat(DewdropReflectionUtils.readFieldValue(field, command), is(nullValue()));
         }

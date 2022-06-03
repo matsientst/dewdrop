@@ -2,18 +2,16 @@ package com.dewdrop.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mockStatic;
 
-import com.dewdrop.aggregate.AggregateId;
+import com.dewdrop.aggregate.annotation.AggregateId;
 import com.dewdrop.aggregate.AggregateRoot;
-import com.dewdrop.aggregate.proxy.AggregateProxyFactory;
 import com.dewdrop.command.CommandHandler;
-import com.dewdrop.fixture.command.DewdropCreateUserCommand;
 import com.dewdrop.fixture.automated.DewdropUserAggregate;
+import com.dewdrop.fixture.command.DewdropCreateUserCommand;
 import com.dewdrop.structure.api.Command;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -42,7 +40,7 @@ class AggregateIdUtilsTest {
     @DisplayName("AggregateIdUtils.getAggregateId() - Given an AggregateRoot object can we deduce the AggregateId based on the annotation @AggregateId of the target")
     void getAggregateId_byAggregateRoot() {
         Method[] methodsWithAnnotation = MethodUtils.getMethodsWithAnnotation(DewdropUserAggregate.class, CommandHandler.class);
-        Optional<AggregateRoot> optAggregate = AggregateProxyFactory.createFromCommandHandlerMethod(methodsWithAnnotation[0]);
+        Optional<AggregateRoot> optAggregate = AggregateUtils.createFromCommandHandlerMethod(methodsWithAnnotation[0]);
         AggregateRoot aggregateRoot = optAggregate.get();
         DewdropUserAggregate dewdropUserAggregate = (DewdropUserAggregate) aggregateRoot.getTarget();
         dewdropUserAggregate.setUserId(UUID.randomUUID());
@@ -55,7 +53,7 @@ class AggregateIdUtilsTest {
     @DisplayName("AggregateIdUtils.getAggregateId() - Given an AggregateRoot object can we deduce the AggregateId based on the annotation @AggregateId of the target with no value")
     void getAggregateId_byAggregateRoot_noValue() {
         Method[] methodsWithAnnotation = MethodUtils.getMethodsWithAnnotation(DewdropUserAggregate.class, CommandHandler.class);
-        Optional<AggregateRoot> optAggregate = AggregateProxyFactory.createFromCommandHandlerMethod(methodsWithAnnotation[0]);
+        Optional<AggregateRoot> optAggregate = AggregateUtils.createFromCommandHandlerMethod(methodsWithAnnotation[0]);
         AggregateRoot aggregateRoot = optAggregate.get();
         DewdropUserAggregate dewdropUserAggregate = (DewdropUserAggregate) aggregateRoot.getTarget();
 
