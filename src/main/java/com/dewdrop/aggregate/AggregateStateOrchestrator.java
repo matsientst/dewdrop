@@ -1,6 +1,5 @@
 package com.dewdrop.aggregate;
 
-import com.dewdrop.aggregate.proxy.AggregateProxyFactory;
 import com.dewdrop.api.result.Result;
 import com.dewdrop.command.CommandMapper;
 import com.dewdrop.read.StreamDetails;
@@ -11,8 +10,9 @@ import com.dewdrop.structure.api.Command;
 import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.events.CorrelationCausation;
 import com.dewdrop.utils.AggregateIdUtils;
+import com.dewdrop.utils.AggregateUtils;
 import com.dewdrop.utils.AssignCorrelationAndCausation;
-import com.dewdrop.utils.CommandUtils;
+import com.dewdrop.utils.CommandHandlerUtils;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class AggregateStateOrchestrator {
     }
 
     Result<Object> processCommand(Command command, Method commandHandlerMethod) {
-        Optional<AggregateRoot> optAggregateRoot = AggregateProxyFactory.createFromCommandHandlerMethod(commandHandlerMethod);
+        Optional<AggregateRoot> optAggregateRoot = AggregateUtils.createFromCommandHandlerMethod(commandHandlerMethod);
 
         if (optAggregateRoot.isPresent()) {
             AggregateRoot aggregateRoot = optAggregateRoot.get();
@@ -83,7 +83,7 @@ public class AggregateStateOrchestrator {
             Object instance = handler.getDeclaringClass()
                 .getDeclaredConstructor()
                 .newInstance();
-            Optional<?> result = CommandUtils.executeCommand(instance, handler, command, aggregateRoot);
+            Optional<?> result = CommandHandlerUtils.executeCommand(instance, handler, command, aggregateRoot);
             if (result.isPresent()) {
                 if (result.get() instanceof List) {
                     for (Event event : (List<Event>) result.get()) {

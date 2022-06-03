@@ -1,17 +1,13 @@
 package com.dewdrop.aggregate;
 
-import com.dewdrop.structure.api.Command;
-import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.events.CorrelationCausation;
-import com.dewdrop.utils.DewdropReflectionUtils;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 public class AggregateRoot extends EventStateMachine {
     private final List<Message> messages = new ArrayList<>();
     private Object target = null;
@@ -23,10 +19,10 @@ public class AggregateRoot extends EventStateMachine {
         this.targetClassName = this.getClass().getName();
     }
 
-    public AggregateRoot(Object target, String targetClassName) {
+    public AggregateRoot(Object target) {
         super();
         this.target = target;
-        this.targetClassName = targetClassName;
+        this.targetClassName = target.getClass().getName();
     }
 
     private UUID correlationId;
@@ -39,30 +35,14 @@ public class AggregateRoot extends EventStateMachine {
         this.causationId = command.getMessageId();
     }
 
-    public EventRecorder getRecorder() {
-        return recorder;
-    }
-
-    public void setRecorder(EventRecorder recorder) {
-        this.recorder = recorder;
-    }
-
     @Override
     public boolean equals(Object o) {
-        return super.equals(o);
+        if (o instanceof AggregateRoot) { return getTarget().equals(((AggregateRoot) o).getTarget()); }
+        return getTarget().equals(o);
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+        return getTarget().hashCode();
     }
-
-    public Object getTarget() {
-        return target;
-    }
-
-    public Optional<List<Event>> handleCommand(Command command) {
-        return DewdropReflectionUtils.callMethod(getTarget(), "handle", command);
-    }
-
 }

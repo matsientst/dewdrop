@@ -18,14 +18,12 @@ public class NameAndPosition {
     private StreamType streamType;
     private String name;
     private Consumer<Message> consumer;
-    private Class<?> messageType;
 
     @Builder(buildMethodName = "create")
-    public NameAndPosition(StreamType streamType, String name, Consumer<Message> consumer, Class<?> messageType) {
+    public NameAndPosition(StreamType streamType, String name, Consumer<Message> consumer) {
         this.streamType = streamType;
         this.name = name;
         this.consumer = consumer;
-        this.messageType = messageType;
     }
 
     public boolean isComplete() {

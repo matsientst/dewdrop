@@ -1,16 +1,23 @@
 package com.dewdrop.utils;
 
-import com.dewdrop.aggregate.Aggregate;
+import com.dewdrop.aggregate.AggregateRoot;
+import com.dewdrop.aggregate.annotation.Aggregate;
 import com.dewdrop.structure.api.Command;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
 @Log4j2
 public class AggregateUtils {
+    private AggregateUtils() {}
+
     private static final List<Class<?>> AGGREGATE_ROOTS_CACHE = new ArrayList<>();
 
     public static List<Class<?>> getAggregateRootsThatSupportCommand(Command command) {
@@ -27,7 +34,7 @@ public class AggregateUtils {
         });
 
         if (CollectionUtils.isEmpty(result)) {
-            log.error("No AggregateRoots found that have a method handle({} command)", command.getClass().getSimpleName());
+            log.error("No AggregateRoots found that have an @CommandHandler for handle({} command)", command.getClass().getSimpleName());
         }
 
         return result;
@@ -36,7 +43,7 @@ public class AggregateUtils {
     public static List<Class<?>> getAnnotatedAggregateRoots() {
         if (!AGGREGATE_ROOTS_CACHE.isEmpty()) { return AGGREGATE_ROOTS_CACHE; }
 
-        Set<Class<?>> aggregates = AnnotationReflection.getAnnotatedClasses(Aggregate.class);
+        Set<Class<?>> aggregates = DewdropAnnotationUtils.getAnnotatedClasses(Aggregate.class);
 
         aggregates.forEach(aggregate -> {
             AGGREGATE_ROOTS_CACHE.add(aggregate);
@@ -46,5 +53,32 @@ public class AggregateUtils {
             log.error("No AggregateRoots found - Make sure to annotate your aggregateRoots with @Aggregate");
         }
         return AGGREGATE_ROOTS_CACHE;
+    }
+
+    static void clear() {
+        AGGREGATE_ROOTS_CACHE.clear();
+    }
+
+    public static <T> Optional<T> create(Class<?> classToProxy) {
+        // ClassPool pool = ClassPool.getDefault();
+        try {
+            // ProxyFactory factory = new ProxyFactory();
+            // factory.setSuperclass(classToProxy);
+            //
+            // MethodHandler handler = new AggregateHandler<>();
+            // Object instance = factory.create(null, null, handler);
+
+            Object instance = ConstructorUtils.invokeConstructor(classToProxy);
+            return Optional.of((T) new AggregateRoot(instance));
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            log.error("Failed to assign AggregateRoot", e);
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<AggregateRoot> createFromCommandHandlerMethod(Method commandHandlerMethod) {
+        Class<?> aggregateClass = CommandHandlerUtils.getAggregateRootClassFromCommandHandlerMethod(commandHandlerMethod);
+
+        return create(aggregateClass);
     }
 }

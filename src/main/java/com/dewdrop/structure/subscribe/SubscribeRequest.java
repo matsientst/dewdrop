@@ -13,7 +13,7 @@ public class SubscribeRequest {
 
     public SubscribeRequest(String streamName, Long lastCheckpoint, Consumer<ReadEventData> consumeEvent) {
         this.streamName = streamName;
-        this.lastCheckpoint = Optional.ofNullable(lastCheckpoint).orElse(-1L);
+        this.lastCheckpoint = Optional.ofNullable(lastCheckpoint).orElse(0L);
         this.consumeEvent = consumeEvent;
     }
 }

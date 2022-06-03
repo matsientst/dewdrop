@@ -12,22 +12,22 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.dewdrop.aggregate.proxy.AggregateProxyFactory;
 import com.dewdrop.api.result.Result;
 import com.dewdrop.api.result.ResultException;
 import com.dewdrop.command.CommandHandlerMapper;
 import com.dewdrop.command.CommandMapper;
-import com.dewdrop.fixture.DewdropAccountAggregate;
-import com.dewdrop.fixture.DewdropAccountCreated;
-import com.dewdrop.fixture.DewdropAddFundsToAccountCommand;
-import com.dewdrop.fixture.DewdropCreateAccountCommand;
+import com.dewdrop.fixture.automated.DewdropAccountAggregate;
+import com.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;
+import com.dewdrop.fixture.command.DewdropCreateAccountCommand;
+import com.dewdrop.fixture.events.DewdropAccountCreated;
 import com.dewdrop.read.readmodel.StreamDetailsFactory;
 import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.streamstore.repository.StreamStoreRepository;
 import com.dewdrop.structure.StreamNameGenerator;
 import com.dewdrop.structure.api.Command;
 import com.dewdrop.utils.AggregateIdUtils;
-import com.dewdrop.utils.CommandUtils;
+import com.dewdrop.utils.AggregateUtils;
+import com.dewdrop.utils.CommandHandlerUtils;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -56,7 +56,8 @@ class AggregateStateOrchestratorTest {
 
     @BeforeEach
     void setup() throws NoSuchMethodException {
-        aggregateRootProxy = (AggregateRoot) AggregateProxyFactory.create(DewdropAccountAggregate.class).orElse(null);
+        aggregateRootProxy = (AggregateRoot) AggregateUtils.create(DewdropAccountAggregate.class)
+            .orElse(null);
         id = UUID.randomUUID();
         userId = UUID.randomUUID();
         name = "TestName";
@@ -135,14 +136,6 @@ class AggregateStateOrchestratorTest {
     }
 
     @Test
-    @DisplayName("Given a method of an Aggregate that is not annotated with the CommandHandler annotation is processed, an empty Result is returned.")
-    void processCommand_NoAggregateRootFound() throws NoSuchMethodException {
-        Result<Object> result = aggregateStateOrchestrator.processCommand(mock(Command.class), DewdropAccountAggregate.class.getMethod("on", DewdropAccountCreated.class));
-
-        assertThat(result.isEmpty(), is(true));
-    }
-
-    @Test
     @DisplayName("Given a properly annotated DewDropAccountAggregate class handle method and a valid command, a Result containing the Aggregate's updated state is returned.")
     void processCommand() throws ResultException {
         Result<Object> result = aggregateStateOrchestrator.processCommand(dewdropCreateAccountCommand, handleMethod);
@@ -165,8 +158,8 @@ class AggregateStateOrchestratorTest {
     void executeCommandOverloaded_EmptyEvents() {
         AggregateRoot unmodifiedAggregateRoot = aggregateRootProxy;
 
-        try (MockedStatic<CommandUtils> utils = mockStatic(CommandUtils.class)) {
-            utils.when(() -> CommandUtils.executeCommand(any(), any(Method.class), any(Command.class), any(AggregateRoot.class)))
+        try (MockedStatic<CommandHandlerUtils> utils = mockStatic(CommandHandlerUtils.class)) {
+            utils.when(() -> CommandHandlerUtils.executeCommand(any(), any(Method.class), any(Command.class), any(AggregateRoot.class)))
                 .thenReturn(Optional.empty());
 
             AggregateRoot result = aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand, handleMethod, aggregateRootProxy);
@@ -194,8 +187,8 @@ class AggregateStateOrchestratorTest {
     void executeCommandOverloaded_SingleEvent() {
         DewdropAccountCreated event = new DewdropAccountCreated(id, name, userId);
 
-        try (MockedStatic<CommandUtils> utils = mockStatic(CommandUtils.class)) {
-            utils.when(() -> CommandUtils.executeCommand(any(), any(Method.class), any(Command.class), any(AggregateRoot.class)))
+        try (MockedStatic<CommandHandlerUtils> utils = mockStatic(CommandHandlerUtils.class)) {
+            utils.when(() -> CommandHandlerUtils.executeCommand(any(), any(Method.class), any(Command.class), any(AggregateRoot.class)))
                 .thenReturn(Optional.of(event));
 
             DewdropAccountAggregate result = (DewdropAccountAggregate) aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand, handleMethod, aggregateRootProxy)
