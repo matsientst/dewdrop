@@ -2,7 +2,7 @@ package com.dewdrop.utils;
 
 import static java.util.Objects.requireNonNull;
 
-import com.dewdrop.aggregate.AggregateId;
+import com.dewdrop.aggregate.annotation.AggregateId;
 import com.dewdrop.read.readmodel.annotation.CreationEvent;
 import com.dewdrop.read.readmodel.annotation.ForeignCacheKey;
 import com.dewdrop.read.readmodel.annotation.PrimaryCacheKey;

@@ -20,23 +20,17 @@ import lombok.extern.log4j.Log4j2;
 @Data
 public class MapBackedInMemoryCacheProcessor<R> implements InMemoryCacheProcessor {
     private Class<?> cachedStateObjectType;
-    private CacheManager cacheManager;
-    private Cache<UUID, R, Map<UUID, R>> cache;
+    private Map<UUID, R> cache;
     private Map<String, Map<UUID, UUID>> cacheIndex;
     private String primaryCacheKeyName;
     private List<String> foreignCacheKeyNames;
     private Map<UUID, LinkedList<Message>> unprocessedMessages;
 
-    public MapBackedInMemoryCacheProcessor(Class<?> cachedStateObjectType, CacheManager cacheManager) {
+    public MapBackedInMemoryCacheProcessor(Class<?> cachedStateObjectType) {
         this.cachedStateObjectType = cachedStateObjectType;
-        this.cacheManager = cacheManager;
-        this.cache = cacheManager.createCache(this, ConcurrentHashMapCache.class);
-        this.primaryCacheKeyName = CacheUtils.getPrimaryCacheKey(cachedStateObjectType)
-            .getName();
-        this.foreignCacheKeyNames = CacheUtils.getForeignCacheKeys(cachedStateObjectType)
-            .stream()
-            .map(Field::getName)
-            .collect(toList());
+        this.cache = new ConcurrentHashMap<>();
+        this.primaryCacheKeyName = CacheUtils.getPrimaryCacheKey(cachedStateObjectType).getName();
+        this.foreignCacheKeyNames = CacheUtils.getForeignCacheKeys(cachedStateObjectType).stream().map(Field::getName).collect(toList());
         this.cacheIndex = new ConcurrentHashMap<>();
         this.unprocessedMessages = new ConcurrentHashMap<>();
         foreignCacheKeyNames.forEach(keyName -> cacheIndex.computeIfAbsent(keyName, key -> new ConcurrentHashMap<>()));
@@ -75,8 +69,7 @@ public class MapBackedInMemoryCacheProcessor<R> implements InMemoryCacheProcesso
     }
 
     protected boolean isInCacheIndex(String foreignCacheKeyName, UUID foreignCacheKey) {
-        return cacheIndex.get(foreignCacheKeyName)
-            .containsKey(foreignCacheKey);
+        return cacheIndex.get(foreignCacheKeyName).containsKey(foreignCacheKey);
     }
 
     <T extends Message> void notFoundInCacheIndex(T message, UUID id) {
@@ -112,8 +105,7 @@ public class MapBackedInMemoryCacheProcessor<R> implements InMemoryCacheProcesso
         if (instance.isPresent()) {
             updatePrimaryCache(instance.get(), message, id);
         } else {
-            log.error("Skipping processing of message:{} due to inability to create cachedStateObjectType:{} - Is it missing a default empty constructor?", message.getClass()
-                .getSimpleName(), cachedStateObjectType.getName());
+            log.error("Skipping processing of message:{} due to inability to create cachedStateObjectType:{} - Is it missing a default empty constructor?", message.getClass().getSimpleName(), cachedStateObjectType.getName());
         }
     }
 
@@ -121,11 +113,9 @@ public class MapBackedInMemoryCacheProcessor<R> implements InMemoryCacheProcesso
         foreignCacheKeyNames.forEach(keyName -> {
             Optional<UUID> foreignKeyValue = DewdropReflectionUtils.readFieldValue(message, keyName);
             foreignKeyValue.ifPresent(uuid -> {
-                cacheIndex.get(keyName)
-                    .put(uuid, primaryCacheKey);
+                cacheIndex.get(keyName).put(uuid, primaryCacheKey);
                 unprocessedMessages.computeIfPresent(uuid, (key, messages) -> {
-                    log.debug("Processing unprocessed message:{}, primaryKey:{}, foreignKey:{}", message.getClass()
-                        .getSimpleName(), primaryCacheKey, uuid);
+                    log.debug("Processing unprocessed message:{}, primaryKey:{}, foreignKey:{}", message.getClass().getSimpleName(), primaryCacheKey, uuid);
                     processForeignKeyMessage(messages.poll(), keyName, uuid);
                     return null;
                 });
@@ -137,7 +127,7 @@ public class MapBackedInMemoryCacheProcessor<R> implements InMemoryCacheProcesso
         cache.put(id, item);
     }
 
-    public Map<UUID, R> getAll() {
-        return cache.getAll();
+    public Map<UUID, R> getCache() {
+        return cache;
     }
 }

@@ -18,10 +18,8 @@ import org.apache.commons.lang3.reflect.MethodUtils;
 public class DewdropAnnotationUtils {
     private DewdropAnnotationUtils() {}
 
-    public static Set<Field> getAnnotatedFields(Object target, Class<? extends Annotation> fieldAnnotation) {
-        Set<Field> fields = FieldUtils.getFieldsListWithAnnotation(target.getClass(), fieldAnnotation)
-            .stream()
-            .collect(toSet());
+    public static Set<Field> getAnnotatedFields(Class<?> targetClass, Class<? extends Annotation> fieldAnnotation) {
+        Set<Field> fields = FieldUtils.getFieldsListWithAnnotation(targetClass, fieldAnnotation).stream().collect(toSet());
         return fields;
     }
 
@@ -29,11 +27,8 @@ public class DewdropAnnotationUtils {
         Set<Method> methods = REFLECTIONS.getMethodsAnnotatedWith(annotationClass);
         if (CollectionUtils.isNotEmpty(methods)) {
             methods = methods.stream()
-                // We have to do this because Reflections is not excluding correctly.
-                .filter(method -> !EXCLUDE_PACKAGES.contains(method.getDeclaringClass()
-                    .getPackageName()))
-                .filter(method -> !Objects.equals(method.getParameterTypes()[0].getSimpleName(), "Object"))
-                .collect(toSet());
+                            // We have to do this because Reflections is not excluding correctly.
+                            .filter(method -> !EXCLUDE_PACKAGES.contains(method.getDeclaringClass().getPackageName())).filter(method -> !Objects.equals(method.getParameterTypes()[0].getSimpleName(), "Object")).collect(toSet());
         }
         return methods;
     }
@@ -42,18 +37,17 @@ public class DewdropAnnotationUtils {
         List<Method> methods = MethodUtils.getMethodsListWithAnnotation(target, annotationClass);
         if (CollectionUtils.isNotEmpty(methods)) {
             return methods.stream()
-                // We have to do this because Reflections is not excluding correctly.
-                .filter(method -> !EXCLUDE_PACKAGES.contains(method.getDeclaringClass()
-                    .getPackageName()))
-                .filter(method -> !Objects.equals(method.getParameterTypes()[0].getSimpleName(), "Object"))
-                .collect(toSet());
+                            // We have to do this because Reflections is not excluding correctly.
+                            .filter(method -> !EXCLUDE_PACKAGES.contains(method.getDeclaringClass().getPackageName())).filter(method -> {
+                                if (method.getParameterTypes().length == 0) { return true; }
+                                return !Objects.equals(method.getParameterTypes()[0].getSimpleName(), "Object");
+                            }).collect(toSet());
         }
         return new HashSet<>();
     }
 
     public static Set<Class<?>> getAnnotatedClasses(Class<? extends Annotation> annotationClass) {
         Set<Class<?>> classes = REFLECTIONS.getTypesAnnotatedWith(annotationClass);
-        return classes.stream()
-            .collect(toSet());
+        return classes.stream().collect(toSet());
     }
 }

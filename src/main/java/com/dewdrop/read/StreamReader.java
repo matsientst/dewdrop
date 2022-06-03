@@ -39,19 +39,13 @@ public class StreamReader {
         this.streamDetails = streamDetails;
         this.streamName = streamDetails.getStreamName();
         this.streamPosition = new AtomicLong(0);
-        this.nameAndPosition = NameAndPosition.builder()
-            .streamType(streamDetails.getStreamType())
-            .name(streamDetails.getStreamName())
-            .consumer(streamDetails.getEventHandler())
-            .create();
+        this.nameAndPosition = NameAndPosition.builder().streamType(streamDetails.getStreamType()).name(streamDetails.getStreamName()).consumer(streamDetails.getEventHandler()).create();
     }
 
 
     public boolean read(Long start, Long count) {
-        long sliceStart = Optional.ofNullable(start)
-            .orElse(streamDetails.getDirection() == Direction.FORWARD ? -1L : 0L);
-        long remaining = Optional.ofNullable(count)
-            .orElse(Long.MAX_VALUE);
+        long sliceStart = Optional.ofNullable(start).orElse(streamDetails.getDirection() == Direction.FORWARD ? -1L : 0L);
+        long remaining = Optional.ofNullable(count).orElse(Long.MAX_VALUE);
         log.debug("Reading from:{} starting at position:{} and ending at:{}", streamDetails.getStreamName(), sliceStart, remaining);
         StreamReadResults readResults;
         do {
@@ -65,12 +59,10 @@ public class StreamReader {
             }
             this.streamExists = true;
             this.firstEventRead = true;
-            remaining -= readResults.getEvents()
-                .size();
+            remaining -= readResults.getEvents().size();
             sliceStart = readResults.getNextEventPosition();
 
-            readResults.getEvents()
-                .forEach(eventRead());
+            readResults.getEvents().forEach(eventRead());
             streamPosition.setRelease(readResults.getNextEventPosition());
 
         } while (!readResults.isEndOfStream() && remaining != 0);
@@ -92,8 +84,7 @@ public class StreamReader {
 
                 Optional<Object> event = eventSerializer.deserialize(readEventData);
                 if (event.get() instanceof Message) {
-                    streamDetails.getEventHandler()
-                        .accept((Message) event.get());
+                    streamDetails.getEventHandler().accept((Message) event.get());
                 }
             } catch (Exception e) {
                 log.error("problem reading event: ", e);

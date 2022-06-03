@@ -1,7 +1,6 @@
 package com.dewdrop.fixture.events;
 
-import com.dewdrop.aggregate.AggregateId;
-import com.dewdrop.read.readmodel.annotation.CreationEvent;
+import com.dewdrop.aggregate.annotation.AggregateId;
 import com.dewdrop.structure.api.Event;
 import java.util.UUID;
 import lombok.Data;

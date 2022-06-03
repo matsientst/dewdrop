@@ -19,7 +19,7 @@ import com.dewdrop.fixture.readmodel.accountdetails.details.DewdropGetAccountByI
 import com.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummary;
 import com.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryQuery;
 import com.dewdrop.fixture.readmodel.users.DewdropUser;
-import com.dewdrop.fixture.readmodel.users.GetUserById;
+import com.dewdrop.fixture.readmodel.users.GetUserByIdQuery;
 import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -32,19 +32,12 @@ import org.junit.jupiter.api.Test;
 @Log4j2
 class DewdropTest {
     Executor delayed = CompletableFuture.delayedExecutor(10L, SECONDS);
-    DewdropProperties properties = DewdropProperties.builder()
-        .packageToScan("com.dewdrop")
-        .packageToExclude("com.dewdrop.fixture.customized")
-        .connectionString("esdb://localhost:2113?tls=false")
-        .create();
+    DewdropProperties properties = DewdropProperties.builder().packageToScan("com.dewdrop").packageToExclude("com.dewdrop.fixture.customized").connectionString("esdb://localhost:2113?tls=false").create();
 
     @Test
     @Disabled
     void test() throws ResultException {
-        Dewdrop dewDrop = DewdropSettings.builder()
-            .properties(properties)
-            .create()
-            .start();
+        Dewdrop dewDrop = DewdropSettings.builder().properties(properties).create().start();
 
         String username = "Dewdropper Funkapuss";
         DewdropCreateUserCommand createUserCommand = new DewdropCreateUserCommand(UUID.randomUUID(), username);
@@ -64,20 +57,17 @@ class DewdropTest {
         assertThat(actual.getUsername(), is(username));
         assertThat(actual.getBalance(), is(addFunds.getFunds()));
 
-        GetUserById getUserById = new GetUserById(createUserCommand.getUserId());
+        GetUserByIdQuery getUserById = new GetUserByIdQuery(createUserCommand.getUserId());
         Result<DewdropUser> userById = dewDrop.executeQuery(getUserById);
         DewdropUser dewdropUser = userById.get();
-        assertThat(createUserCommand.getUserId(), is(dewdropUser
-            .getUserId()));
+        assertThat(createUserCommand.getUserId(), is(dewdropUser.getUserId()));
         assertThat(createUserCommand.getUsername(), is(dewdropUser.getUsername()));
 
         DewdropAccountSummaryQuery dewdropAccountSummaryQuery = new DewdropAccountSummaryQuery();
         Result<DewdropAccountSummary> summaryResult = dewDrop.executeQuery(dewdropAccountSummaryQuery);
-        BigDecimal totalFunds = summaryResult.get()
-            .getTotalFunds();
+        BigDecimal totalFunds = summaryResult.get().getTotalFunds();
         assertThat(totalFunds, is(greaterThan(new BigDecimal(99))));
-        int countOfAccounts = summaryResult.get()
-            .getCountOfAccounts();
+        int countOfAccounts = summaryResult.get().getCountOfAccounts();
         assertThat(countOfAccounts, is(greaterThan(0)));
 
         log.info("TOTAL ACCOUNTS: {}", countOfAccounts);
@@ -87,19 +77,14 @@ class DewdropTest {
     private void retryUntilComplete(Dewdrop dewdrop, DewdropGetAccountByIdQuery query) {
         BigDecimal balance = new BigDecimal(100);
 
-        with().pollInterval(fibonacci(SECONDS))
-            .await()
-            .until(() -> {
-                Result<DewdropAccountDetails> objectResult = dewdrop.executeQuery(query);
-                if (objectResult.isValuePresent()) {
-                    DewdropAccountDetails dewdropAccountDetails = objectResult.get();
-                    if (StringUtils.isNotEmpty(dewdropAccountDetails.getUsername()) && dewdropAccountDetails.getBalance()
-                        .equals(balance)) {
-                        return true;
-                    }
-                }
-                return false;
-            });
+        with().pollInterval(fibonacci(SECONDS)).await().until(() -> {
+            Result<DewdropAccountDetails> objectResult = dewdrop.executeQuery(query);
+            if (objectResult.isValuePresent()) {
+                DewdropAccountDetails dewdropAccountDetails = objectResult.get();
+                if (StringUtils.isNotEmpty(dewdropAccountDetails.getUsername()) && dewdropAccountDetails.getBalance().equals(balance)) { return true; }
+            }
+            return false;
+        });
     }
 
 }

@@ -20,32 +20,26 @@ public class QueryHandlerUtils {
 
         Optional<Method> targetMethod = getMethodForQuery(target.getClass(), query);
         if (targetMethod.isEmpty()) {
-            log.debug("Unable to find method annotated with @QueryHandler with method signature query({} query) on target class: {}", query.getClass()
-                .getSimpleName(), query.getClass()
-                .getSimpleName());
+            log.debug("Unable to find method annotated with @QueryHandler with method signature query({} query) on target class: {}", query.getClass().getSimpleName(), query.getClass().getSimpleName());
             return Result.empty();
         }
 
         try {
-            R invoke = (R) targetMethod.get()
-                .invoke(target, query);
-            if (invoke instanceof Result) {
-                return (Result<R>) invoke;
-            }
+            R invoke = (R) targetMethod.get().invoke(target, query);
+            if (invoke instanceof Result) { return (Result<R>) invoke; }
             return invoke == null ? Result.empty() : Result.of(invoke);
 
         } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
-            log.error("Unable to invoke method annotated with @QueryHandler with method signature query({} query) on {} - Make sure the method exists", query.getClass()
-                .getSimpleName(), target.getClass()
-                .getSimpleName(), e);
+            log.error("Unable to invoke method annotated with @QueryHandler with method signature query({} query) on {} - Make sure the method exists", query.getClass().getSimpleName(), target.getClass().getSimpleName(), e);
         }
         return Result.empty();
     }
 
     public static <T> Optional<Method> getMethodForQuery(Class<?> target, T query) {
         Set<Method> methods = DewdropAnnotationUtils.getAnnotatedMethods(target, QueryHandler.class);
-        return methods.stream()
-            .filter(method -> method.getParameterTypes()[0].equals(query.getClass()))
-            .findAny();
+        return methods.stream().filter(method -> {
+            if (method.getParameterTypes().length == 0) { return false; }
+            return method.getParameterTypes()[0].equals(query.getClass());
+        }).findAny();
     }
 }

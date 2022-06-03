@@ -7,8 +7,6 @@ import com.dewdrop.utils.EventHandlerUtils;
 import com.dewdrop.utils.ReadModelUtils;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
@@ -27,7 +25,8 @@ public class ReadModel<T extends Message> {
         this.inMemoryCacheProcessor = inMemoryCacheProcessor;
     }
     // on demand read through cache
-    // live subscription to category stream and throw away any events for account not currently in cache.
+    // live subscription to category stream and throw away any events for account not currently in
+    // cache.
     // Only create the read model when we are querying for that specific accountId
 
 
@@ -40,8 +39,7 @@ public class ReadModel<T extends Message> {
 
         inMemoryCacheProcessor.process(message);
 
-        EventHandlerUtils.callEventHandler(readModel, message, inMemoryCacheProcessor.getCache()
-            .getAll());
+        EventHandlerUtils.callEventHandler(readModel, message, inMemoryCacheProcessor.getCache());
     }
 
     public Consumer<T> handler() {
@@ -53,7 +51,7 @@ public class ReadModel<T extends Message> {
     }
 
     public <R> R getCachedItems() {
-        return inMemoryCacheProcessor.getAll();
+        return inMemoryCacheProcessor.getCache();
     }
 
     public Object getReadModel() {
@@ -67,6 +65,6 @@ public class ReadModel<T extends Message> {
 
     public void updateState() {
         streams.forEach(stream -> stream.updateState());
-        ReadModelUtils.updateReadModelCacheField(readModel, inMemoryCacheProcessor);
+        ReadModelUtils.updateReadModelCacheField(readModel, inMemoryCacheProcessor.getCache());
     }
 }

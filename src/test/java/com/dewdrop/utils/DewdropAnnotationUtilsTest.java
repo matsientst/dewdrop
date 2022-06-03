@@ -3,9 +3,10 @@ package com.dewdrop.utils;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-import com.dewdrop.aggregate.Aggregate;
+import com.dewdrop.aggregate.annotation.Aggregate;
 import com.dewdrop.command.CommandHandler;
 import com.dewdrop.fixture.automated.DewdropAccountAggregate;
+import com.dewdrop.fixture.automated.DewdropUserAggregate;
 import com.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetails;
 import com.dewdrop.read.readmodel.annotation.PrimaryCacheKey;
 import java.lang.annotation.Documented;
@@ -32,8 +33,7 @@ class DewdropAnnotationUtilsTest {
     @Test
     @DisplayName("getAnnotatedFields() - Given an instance of an object with a field annotated with @PrimaryCacheKey and the annotation @PrimaryCacheKey, return the field marked with the annotation")
     void getAnnotatedFields() {
-        DewdropAccountDetails instance = new DewdropAccountDetails();
-        Set<Field> annotatedFields = DewdropAnnotationUtils.getAnnotatedFields(instance, PrimaryCacheKey.class);
+        Set<Field> annotatedFields = DewdropAnnotationUtils.getAnnotatedFields(DewdropAccountDetails.class, PrimaryCacheKey.class);
         assertThat(annotatedFields.isEmpty(), is(false));
         Field[] fieldsWithAnnotation = FieldUtils.getFieldsWithAnnotation(DewdropAccountDetails.class, PrimaryCacheKey.class);
         assertThat(annotatedFields.stream().findAny().get(), is(fieldsWithAnnotation[0]));
@@ -70,6 +70,41 @@ class DewdropAnnotationUtilsTest {
 
         ReflectionsConfigUtils.init("com.dewdrop", List.of("com.dewdrop.fixture.automated"));
         annotated = DewdropAnnotationUtils.getAnnotatedMethods(CommandHandler.class);
+        assertThat(annotated.stream().filter(method -> method.getDeclaringClass().getSimpleName().equals("DewdropAccountAggregate")).findAny().isEmpty(), is(true));
+    }
+
+    @Test
+    @DisplayName("getAnnotatedMethods() - Given a target object and a @CommandHandler annotation, return methods marked with the annotation @CommandHandler")
+    void getAnnotatedMethodsWithTarget() {
+        Set<Method> annotated = DewdropAnnotationUtils.getAnnotatedMethods(DewdropUserAggregate.class, CommandHandler.class);
+
+        assertThat(annotated.size(), is(1));
+    }
+
+    @Test
+    @DisplayName("getAnnotatedMethods() - Given a target object and a @CommandHandler annotation, return an empty set")
+    void getAnnotatedMethodsWithTarget_empty() {
+        Set<Method> annotated = DewdropAnnotationUtils.getAnnotatedMethods(DewdropUserAggregate.class, TestAnnotation.class);
+        assertThat(annotated.isEmpty(), is(true));
+    }
+
+
+    @Test
+    @DisplayName("getAnnotatedMethods() - Given a target object and a @CommandHandler annotation, filter out any methods who's first parameter is Object")
+    void getAnnotatedMethodsWithTarget_skipWhenFirstParamIsObject() {
+        Set<Method> annotated = DewdropAnnotationUtils.getAnnotatedMethods(TestCommandHandler.class, CommandHandler.class);
+
+        assertThat(annotated.stream().filter(method -> method.getDeclaringClass().getSimpleName().equals("TestCommandHandler")).findAny().isEmpty(), is(true));
+    }
+
+    @Test
+    @DisplayName("getAnnotatedMethods() -  Given a target object and a @CommandHandler annotation, filter out any methods who's in the EXCLUDE_PACKAGES")
+    void getAnnotatedMethodsWithTarget_skipWhenExcluded() {
+        Set<Method> annotated = DewdropAnnotationUtils.getAnnotatedMethods(DewdropAccountAggregate.class, CommandHandler.class);
+        assertThat(annotated.stream().filter(method -> method.getDeclaringClass().equals(DewdropAccountAggregate.class)).findAny().isPresent(), is(true));
+
+        ReflectionsConfigUtils.init("com.dewdrop", List.of("com.dewdrop.fixture.automated"));
+        annotated = DewdropAnnotationUtils.getAnnotatedMethods(DewdropAccountAggregate.class, CommandHandler.class);
         assertThat(annotated.stream().filter(method -> method.getDeclaringClass().getSimpleName().equals("DewdropAccountAggregate")).findAny().isEmpty(), is(true));
     }
 

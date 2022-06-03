@@ -10,33 +10,24 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class SingleItemInMemoryCache<T> implements InMemoryCacheProcessor {
     private Class<?> cachedStateObjectType;
-    private CacheManager cacheManager;
-    private Cache<T, T, T> cache;
-    private T instance;
+    private T cache;
 
-    public SingleItemInMemoryCache(Class<?> cachedStateObjectType, CacheManager cacheManager) {
+    public SingleItemInMemoryCache(Class<?> cachedStateObjectType) {
         this.cachedStateObjectType = cachedStateObjectType;
-        this.cache = cacheManager.createCache(this, SingleItemCache.class);
         Optional<T> optInstance = DewdropReflectionUtils.createInstance(cachedStateObjectType);
         if (optInstance.isPresent()) {
-            instance = optInstance.get();
-            this.cache.put(instance, instance);
+            cache = optInstance.get();
         }
     }
 
     public <T extends Message> void process(T message) {
         log.debug("Received message: {} to cache ", message);
 
-        EventHandlerUtils.callEventHandler(this.cache.get(instance), message);
+        EventHandlerUtils.callEventHandler(this.cache, message);
     }
 
     @Override
-    public Cache getCache() {
+    public T getCache() {
         return cache;
-    }
-
-    @Override
-    public T getAll() {
-        return cache.getAll();
     }
 }

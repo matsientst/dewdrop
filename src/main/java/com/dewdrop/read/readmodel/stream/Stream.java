@@ -37,12 +37,9 @@ public class Stream<T extends Message> implements Handler<T> {
     }
 
     public void subscribe() {
-        if (!streamDetails.isSubscribed()) {return;}
-        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}, from position:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(), streamDetails.getMessageTypes()
-            .stream()
-            .map(Class::getSimpleName)
-            .collect(
-                joining(",")));
+        if (!streamDetails.isSubscribed()) { return; }
+        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}, from position:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
+                        streamDetails.getMessageTypes().stream().map(Class::getSimpleName).collect(joining(",")));
         subscription = new Subscription<>(this, streamDetails.getMessageTypes(), streamStore, eventSerializer);
         StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails);
 
@@ -61,8 +58,7 @@ public class Stream<T extends Message> implements Handler<T> {
 
     @Override
     public void handle(T event) {
-        streamDetails.getEventHandler()
-            .accept(event);
+        streamDetails.getEventHandler().accept(event);
     }
 
     public List<Class<?>> getMessageTypes() {

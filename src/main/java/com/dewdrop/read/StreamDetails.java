@@ -33,18 +33,14 @@ public class StreamDetails {
         this.eventHandler = eventHandler;
         this.direction = direction;
         this.streamNameGenerator = streamNameGenerator;
-        this.subscribed = Optional.ofNullable(subscribed)
-            .orElse(true);
+        this.subscribed = Optional.ofNullable(subscribed).orElse(true);
         switch (streamType) {
             case EVENT:
                 this.streamName = streamNameGenerator.generateForEvent(name);
                 break;
             case AGGREGATE:
-                UUID verifiedId = Optional.ofNullable(id)
-                    .orElseGet(() -> AggregateIdUtils.getAggregateId(aggregateRoot)
-                        .orElse(null));
-                this.streamName = streamNameGenerator.generateForAggregate(aggregateRoot.getTarget()
-                    .getClass(), verifiedId);
+                UUID verifiedId = Optional.ofNullable(id).orElseGet(() -> AggregateIdUtils.getAggregateId(aggregateRoot).orElse(null));
+                this.streamName = streamNameGenerator.generateForAggregate(aggregateRoot.getTarget().getClass(), verifiedId);
                 break;
             case CATEGORY:
             default:
@@ -54,10 +50,6 @@ public class StreamDetails {
     }
 
     public String getMessageTypeNames() {
-        return getMessageTypes()
-            .stream()
-            .map(Class::getSimpleName)
-            .collect(
-                joining(","));
+        return getMessageTypes().stream().map(Class::getSimpleName).collect(joining(","));
     }
 }

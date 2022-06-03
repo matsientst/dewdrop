@@ -1,4 +1,4 @@
-package com.dewdrop.aggregate;
+package com.dewdrop.aggregate.annotation;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

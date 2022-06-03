@@ -44,13 +44,11 @@ public class Subscription<T extends Message> {
 
     void registerToMessageType(EventProcessor<T> handler, Class<?> eventType) {
         List<EventProcessor<T>> handlesFor = getHandlesFor(eventType);
-        boolean isSame = handlesFor.stream()
-            .anyMatch(handle -> handle.isSame(eventType, handler));
+        boolean isSame = handlesFor.stream().anyMatch(handle -> handle.isSame(eventType, handler));
         if (!isSame) {
             synchronized (this.handlers) {
                 this.handlers.computeIfAbsent(eventType, item -> new ArrayList<>());
-                this.handlers.get(eventType)
-                    .add(handler);
+                this.handlers.get(eventType).add(handler);
             }
         }
     }
@@ -59,7 +57,7 @@ public class Subscription<T extends Message> {
         requireNonNull(type, "Type is required");
 
         synchronized (this.handlers) {
-            if (this.handlers.containsKey(type)) {return new ArrayList<>(this.handlers.get(type));}
+            if (this.handlers.containsKey(type)) { return new ArrayList<>(this.handlers.get(type)); }
             return new ArrayList<>();
         }
     }
@@ -75,8 +73,7 @@ public class Subscription<T extends Message> {
     public void publish(T event) {
         requireNonNull(event, "event is required");
 
-        log.debug("Publishing event:{}, handlers: {}", event.getClass()
-            .getSimpleName(), this.handlers.size());
+        log.debug("Publishing event:{}, handlers: {}", event.getClass().getSimpleName(), this.handlers.size());
         // Call each handler registered to the event type.
         List<EventProcessor<T>> eventProcessors = getHandlesFor(event.getClass());
 
@@ -85,11 +82,11 @@ public class Subscription<T extends Message> {
 
     public boolean subscribeByNameAndPosition(StreamReader streamReader) {
         NameAndPosition nameAndPosition = streamReader.nameAndPosition();
-        if (!streamReader.isStreamExists()) {
-            return false;
-        }
+        if (!streamReader.isStreamExists()) { return false; }
         boolean subscribed = listener.start(nameAndPosition.getStreamName(), nameAndPosition.getPosition(), this);
-        if (subscribed) {log.info("Completed subscription to stream: {} from position:{}", nameAndPosition.getStreamName(), nameAndPosition.getPosition());}
+        if (subscribed) {
+            log.info("Completed subscription to stream: {} from position:{}", nameAndPosition.getStreamName(), nameAndPosition.getPosition());
+        }
         return subscribed;
     }
 

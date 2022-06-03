@@ -6,6 +6,6 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class GetUserById {
+public class GetUserByIdQuery {
     private UUID userId;
 }

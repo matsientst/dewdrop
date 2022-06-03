@@ -5,7 +5,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 import com.dewdrop.aggregate.AggregateRoot;
-import com.dewdrop.aggregate.proxy.AggregateProxyFactory;
 import com.dewdrop.command.CommandHandler;
 import com.dewdrop.fixture.automated.DewdropUserAggregate;
 import com.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;
@@ -42,7 +41,7 @@ class CommandHandlerUtilsTest {
         DewdropCreateUserCommand command = new DewdropCreateUserCommand(UUID.randomUUID(), "test");
 
         Method method = commandMethods.get(DewdropCreateUserCommand.class);
-        Optional<AggregateRoot> aggregateRoot = AggregateProxyFactory.createFromCommandHandlerMethod(method);
+        Optional<AggregateRoot> aggregateRoot = AggregateUtils.createFromCommandHandlerMethod(method);
         Optional<DewdropUserCreated> events = (Optional<DewdropUserCreated>) CommandHandlerUtils.executeCommand(target, method, command, aggregateRoot.get());
         assertThat(events.get().getUserId(), is(command.getUserId()));
     }
@@ -54,7 +53,7 @@ class CommandHandlerUtilsTest {
         DewdropAddFundsToAccountCommand command = new DewdropAddFundsToAccountCommand(UUID.randomUUID(), new BigDecimal(100));
 
         Method method = MethodUtils.getMethodsWithAnnotation(DewdropCommandService.class, CommandHandler.class)[0];
-        Optional<AggregateRoot> aggregateRoot = AggregateProxyFactory.createFromCommandHandlerMethod(method);
+        Optional<AggregateRoot> aggregateRoot = AggregateUtils.createFromCommandHandlerMethod(method);
         Optional<List<DewdropFundsAddedToAccount>> events = (Optional<List<DewdropFundsAddedToAccount>>) CommandHandlerUtils.executeCommand(new DewdropCommandService(), method, command, aggregateRoot.get());
         assertThat(events.get().get(0).getFunds(), is(command.getFunds()));
     }

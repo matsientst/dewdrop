@@ -14,26 +14,24 @@ public class EventProcessor<T extends Message> {
 
     public EventProcessor(Handler<T> handler, List<Class<?>> messageTypes) {
         requireNonNull(handler, "Handler is required");
-        requireNonNull(messageTypes,"messageTypes is required");
+        requireNonNull(messageTypes, "messageTypes is required");
 
         this.handler = handler;
         this.messageTypes = messageTypes;
     }
 
     public void process(T event) {
-        messageTypes.stream()
-            .forEach(messageType -> {
-                if (event != null && messageType.isAssignableFrom(event.getClass())) {
-                    T msg = (T) messageType.cast(event);
-                    handler.handle(msg); // if this throws let it bubble up.
-                }
-            });
+        messageTypes.stream().forEach(messageType -> {
+            if (event != null && messageType.isAssignableFrom(event.getClass())) {
+                T msg = (T) messageType.cast(event);
+                handler.handle(msg); // if this throws let it bubble up.
+            }
+        });
     }
 
     public boolean isSame(Class<?> messagesType, Object handler) {
 
-        return messageTypes.contains(messagesType) && handler.getClass()
-            .equals(this.handler.getClass());
+        return messageTypes.contains(messagesType) && handler.getClass().equals(this.handler.getClass());
     }
 
 }

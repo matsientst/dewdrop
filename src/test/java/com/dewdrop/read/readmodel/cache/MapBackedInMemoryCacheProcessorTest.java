@@ -31,7 +31,7 @@ import org.mockito.MockedStatic;
 
 class MapBackedInMemoryCacheProcessorTest {
     private MapBackedInMemoryCacheProcessor<DewdropAccountDetails> mapBackedInMemoryCacheProcessor;
-    private Cache<UUID, DewdropAccountDetails, Map<UUID, DewdropAccountDetails>> cache;
+    private Map<UUID, DewdropAccountDetails> cache;
     UUID accountId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
 
@@ -40,10 +40,7 @@ class MapBackedInMemoryCacheProcessorTest {
 
     @BeforeEach
     void setup() {
-        CacheManager cacheManager = new CacheManager();
-        mapBackedInMemoryCacheProcessor = spy(new MapBackedInMemoryCacheProcessor<>(DewdropAccountDetails.class, cacheManager));
-        cache = new ConcurrentHashMapCache<>();
-        cache.put(accountId, new DewdropAccountDetails());
+        mapBackedInMemoryCacheProcessor = spy(new MapBackedInMemoryCacheProcessor<>(DewdropAccountDetails.class));
     }
 
     @Test
@@ -52,7 +49,7 @@ class MapBackedInMemoryCacheProcessorTest {
         assertThat(mapBackedInMemoryCacheProcessor.getCachedStateObjectType(), is(DewdropAccountDetails.class));
         assertThat(mapBackedInMemoryCacheProcessor.getPrimaryCacheKeyName(), is("accountId"));
         assertThat(mapBackedInMemoryCacheProcessor.getForeignCacheKeyNames(), is(List.of("userId")));
-        assertThat(mapBackedInMemoryCacheProcessor.getCache().getAll().size(), is(0));
+        assertThat(mapBackedInMemoryCacheProcessor.getCache().size(), is(0));
         assertThat(mapBackedInMemoryCacheProcessor.getCacheIndex().size(), is(1));
         assertThat(mapBackedInMemoryCacheProcessor.getCacheIndex().get("userId"), is(notNullValue()));
     }
@@ -76,11 +73,11 @@ class MapBackedInMemoryCacheProcessorTest {
     }
 
     @Test
-    @DisplayName("getAll() - confirm we get back the cache we expect")
-    void getAll() {
+    @DisplayName("getCache() - confirm we get back the cache we expect")
+    void getCache() {
         mapBackedInMemoryCacheProcessor.setCache(cache);
 
-        assertThat(mapBackedInMemoryCacheProcessor.getAll(), is(cache.getAll()));
+        assertThat(mapBackedInMemoryCacheProcessor.getCache(), is(cache));
     }
 
     @Test
@@ -88,7 +85,7 @@ class MapBackedInMemoryCacheProcessorTest {
     void primaryCache_isCacheRoot_and_accountId() {
         UUID id = accountCreated.getAccountId();
         mapBackedInMemoryCacheProcessor.primaryCache(accountCreated, id);
-        assertThat(mapBackedInMemoryCacheProcessor.getAll().get(id).getName(), is("test"));
+        assertThat(mapBackedInMemoryCacheProcessor.getCache().get(id).getName(), is("test"));
     }
 
     @Test
@@ -98,7 +95,7 @@ class MapBackedInMemoryCacheProcessorTest {
         BigDecimal funds = new BigDecimal(100);
         DewdropFundsAddedToAccount accountUpdated = new DewdropFundsAddedToAccount(accountId, funds);
         mapBackedInMemoryCacheProcessor.primaryCache(accountUpdated, accountId);
-        DewdropAccountDetails result = mapBackedInMemoryCacheProcessor.getAll().get(accountId);
+        DewdropAccountDetails result = mapBackedInMemoryCacheProcessor.getCache().get(accountId);
         assertThat("test", is(result.getName()));
         assertThat(funds, is(result.getBalance()));
     }
@@ -127,7 +124,7 @@ class MapBackedInMemoryCacheProcessorTest {
             utilities.when(() -> DewdropReflectionUtils.createInstance(any(Class.class))).thenReturn(Optional.empty());
 
             mapBackedInMemoryCacheProcessor.primaryCache(accountCreated, id);
-            assertThat(mapBackedInMemoryCacheProcessor.getAll().containsKey(id), is(false));
+            assertThat(mapBackedInMemoryCacheProcessor.getCache().containsKey(id), is(false));
         }
     }
 
@@ -140,7 +137,7 @@ class MapBackedInMemoryCacheProcessorTest {
         cacheIndex.put("userId", index);
         mapBackedInMemoryCacheProcessor.setCacheIndex(cacheIndex);
         DewdropAccountDetails target = new DewdropAccountDetails();
-        mapBackedInMemoryCacheProcessor.getAll().put(accountId, target);
+        mapBackedInMemoryCacheProcessor.getCache().put(accountId, target);
 
         mapBackedInMemoryCacheProcessor.processForeignKeyMessage(userCreated, "userId", userId);
 

@@ -15,8 +15,7 @@ public class ReadRequest {
 
     public ReadRequest(String streamName, Long start, Long count, Direction direction) {
         this.streamName = streamName;
-        this.count = Optional.ofNullable(count)
-            .orElse(Long.MAX_VALUE);
+        this.count = Optional.ofNullable(count).orElse(Long.MAX_VALUE);
         this.start = start;
         this.direction = direction;
     }
