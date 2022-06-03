@@ -190,7 +190,7 @@ class AggregateStateOrchestratorTest {
     }
 
     @Test
-    @DisplayName("Given a single Event is returned after executing a command, the eAggregateRoot target is updated and the whole AggregateRoot is returned. .")
+    @DisplayName("Given a single Event is returned after executing a command, the eAggregateRoot target is updated and the whole AggregateRoot is returned.")
     void executeCommandOverloaded_SingleEvent() {
         DewdropAccountCreated event = new DewdropAccountCreated(id, name, userId);
 

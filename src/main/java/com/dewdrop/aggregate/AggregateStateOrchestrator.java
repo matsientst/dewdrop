@@ -65,8 +65,8 @@ public class AggregateStateOrchestrator {
             log.debug("Processing command {}", command.getClass()
                 .getSimpleName());
             aggregateRoot = getById(command, aggregateRoot);
-            executeCommand(command, commandHandlerMethod, aggregateRoot);
-            save(aggregateRoot);
+            aggregateRoot = executeCommand(command, commandHandlerMethod, aggregateRoot);
+            aggregateRoot = save(aggregateRoot);
             return Result.of(aggregateRoot.getTarget());
         }
 
