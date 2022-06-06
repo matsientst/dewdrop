@@ -3,9 +3,10 @@ package com.dewdrop.structure.read;
 import com.dewdrop.read.StreamDetails;
 import java.util.Optional;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
-
+@ToString
 public class ReadRequest {
     String streamName;
     Long start;

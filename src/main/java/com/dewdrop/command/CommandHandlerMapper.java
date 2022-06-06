@@ -2,7 +2,7 @@ package com.dewdrop.command;
 
 import com.dewdrop.streamstore.repository.StreamStoreRepository;
 import com.dewdrop.structure.api.Command;
-import com.dewdrop.utils.CommandUtils;
+import com.dewdrop.utils.CommandHandlerUtils;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Optional;
@@ -21,7 +21,7 @@ public class CommandHandlerMapper extends AbstractCommandHandlerMapper {
         super.construct(streamStoreRepository);
 
 
-        Set<Method> commandHandlerMethods = CommandUtils.getCommandHandlerMethods();
+        Set<Method> commandHandlerMethods = CommandHandlerUtils.getCommandHandlerMethods();
         if (CollectionUtils.isEmpty(commandHandlerMethods)) {
             log.error("No command handlers found - Make sure to annotate your handlers with @CommandHandler - If in your AggregateRoot it should be handle(MyCustomCommand command) or if in a service handle(MyCustomCommand command, MyAggregateRoot aggregateRoot)");
         }
@@ -35,6 +35,7 @@ public class CommandHandlerMapper extends AbstractCommandHandlerMapper {
                 return;
             }
 
+            log.info("Registering @CommandHandler for {} to be handled by {}", commandClass.getSimpleName(), commandHandlerMethod.getDeclaringClass().getSimpleName());
             commandHandlerToMethod.put(commandClass, commandHandlerMethod);
         });
     }

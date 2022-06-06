@@ -39,16 +39,16 @@ public class EventStore implements StreamStore {
     }
 
     @Override
-    public void subscribeToStream(SubscribeRequest subscribeRequest) throws NoStreamException {
+    public boolean subscribeToStream(SubscribeRequest subscribeRequest) throws NoStreamException {
         SubscriptionListener listener = EventStoreUtils.createListener(subscribeRequest.getConsumeEvent());
 
         SubscribeToStreamOptions options = SubscribeToStreamOptions.get();
         options.fromRevision(subscribeRequest.getLastCheckpoint());
         options.resolveLinkTos();
 
-        if (subscribeTo(subscribeRequest.getStreamName(), listener, options)) { return; }
+        if (subscribeTo(subscribeRequest.getStreamName(), listener, options)) { return true; }
 
-        subscribeTo(subscribeRequest.getStreamName(), listener, options);
+        return subscribeTo(subscribeRequest.getStreamName(), listener, options);
     }
 
     boolean subscribeTo(String stream, SubscriptionListener listener, SubscribeToStreamOptions options) throws NoStreamException {
@@ -60,9 +60,9 @@ public class EventStore implements StreamStore {
             Thread.currentThread().interrupt();
             return false;
         } catch (ExecutionException e) {
-            log.error("There was an execution exception - name:" + stream, e);
-            if (e.getCause() instanceof StreamNotFoundException) { throw new NoStreamException(stream); }
-            return false;
+            if (e.getCause() instanceof StreamNotFoundException) { return false; }
+            log.error("There was an execution exception for streamName:{}, Is EventStore up?", stream, e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -98,7 +98,6 @@ public class EventStore implements StreamStore {
         try {
             readResult = performRead(readRequest);
         } catch (NoStreamException e) {
-            log.debug("Stream:{} was not found", readRequest.getStreamName());
             return StreamReadResults.noStream();
         }
 
@@ -106,7 +105,6 @@ public class EventStore implements StreamStore {
             log.debug("Request had not results for Stream:{} - request:{}", readRequest.getStreamName(), readRequest);
             return StreamReadResults.empty();
         }
-
 
         ReadResult result = readResult.get();
         log.debug("Read {} messages from stream:{}", result.getEvents().size(), readRequest.getStreamName());
@@ -118,6 +116,7 @@ public class EventStore implements StreamStore {
         Long count = readRequest.getCount();
         ReadStreamOptions readStreamOptions = EventStoreUtils.options(readRequest);
         try {
+            log.debug("ReadRequest: {}", readRequest);
             ReadResult readResult = client.readStream(streamName, count, readStreamOptions).get();
             return Optional.of(readResult);
         } catch (InterruptedException e) {

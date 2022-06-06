@@ -1,21 +1,24 @@
 package com.dewdrop.config;
 
+import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Singular;
 import org.apache.commons.lang3.StringUtils;
 
-@Data
+@Getter
+@Builder(buildMethodName = "create")
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DewdropProperties {
-
+    @NonNull
     private String connectionString;
     private String streamPrefix;
     private String packageToScan;
-
-    @Builder(buildMethodName = "create")
-    public DewdropProperties(String connectionString, String streamPrefix, String packageToScan) {
-        this.connectionString = connectionString;
-        this.streamPrefix = streamPrefix;
-        this.packageToScan = packageToScan;
-        if (StringUtils.isEmpty(packageToScan)) { throw new IllegalArgumentException("Packages to scan is required to find the necessary annotations"); }
-    }
+    @Singular("packageToExclude")
+    private List<String> packageToExclude;
 }

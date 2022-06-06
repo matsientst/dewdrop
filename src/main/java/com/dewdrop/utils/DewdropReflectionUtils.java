@@ -5,27 +5,37 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
+import org.reflections.ReflectionUtils;
 
 @Log4j2
 public class DewdropReflectionUtils {
+    private DewdropReflectionUtils() {}
+
     public static boolean hasField(Object message, String name) {
         Field hasField = FieldUtils.getField(message.getClass(), name, true);
         return hasField != null;
     }
 
-    public static <T> Optional<T> getFieldValue(Object instance, String name) {
-        try {
-            Field field = FieldUtils.getField(instance.getClass(), name, true);
-            if (field != null) {
-                T result = (T) field.get(instance);
-                return Optional.of(result);
-            }
-        } catch (IllegalAccessException e) {
-            log.error("Unable to access field:{} on instance:{}", name, instance.getClass().getName(), e);
+    public static <T> Optional<T> readFieldValue(Object instance, String name) {
+        Field field = FieldUtils.getField(instance.getClass(), name, true);
+
+        if (field != null) {
+            T result = (T) DewdropReflectionUtils.readFieldValue(field, instance);
+            return Optional.of(result);
         }
         return Optional.empty();
+    }
+
+    public static <T> T readFieldValue(Field field, Object instance) {
+        try {
+            return (T) FieldUtils.readField(field, instance, true);
+        } catch (IllegalAccessException e) {
+            log.error("Unable to call field: {} on the target:{}", field, instance);
+            return null;
+        }
     }
 
     public static <T> Optional<T> callMethod(Object object, String method, Object... args) {
@@ -42,9 +52,7 @@ public class DewdropReflectionUtils {
 
     public static <R> Optional<R> createInstance(Class<?> clazz) {
         try {
-            Constructor<?> constructor = clazz.getConstructor();
-            constructor.setAccessible(true);
-            R instance = (R) constructor.newInstance();
+            R instance = (R) ConstructorUtils.invokeConstructor(clazz);
             return Optional.of(instance);
         } catch (InstantiationException | IllegalArgumentException | InvocationTargetException | SecurityException e) {
             log.error("Unable to create instance of {} - message: {}", clazz.getSimpleName(), e.getMessage(), e);

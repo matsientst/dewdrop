@@ -10,8 +10,6 @@ import com.dewdrop.read.readmodel.QueryStateOrchestrator;
 import com.dewdrop.read.readmodel.ReadModelFactory;
 import com.dewdrop.read.readmodel.ReadModelMapper;
 import com.dewdrop.read.readmodel.StreamDetailsFactory;
-import com.dewdrop.read.readmodel.cache.CacheManager;
-import com.dewdrop.read.readmodel.cache.ConcurrentHashMapCache;
 import com.dewdrop.streamstore.eventstore.EventStore;
 import com.dewdrop.streamstore.repository.StreamStoreRepository;
 import com.dewdrop.streamstore.serialize.JsonSerializer;
@@ -31,10 +29,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.log4j.Log4j2;
 
 @Data
+@Log4j2
 public class DewdropSettings {
-
     private DewdropSettings() {}
 
     private DewdropProperties properties;
@@ -50,10 +49,10 @@ public class DewdropSettings {
     private ReadModelMapper readModelMapper;
     private StreamDetailsFactory streamDetailsFactory;
     private ReadModelFactory readModelFactory;
-    private CacheManager cacheManager;
 
     @Builder(buildMethodName = "create")
-    public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper, CacheManager cacheManager) {
+    public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper) {
+        Ascii.writeAscii();
         this.properties = properties;
         this.objectMapper = Optional.ofNullable(objectMapper).orElse(defaultObjectMapper());
         try {
@@ -63,7 +62,7 @@ public class DewdropSettings {
         } catch (ParseError e) {
             throw new IllegalArgumentException("Unable to parse EventStore connection", e);
         }
-        ReflectionsConfigUtils.init(getProperties().getPackageToScan());
+        ReflectionsConfigUtils.init(getProperties().getPackageToScan(), getProperties().getPackageToExclude());
         this.eventSerializer = Optional.ofNullable(eventSerializer).orElse(new JsonSerializer(getObjectMapper()));
         this.streamNameGenerator = new PrefixStreamNameGenerator(getProperties().getStreamPrefix());
         this.streamDetailsFactory = new StreamDetailsFactory(getStreamNameGenerator());
@@ -72,8 +71,7 @@ public class DewdropSettings {
         getCommandMapper().init(getStreamStoreRepository());
         this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getStreamStoreRepository(), getStreamDetailsFactory());
         this.readModelMapper = Optional.ofNullable(readModelMapper).orElse(new DefaultAnnotationReadModelMapper());
-        this.cacheManager = Optional.ofNullable(cacheManager).orElse(new CacheManager(ConcurrentHashMapCache.class));
-        this.readModelFactory = new ReadModelFactory(getStreamStore(), getEventSerializer(), getStreamDetailsFactory(), getCacheManager());
+        this.readModelFactory = new ReadModelFactory(getStreamStore(), getEventSerializer(), getStreamDetailsFactory());
         getReadModelMapper().init(getStreamStore(), getEventSerializer(), getStreamDetailsFactory(), getReadModelFactory());
         this.queryStateOrchestrator = new QueryStateOrchestrator(getReadModelMapper());
     }
@@ -97,7 +95,8 @@ public class DewdropSettings {
     }
 
     public Dewdrop start() {
-        Ascii.writeAscii();
-        return new Dewdrop(this);
+        Dewdrop dewdrop = new Dewdrop(this);
+        log.info("Dewdrop successfully started");
+        return dewdrop;
     }
 }
