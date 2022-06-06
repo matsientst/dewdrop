@@ -92,7 +92,7 @@ public class EventStore implements StreamStore {
         }
     }
 
-    private StreamReadResults readFromStream(ReadRequest readRequest) {
+    StreamReadResults readFromStream(ReadRequest readRequest) {
         Optional<ReadResult> readResult;
 
         try {
