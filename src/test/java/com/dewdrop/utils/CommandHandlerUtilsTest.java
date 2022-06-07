@@ -42,7 +42,7 @@ class CommandHandlerUtilsTest {
 
         Method method = commandMethods.get(DewdropCreateUserCommand.class);
         Optional<AggregateRoot> aggregateRoot = AggregateUtils.createFromCommandHandlerMethod(method);
-        Optional<DewdropUserCreated> events = (Optional<DewdropUserCreated>) CommandHandlerUtils.executeCommand(target, method, command, aggregateRoot.get());
+        Optional<DewdropUserCreated> events = CommandHandlerUtils.executeCommand(target, method, command, aggregateRoot.get());
         assertThat(events.get().getUserId(), is(command.getUserId()));
     }
 
@@ -54,7 +54,7 @@ class CommandHandlerUtilsTest {
 
         Method method = MethodUtils.getMethodsWithAnnotation(DewdropCommandService.class, CommandHandler.class)[0];
         Optional<AggregateRoot> aggregateRoot = AggregateUtils.createFromCommandHandlerMethod(method);
-        Optional<List<DewdropFundsAddedToAccount>> events = (Optional<List<DewdropFundsAddedToAccount>>) CommandHandlerUtils.executeCommand(new DewdropCommandService(), method, command, aggregateRoot.get());
+        Optional<List<DewdropFundsAddedToAccount>> events = CommandHandlerUtils.executeCommand(new DewdropCommandService(), method, command, aggregateRoot.get());
         assertThat(events.get().get(0).getFunds(), is(command.getFunds()));
     }
 }

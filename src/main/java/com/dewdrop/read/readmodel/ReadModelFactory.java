@@ -19,12 +19,12 @@ import lombok.extern.log4j.Log4j2;
 public class ReadModelFactory {
     StreamStore streamStore;
     EventSerializer eventSerializer;
-    StreamDetailsFactory streamDetailsFactory;
+    StreamFactory streamFactory;
 
-    public ReadModelFactory(StreamStore streamStore, EventSerializer eventSerializer, StreamDetailsFactory streamDetailsFactory) {
+    public ReadModelFactory(StreamStore streamStore, EventSerializer eventSerializer, StreamFactory streamFactory) {
         this.streamStore = streamStore;
         this.eventSerializer = eventSerializer;
-        this.streamDetailsFactory = streamDetailsFactory;
+        this.streamFactory = streamFactory;
     }
 
     public Optional<com.dewdrop.read.readmodel.ReadModel<Message>> constructReadModel(Class<?> target) {
@@ -52,8 +52,7 @@ public class ReadModelFactory {
             Stream[] streams = target.getClass().getAnnotationsByType(Stream.class);
             List<Class<?>> eventHandlers = EventHandlerUtils.getFirstParameterForEventHandlerMethods(readModel.getCachedStateObjectType());
             Arrays.stream(streams).forEach(streamAnnotation -> {
-                StreamDetails streamDetails = streamDetailsFactory.fromStreamAnnotation(streamAnnotation, (Consumer) readModel.handler(), eventHandlers);
-                com.dewdrop.read.readmodel.stream.Stream stream = new com.dewdrop.read.readmodel.stream.Stream(streamDetails, streamStore, eventSerializer);
+                com.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStream(streamAnnotation, (Consumer) readModel.handler(), eventHandlers);
                 readModel.addStream(stream);
             });
             return readModel;

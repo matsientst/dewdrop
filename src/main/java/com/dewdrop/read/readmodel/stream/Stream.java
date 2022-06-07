@@ -3,9 +3,12 @@ package com.dewdrop.read.readmodel.stream;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
+import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.read.StreamDetails;
 import com.dewdrop.read.StreamReader;
+import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.streamstore.subscribe.Subscription;
+import com.dewdrop.streamstore.write.StreamWriter;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.read.Handler;
@@ -71,5 +74,15 @@ public class Stream<T extends Message> implements Handler<T> {
         if (!streamDetails.isSubscribed()) {
             this.read(this.streamPosition.get(), null);
         }
+    }
+
+    public AggregateRoot getById(StreamStoreGetByIDRequest request) {
+        StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails);
+        return streamReader.getById(request);
+    }
+
+    public void save(AggregateRoot aggregateRoot) {
+        StreamWriter streamWriter = new StreamWriter(streamDetails, streamStore, eventSerializer);
+        streamWriter.save(aggregateRoot);
     }
 }

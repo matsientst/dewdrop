@@ -1,8 +1,6 @@
 package com.dewdrop.streamstore.serialize;
 
-import static com.dewdrop.streamstore.repository.StreamStoreRepository.CAUSATION_ID;
-import static com.dewdrop.streamstore.repository.StreamStoreRepository.CORRELATION_ID;
-
+import com.dewdrop.streamstore.write.StreamWriter;
 import com.dewdrop.structure.events.CorrelationCausation;
 import com.dewdrop.structure.events.ReadEventData;
 import com.dewdrop.structure.events.WriteEventData;
@@ -74,12 +72,12 @@ public class JsonSerializer implements EventSerializer {
             T value = (T) objectMapper.readValue(event.getData(), Class.forName(className));
             if (value instanceof CorrelationCausation) {
                 CorrelationCausation correlationCausation = (CorrelationCausation) value;
-                if (metadata.containsKey(CAUSATION_ID)) {
-                    String uuid = (String) metadata.get(CAUSATION_ID);
+                if (metadata.containsKey(StreamWriter.CAUSATION_ID)) {
+                    String uuid = (String) metadata.get(StreamWriter.CAUSATION_ID);
                     correlationCausation.setCausationId(UUID.fromString(uuid));
                 }
-                if (metadata.containsKey(CORRELATION_ID)) {
-                    String uuid = (String) metadata.get(CORRELATION_ID);
+                if (metadata.containsKey(StreamWriter.CORRELATION_ID)) {
+                    String uuid = (String) metadata.get(StreamWriter.CORRELATION_ID);
                     correlationCausation.setCorrelationId(UUID.fromString(uuid));
                 }
             }
