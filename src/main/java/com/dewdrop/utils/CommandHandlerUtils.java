@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.command.CommandHandler;
 import com.dewdrop.structure.api.Command;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.Set;
@@ -16,7 +17,19 @@ public class CommandHandlerUtils {
 
     private static final String COMMAND_HANDLER = CommandHandler.class.getSimpleName();
 
-    public static Optional<?> executeCommand(Object target, Method commandHandlerMethod, Command command, AggregateRoot aggregateRoot) {
+    public static <T> Optional<T> executeCommand(Method commandHandlerMethod, Command command, AggregateRoot aggregateRoot) {
+        requireNonNull(commandHandlerMethod, "We must have a method decorated with @" + COMMAND_HANDLER);
+        requireNonNull(command, "We must have a command to pass to the @" + COMMAND_HANDLER);
+        try {
+            Object instance = commandHandlerMethod.getDeclaringClass().getDeclaredConstructor().newInstance();
+            return executeCommand(instance, commandHandlerMethod, command, aggregateRoot);
+        } catch (IllegalArgumentException | InvocationTargetException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
+            log.error("We were unable to call an empty constructor on {} - message: {}", commandHandlerMethod.getDeclaringClass().getSimpleName(), e.getMessage(), e);
+        }
+        return Optional.empty();
+    }
+
+    public static <T> Optional<T> executeCommand(Object target, Method commandHandlerMethod, Command command, AggregateRoot aggregateRoot) {
         requireNonNull(target, "We must have a target to call");
         requireNonNull(commandHandlerMethod, "We must have a method decorated with @" + COMMAND_HANDLER);
         requireNonNull(command, "We must have a command to pass to the @" + COMMAND_HANDLER);

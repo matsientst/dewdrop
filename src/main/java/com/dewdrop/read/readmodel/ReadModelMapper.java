@@ -8,5 +8,5 @@ public interface ReadModelMapper {
 
     ReadModel<Message> getReadModelByQuery(Object query);
 
-    void init(StreamStore streamStore, EventSerializer eventSerializer, StreamDetailsFactory streamDetailsFactory, ReadModelFactory readModelFactory);
+    void init(StreamStore streamStore, EventSerializer eventSerializer, StreamFactory streamFactory, ReadModelFactory readModelFactory);
 }

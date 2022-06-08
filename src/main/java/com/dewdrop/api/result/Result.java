@@ -16,11 +16,11 @@ public class Result<T> {
 
     @SuppressWarnings("java:S112")
     public void rethrowRuntime() {
-        if (exception != null) {throw new RuntimeException(exception);}
+        if (exception != null) { throw new RuntimeException(exception); }
     }
 
     public void rethrow() throws ResultException {
-        if (exception != null) {throw new ResultException(exception);}
+        if (exception != null) { throw new ResultException(exception); }
     }
 
     public Exception getException() {
@@ -56,7 +56,7 @@ public class Result<T> {
     }
 
     public T get() throws ResultException {
-        if (exception != null) {throw new ResultException(exception);}
+        if (exception != null) { throw new ResultException(exception); }
         return value;
     }
 
@@ -79,7 +79,9 @@ public class Result<T> {
     }
 
     public void ifExceptionPresent(Consumer<? super Exception> consumer) {
-        if (exception != null) {consumer.accept(exception);}
+        if (exception != null) {
+            consumer.accept(exception);
+        }
     }
 
     public void ifExceptionPresent(Class<? extends Exception> targetType, Consumer<? super Exception> consumer) {
@@ -89,14 +91,14 @@ public class Result<T> {
     }
 
     public T orElse(T other) {
-        if (exception == null) {return value == null ? other : value;}
+        if (exception == null) { return value == null ? other : value; }
         return other;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {return true;}
-        if (!(obj instanceof Result)) {return false;}
+        if (this == obj) { return true; }
+        if (!(obj instanceof Result)) { return false; }
         Result<?> other = (Result<?>) obj;
         return Objects.equals(value, other.value);
     }

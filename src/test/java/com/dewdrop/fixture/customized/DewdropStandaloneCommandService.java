@@ -3,26 +3,24 @@ package com.dewdrop.fixture.customized;
 import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;
 import com.dewdrop.fixture.command.DewdropCreateAccountCommand;
-import com.dewdrop.read.StreamDetails;
-import com.dewdrop.read.readmodel.StreamDetailsFactory;
-import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
-import com.dewdrop.streamstore.repository.StreamStoreRepository;
+import com.dewdrop.read.readmodel.StreamFactory;
+import com.dewdrop.streamstore.process.StandaloneAggregateProcessor;
 import com.dewdrop.utils.AggregateIdUtils;
 import java.util.Optional;
 import java.util.UUID;
 
 public class DewdropStandaloneCommandService {
-    private StreamStoreRepository streamStoreRepository;
-    private StreamDetailsFactory streamDetailsFactory;
+    private StandaloneAggregateProcessor standaloneAggregateProcessor;
+    private StreamFactory streamFactory;
 
-    public DewdropStandaloneCommandService(StreamStoreRepository streamStoreRepository) {
-        this.streamStoreRepository = streamStoreRepository;
+    public DewdropStandaloneCommandService(StandaloneAggregateProcessor standaloneAggregateProcessor) {
+        this.standaloneAggregateProcessor = standaloneAggregateProcessor;
     }
 
     public DewdropAccountAggregateSubclass process(DewdropCreateAccountCommand command) {
         DewdropAccountAggregateSubclass accountAggregate = new DewdropAccountAggregateSubclass();
         accountAggregate.handle(command);
-        streamStoreRepository.save(accountAggregate);
+        standaloneAggregateProcessor.save(accountAggregate);
         return accountAggregate;
     }
 
@@ -33,13 +31,10 @@ public class DewdropStandaloneCommandService {
         if (optId.isEmpty()) { return accountAggregate; }
 
         UUID id = optId.get();
-        StreamDetails streamDetails = streamDetailsFactory.fromAggregateRoot(accountAggregate, id);
 
-        StreamStoreGetByIDRequest request = StreamStoreGetByIDRequest.builder().streamDetails(streamDetails).aggregateRoot(accountAggregate).id(id).command(command).create();
-
-        AggregateRoot aggregateRoot = streamStoreRepository.getById(request);
+        AggregateRoot aggregateRoot = standaloneAggregateProcessor.getById(accountAggregate, id);
         accountAggregate.handle(command);
-        streamStoreRepository.save(aggregateRoot);
+        standaloneAggregateProcessor.save(aggregateRoot);
         return accountAggregate;
     }
 }

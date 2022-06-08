@@ -1,5 +1,9 @@
 package com.dewdrop.read;
 
+import static java.util.stream.Collectors.toList;
+
+import com.dewdrop.aggregate.AggregateRoot;
+import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.structure.NoStreamException;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
@@ -8,6 +12,7 @@ import com.dewdrop.structure.events.StreamReadResults;
 import com.dewdrop.structure.read.Direction;
 import com.dewdrop.structure.read.ReadRequest;
 import com.dewdrop.structure.serialize.EventSerializer;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -116,5 +121,50 @@ public class StreamReader {
             log.error("There was a problem reading from: {}", streamName, e);
             return nameAndPosition;
         }
+    }
+
+    public AggregateRoot getById(StreamStoreGetByIDRequest getByIDRequest) {
+        AggregateRoot aggregateRoot = getByIDRequest.getAggregateRoot();
+        log.debug("Getting by ID for aggregateRoot:{}, with ID:{}", aggregateRoot.getTargetClassName(), getByIDRequest.getId());
+        int version = getByIDRequest.getVersion();
+        if (version <= 0) { throw new IllegalArgumentException("Cannot get version <= 0"); }
+        if (getByIDRequest.getCommand() != null) {
+            aggregateRoot.setSource(getByIDRequest.getCommand());
+        }
+
+        Long sliceStart = 0L;
+        StreamReadResults streamReadResults;
+        Long appliedEventCount = 0L;
+        do {
+            Long sliceCount = sliceStart + READ_PAGE_SIZE <= version ? READ_PAGE_SIZE : version - sliceStart;
+            ReadRequest request = new ReadRequest(streamName, sliceStart, sliceCount, Direction.FORWARD);
+            streamReadResults = streamStore.read(request);
+
+            if (!streamReadResults.isStreamExists()) { return aggregateRoot; }
+            // if (streamReadResults instanceof StreamNotFoundSlice) {throw new AggregateNotFoundException(id,
+            // aggClass);}
+            //
+            // if (streamReadResults instanceof StreamDeletedSlice) {throw new AggregateDeletedException(id,
+            // aggClass);}
+
+            sliceStart = streamReadResults.getNextEventPosition();
+
+            appliedEventCount += streamReadResults.getEvents().size();
+            List<Message> messages = streamReadResults.getEvents().stream().map(evt -> {
+                Optional<Message> deserialize = eventSerializer.deserialize(evt);
+                if (deserialize.isPresent()) { return deserialize.get(); }
+                return null;
+            }).filter(e -> e != null).collect(toList());
+            aggregateRoot.restoreFromEvents(messages);
+
+        } while (version > streamReadResults.getNextEventPosition() && !streamReadResults.isEndOfStream());
+        //
+        // if (version != Integer.MAX_VALUE && version != appliedEventCount) {throw new
+        // AggregateVersionException(id, aggClass, (long) version, aggregate.getExpectedVersion());}
+        //
+        // if (version != Integer.MAX_VALUE && aggregate.getExpectedVersion() != version - 1) {throw new
+        // AggregateVersionException(id, aggClass, (long) version, aggregate.getExpectedVersion());}
+
+        return aggregateRoot;
     }
 }

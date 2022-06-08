@@ -19,15 +19,15 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
 
     protected StreamStore streamStore;
     protected EventSerializer eventSerializer;
-    protected StreamDetailsFactory streamDetailsFactory;
+    protected StreamFactory streamFactory;
     protected ReadModelFactory readModelFactory;
     // protected Map<Class<?>, ReadModel<Object>> readModels = new HashMap<>();
     protected Map<Class<?>, ReadModel<Message>> queryToReadModelMethod = new HashMap<>();
 
-    public void init(StreamStore streamStore, EventSerializer eventSerializer, StreamDetailsFactory streamDetailsFactory, ReadModelFactory readModelFactory) {
+    public void init(StreamStore streamStore, EventSerializer eventSerializer, StreamFactory streamFactory, ReadModelFactory readModelFactory) {
         this.streamStore = streamStore;
         this.eventSerializer = eventSerializer;
-        this.streamDetailsFactory = streamDetailsFactory;
+        this.streamFactory = streamFactory;
         this.readModelFactory = readModelFactory;
 
         registerReadModels();
