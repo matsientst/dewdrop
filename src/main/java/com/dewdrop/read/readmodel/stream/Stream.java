@@ -6,7 +6,9 @@ import static java.util.stream.Collectors.joining;
 import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.read.StreamDetails;
 import com.dewdrop.read.StreamReader;
+import com.dewdrop.read.StreamType;
 import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
+import com.dewdrop.streamstore.subscribe.StreamListener;
 import com.dewdrop.streamstore.subscribe.Subscription;
 import com.dewdrop.streamstore.write.StreamWriter;
 import com.dewdrop.structure.api.Message;
@@ -43,7 +45,7 @@ public class Stream<T extends Message> implements Handler<T> {
         if (!streamDetails.isSubscribed()) { return; }
         log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}, from position:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
                         streamDetails.getMessageTypes().stream().map(Class::getSimpleName).collect(joining(",")));
-        subscription = new Subscription<>(this, streamDetails.getMessageTypes(), streamStore, eventSerializer);
+        subscription = new Subscription<>(this, streamDetails.getMessageTypes(), new StreamListener<>(streamStore, eventSerializer));
         StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails);
 
         if (!subscription.subscribeByNameAndPosition(streamReader)) {
@@ -77,6 +79,8 @@ public class Stream<T extends Message> implements Handler<T> {
     }
 
     public AggregateRoot getById(StreamStoreGetByIDRequest request) {
+        if (streamDetails.getStreamType() != StreamType.AGGREGATE) { throw new IllegalStateException("Stream is not an aggregate"); }
+
         StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails);
         return streamReader.getById(request);
     }

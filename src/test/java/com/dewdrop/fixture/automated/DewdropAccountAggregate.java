@@ -11,10 +11,13 @@ import com.dewdrop.read.readmodel.annotation.EventHandler;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
+@Data
 @Aggregate
 public class DewdropAccountAggregate {
+
     @AggregateId
     UUID accountId;
     String name;
@@ -47,6 +50,7 @@ public class DewdropAccountAggregate {
 
     @EventHandler
     public void on(DewdropFundsAddedToAccount event) {
+        // this.accountId = event.getAccountId();
         this.balance = this.balance.add(event.getFunds());
     }
 }

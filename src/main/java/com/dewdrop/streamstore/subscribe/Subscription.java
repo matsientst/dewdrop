@@ -5,9 +5,7 @@ import static java.util.Objects.requireNonNull;
 import com.dewdrop.read.NameAndPosition;
 import com.dewdrop.read.StreamReader;
 import com.dewdrop.structure.api.Message;
-import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.read.Handler;
-import com.dewdrop.structure.serialize.EventSerializer;
 import com.dewdrop.structure.subscribe.EventProcessor;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,29 +24,25 @@ import lombok.extern.log4j.Log4j2;
 public class Subscription<T extends Message> {
     private final Map<Class<?>, List<EventProcessor<T>>> handlers = new ConcurrentHashMap<>();
     protected final StreamListener<T> listener;
-    private final StreamStore streamStoreConnection;
-    private final EventSerializer eventSerializer;
     private final List<Class<?>> messageTypes;
     private final Handler<T> handler;
     private final ScheduledExecutorService executorService;
 
-    public Subscription(Handler<T> handler, List<Class<?>> messageTypes, StreamStore streamStoreConnection, EventSerializer eventSerializer) {
-        this.streamStoreConnection = streamStoreConnection;
-        this.eventSerializer = eventSerializer;
+    public Subscription(Handler<T> handler, List<Class<?>> messageTypes, StreamListener<T> listener) {
         this.messageTypes = messageTypes;
         this.handler = handler;
         this.executorService = Executors.newScheduledThreadPool(2);
-        this.listener = new StreamListener<>(streamStoreConnection, eventSerializer);
+        this.listener = listener;
         registerHandlers();
     }
 
-    void registerToMessageType(EventProcessor<T> handler, Class<?> eventType) {
+    void registerToMessageType(EventProcessor<T> eventProcessor, Class<?> eventType) {
         List<EventProcessor<T>> handlesFor = getHandlesFor(eventType);
-        boolean isSame = handlesFor.stream().anyMatch(handle -> handle.isSame(eventType, handler));
+        boolean isSame = handlesFor.stream().anyMatch(handle -> handle.isSame(eventType, eventProcessor));
         if (!isSame) {
             synchronized (this.handlers) {
                 this.handlers.computeIfAbsent(eventType, item -> new ArrayList<>());
-                this.handlers.get(eventType).add(handler);
+                this.handlers.get(eventType).add(eventProcessor);
             }
         }
     }
@@ -93,9 +87,7 @@ public class Subscription<T extends Message> {
     public void pollForCompletion(StreamReader streamReader) {
         CompletableFuture<NameAndPosition> completionFuture = new CompletableFuture<>();
         Runnable runnable = () -> {
-            NameAndPosition result;
-
-            result = streamReader.nameAndPosition();
+            NameAndPosition result = streamReader.nameAndPosition();
             if (result.isComplete()) {
                 log.info("Finally discovered stream: {}", result.getStreamName());
                 completionFuture.complete(result);

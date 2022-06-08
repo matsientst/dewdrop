@@ -8,11 +8,11 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public abstract class UserEvent extends Event {
+public abstract class DewdropUserEvent extends Event {
     @AggregateId
     private UUID userId;
 
-    public UserEvent(UUID userId) {
+    public DewdropUserEvent(UUID userId) {
         this.userId = userId;
     }
 }

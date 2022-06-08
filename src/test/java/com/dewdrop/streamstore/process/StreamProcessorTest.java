@@ -73,7 +73,6 @@ class StreamProcessorTest {
     @Test
     @DisplayName("getById() - Given a Stream, Command, an AggregateRoot and a UUID, when getById() is called, then stream.getById(StreamStoreGetByIDRequest) is called")
     void getById() {
-
         doReturn(aggregateRoot).when(stream).getById(any(StreamStoreGetByIDRequest.class));
         Command command = mock(DewdropCreateUserCommand.class);
 

@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class Result<T> {
+
     private static final Result<?> EMPTY = new Result<>();
     private final T value;
     private final Exception exception;
@@ -78,7 +79,9 @@ public class Result<T> {
     }
 
     public void ifExceptionPresent(Consumer<? super Exception> consumer) {
-        if (exception != null) consumer.accept(exception);
+        if (exception != null) {
+            consumer.accept(exception);
+        }
     }
 
     public void ifExceptionPresent(Class<? extends Exception> targetType, Consumer<? super Exception> consumer) {

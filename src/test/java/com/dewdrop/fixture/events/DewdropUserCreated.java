@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @CreationEvent
-public class DewdropUserCreated extends UserEvent {
+public class DewdropUserCreated extends DewdropUserEvent {
     String username;
 
     public DewdropUserCreated(UUID userId, String username) {
