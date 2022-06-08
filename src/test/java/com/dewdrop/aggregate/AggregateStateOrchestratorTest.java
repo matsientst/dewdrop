@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 
 import com.dewdrop.api.result.Result;
 import com.dewdrop.api.result.ResultException;
+import com.dewdrop.command.CommandHandlerMapper;
 import com.dewdrop.command.CommandMapper;
 import com.dewdrop.fixture.automated.DewdropAccountAggregate;
 import com.dewdrop.fixture.command.DewdropCreateAccountCommand;
@@ -36,16 +37,15 @@ class AggregateStateOrchestratorTest {
     DewdropCreateAccountCommand dewdropCreateAccountCommand;
     AggregateStateCommandProcessor aggregateStateCommandProcessor;
     Method handleMethod;
-    //
 
     @BeforeEach
     void setup() throws NoSuchMethodException {
         dewdropCreateAccountCommand = mock(DewdropCreateAccountCommand.class);
-        commandMapper = mock(CommandMapper.class);
+        commandMapper = mock(CommandHandlerMapper.class);
         aggregateStateCommandProcessor = mock(AggregateStateCommandProcessor.class);
         aggregateStateOrchestrator = spy(new AggregateStateOrchestrator(commandMapper, aggregateStateCommandProcessor));
         dewdropAccountAggregate = spy(new DewdropAccountAggregate());
-        handleMethod = DewdropAccountAggregate.class.getMethod("handle", DewdropCreateAccountCommand.class);
+        handleMethod = mock(Method.class);
     }
 
     @Test
@@ -61,7 +61,7 @@ class AggregateStateOrchestratorTest {
     @DisplayName("Given a properly annotated DewDropAccountAggregate class and a valid command, the command is processed and the Aggregate's state is updated.")
     void executeCommand() throws ResultException {
         doReturn(Result.of(dewdropAccountAggregate)).when(aggregateStateCommandProcessor).processCommand(any(Command.class), any(Method.class));
-        doReturn(Optional.of(handleMethod)).when(commandMapper).getCommandHandlersThatSupportCommand(any(Command.class));
+        doReturn(Optional.of(handleMethod)).when(commandMapper).getCommandHandlersThatSupportCommand(any(DewdropCreateAccountCommand.class));
 
         Result<DewdropAccountAggregate> results = aggregateStateOrchestrator.executeCommand(dewdropCreateAccountCommand);
         assertThat(results.get(), is(notNullValue()));

@@ -35,7 +35,6 @@ class DewdropTest {
     DewdropProperties properties = DewdropProperties.builder().packageToScan("com.dewdrop").packageToExclude("com.dewdrop.fixture.customized").connectionString("esdb://localhost:2113?tls=false").create();
 
     @Test
-    @Disabled
     void test() throws ResultException {
         Dewdrop dewDrop = DewdropSettings.builder().properties(properties).create().start();
 
