@@ -20,12 +20,7 @@ public class DewdropUsersReadModel {
 
     @QueryHandler
     public DewdropUser query(GetUserByIdQuery userById) {
-        DewdropUser dewdropUser = cache.values()
-            .stream()
-            .filter(user -> user.getUserId()
-                .equals(userById.getUserId()))
-            .findAny()
-            .orElse(null);
+        DewdropUser dewdropUser = cache.values().stream().filter(user -> user.getUserId().equals(userById.getUserId())).findAny().orElse(null);
         return dewdropUser;
     }
 }

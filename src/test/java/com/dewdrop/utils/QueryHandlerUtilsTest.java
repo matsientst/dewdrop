@@ -22,6 +22,7 @@ import com.dewdrop.read.readmodel.query.QueryHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -81,7 +82,7 @@ class QueryHandlerUtilsTest {
     @DisplayName("callQueryHandler() - Given an object with a method annotated with @QueryHandler and an query, the object will call the method annotated with @QueryHandler")
     void callQueryHandler() throws ResultException {
         user.setUserId(query.getUserId());
-        ReadModelUtils.updateReadModelCacheField(readModel, List.of(user));
+        ReadModelUtils.updateReadModelCacheField(readModel, Map.of(user.getUserId(), user));
         try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
             utilities.when(() -> DewdropAnnotationUtils.getAnnotatedMethods(any(), any(Class.class))).thenReturn(Set.of(method));
             Result<DewdropUser> result = QueryHandlerUtils.callQueryHandler(readModel, query);
@@ -93,7 +94,7 @@ class QueryHandlerUtilsTest {
     @DisplayName("callQueryHandler() - Given an object with a method annotated with @QueryHandler and an query, the object returned will already be a result")
     void callQueryHandler_returnResult() throws InvocationTargetException, IllegalAccessException {
         user.setUserId(query.getUserId());
-        ReadModelUtils.updateReadModelCacheField(readModel, List.of(user));
+        ReadModelUtils.updateReadModelCacheField(readModel, Map.of(user.getUserId(), user));
         Method spy = spy(method);
         doReturn(Result.of(user)).when(spy).invoke(any(), any());
         try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
@@ -108,7 +109,7 @@ class QueryHandlerUtilsTest {
     @DisplayName("callQueryHandler() - Given an object with a method annotated with @QueryHandler and an query and a null return, the object returned will be an empty result")
     void callQueryHandler_returnNull() throws InvocationTargetException, IllegalAccessException {
         user.setUserId(query.getUserId());
-        ReadModelUtils.updateReadModelCacheField(readModel, List.of(user));
+        ReadModelUtils.updateReadModelCacheField(readModel, Map.of(user.getUserId(), user));
         Method spy = spy(method);
         doReturn(null).when(spy).invoke(any(), any());
         try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
