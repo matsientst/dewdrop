@@ -1,6 +1,8 @@
 package com.dewdrop.utils;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 import com.dewdrop.aggregate.annotation.AggregateId;
 import com.dewdrop.read.readmodel.annotation.CreationEvent;
@@ -8,11 +10,15 @@ import com.dewdrop.read.readmodel.annotation.ForeignCacheKey;
 import com.dewdrop.read.readmodel.annotation.PrimaryCacheKey;
 import com.dewdrop.structure.api.Message;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 @Log4j2
@@ -23,16 +29,22 @@ public class CacheUtils {
         return message.getClass().isAnnotationPresent(CreationEvent.class);
     }
 
-    public static Field getPrimaryCacheKey(Class<?> cacheTarget) {
+    public static List<String> getPrimaryCacheKeys(Class<?> cacheTarget) {
         requireNonNull(cacheTarget, "CacheTarget is required");
 
-        List<Field> fields = FieldUtils.getFieldsListWithAnnotation(cacheTarget, PrimaryCacheKey.class);
+        Set<String> primaryCacheKeys = new HashSet<>();
+        final Set<Field> fields = FieldUtils.getFieldsListWithAnnotation(cacheTarget, PrimaryCacheKey.class).stream().collect(toSet());
 
         if (fields.size() > 1) { throw new IllegalArgumentException("There were more than one PrimaryCacheKeys in your cached object. There should only be one."); }
 
         if (fields.isEmpty()) { throw new IllegalArgumentException(String.format("Cache target:%s doesn't have a key annotated with @PrimaryCacheKey - This allows the cache to know what the primary key is", cacheTarget.getSimpleName())); }
 
-        return fields.get(0);
+        Field field = fields.iterator().next();
+        PrimaryCacheKey annotation = field.getAnnotation(PrimaryCacheKey.class);
+        primaryCacheKeys.add(field.getName());
+        Arrays.asList(annotation.alternateCacheKeys()).stream().filter(key -> StringUtils.isNotEmpty(key)).forEach(key -> primaryCacheKeys.add(key));
+
+        return primaryCacheKeys.stream().collect(toList());
     }
 
 

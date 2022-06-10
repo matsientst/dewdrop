@@ -38,9 +38,21 @@ public class StreamWriter {
     }
 
     public void save(AggregateRoot aggregateRoot) {
+        Optional<UUID> aggregateId = AggregateIdUtils.getAggregateId(aggregateRoot.getTarget());
+
+        if (aggregateId.isEmpty()) { throw new IllegalArgumentException("There is no aggregateId to persist"); }
+
+        long expectedVersion = aggregateRoot.getVersion();
+        List<Message> newMessages = aggregateRoot.takeEvents();
+        List<WriteEventData> eventsToSave = generateEventsToSave(aggregateRoot, newMessages);
+        WriteRequest request = new WriteRequest(streamDetails.getStreamName(), expectedVersion, eventsToSave);
+        log.debug("saving aggregateRoot:{}, with ID:{}", aggregateRoot.getTargetClassName(), aggregateId.get());
+        streamStore.appendToStream(request);
+    }
+
+    Map<String, Object> commitHeaders(AggregateRoot aggregateRoot) {
         Map<String, Object> commitHeaders = new HashMap<>();
         commitHeaders.put(COMMIT_ID_HEADER, UUID.randomUUID());
-        // commitHeaders.put(AGGREGATE_CLR_TYPE_NAME_HEADER, header);
         commitHeaders.put(AGGREGATE_CLR_TYPE_NAME, aggregateRoot.getTargetClassName());
 
         if (aggregateRoot.getCausationId() != null) {
@@ -49,26 +61,16 @@ public class StreamWriter {
         if (aggregateRoot.getCorrelationId() != null) {
             commitHeaders.put(CORRELATION_ID, aggregateRoot.getCorrelationId());
         }
-
-        Optional<UUID> aggregateId = AggregateIdUtils.getAggregateId(aggregateRoot.getTarget());
-
-        if (aggregateId.isEmpty()) { throw new IllegalArgumentException("There is no aggregateId to persist"); }
-
-        long expectedVersion = aggregateRoot.getVersion();
-        List<Message> newMessages = aggregateRoot.takeEvents();
-        List<WriteEventData> eventsToSave = getEventsToSave(commitHeaders, newMessages);
-        WriteRequest request = new WriteRequest(streamDetails.getStreamName(), expectedVersion, eventsToSave);
-        log.debug("saving aggregateRoot:{}, with ID:{}", aggregateRoot.getTargetClassName(), aggregateId.get());
-        streamStore.appendToStream(request);
+        return commitHeaders;
     }
 
-    List<WriteEventData> getEventsToSave(Map<String, Object> commitHeaders, List<Message> newMessages) {
+    List<WriteEventData> generateEventsToSave(AggregateRoot aggregateRoot, List<Message> newMessages) {
+        Map<String, Object> commitHeaders = commitHeaders(aggregateRoot);
         List<WriteEventData> eventsToSave = new ArrayList<>();
         for (Message message : newMessages) {
             Optional<WriteEventData> serializedAggregate = eventSerializer.serialize(message, new HashMap<>(commitHeaders));
-            if (serializedAggregate.isEmpty()) { throw new IllegalStateException("Failed to serialize event " + message); }
+            if (serializedAggregate.isEmpty()) { throw new IllegalStateException("Failed to serialize event: " + message.getClass().getSimpleName()); }
             eventsToSave.add(serializedAggregate.get());
-
         }
         return eventsToSave;
     }

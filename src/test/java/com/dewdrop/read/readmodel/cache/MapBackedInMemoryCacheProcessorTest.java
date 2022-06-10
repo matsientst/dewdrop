@@ -47,7 +47,7 @@ class MapBackedInMemoryCacheProcessorTest {
     @DisplayName("constructor() - confirm that we construct properly")
     void constructor() {
         assertThat(mapBackedInMemoryCacheProcessor.getCachedStateObjectType(), is(DewdropAccountDetails.class));
-        assertThat(mapBackedInMemoryCacheProcessor.getPrimaryCacheKeyName(), is("accountId"));
+        assertThat(mapBackedInMemoryCacheProcessor.getPrimaryCacheKeyNames(), is(List.of("accountId")));
         assertThat(mapBackedInMemoryCacheProcessor.getForeignCacheKeyNames(), is(List.of("userId")));
         assertThat(mapBackedInMemoryCacheProcessor.getCache().size(), is(0));
         assertThat(mapBackedInMemoryCacheProcessor.getCacheIndex().size(), is(1));
