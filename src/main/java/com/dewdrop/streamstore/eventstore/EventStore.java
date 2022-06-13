@@ -111,7 +111,7 @@ public class EventStore implements StreamStore {
         return EventStoreUtils.toStreamReadResults(readRequest, result);
     }
 
-    private Optional<ReadResult> performRead(ReadRequest readRequest) throws NoStreamException {
+    Optional<ReadResult> performRead(ReadRequest readRequest) throws NoStreamException {
         String streamName = readRequest.getStreamName();
         Long count = readRequest.getCount();
         ReadStreamOptions readStreamOptions = EventStoreUtils.options(readRequest);
