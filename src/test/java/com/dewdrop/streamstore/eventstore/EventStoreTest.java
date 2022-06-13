@@ -7,12 +7,13 @@ import static org.hamcrest.Matchers.isA;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.dewdrop.structure.NoStreamException;
 import com.dewdrop.structure.events.StreamReadResults;
@@ -58,29 +59,30 @@ class EventStoreTest {
 
     @Test
     void read() {
-        try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
-            utils.when(()-> EventStoreUtils.toStreamReadResults(any(ReadRequest.class), any(ReadResult.class)))
-                .thenReturn(mock(StreamReadResults.class));
+        doReturn(streamReadResults).when(eventStore).readFromStream(any(ReadRequest.class));
+        StreamReadResults streamReadResults = eventStore.read(mock(ReadRequest.class));
 
-            doReturn(mock(CompletableFuture.class)).when(eventStoreDBClient)
-                .readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
+        assertThat(streamReadResults, isA(StreamReadResults.class));
+        verify(eventStore, times(1)).readFromStream(any(ReadRequest.class));
+    }
+
+    @Test
+    void readFromStream() {
+        try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
+            utils.when(() -> EventStoreUtils.toStreamReadResults(any(ReadRequest.class), any(ReadResult.class))).thenReturn(mock(StreamReadResults.class));
 
             doReturn(Optional.of(readResult)).when(eventStore).performRead(any(ReadRequest.class));
 
-            StreamReadResults streamReadResults = eventStore.read(mock(ReadRequest.class));
+            StreamReadResults streamReadResults = eventStore.readFromStream(mock(ReadRequest.class));
 
             assertThat(streamReadResults, isA(StreamReadResults.class));
         }
     }
 
     @Test
-    void read_with_empty_readResult() {
+    void readFromStream_with_empty_readResult() {
         try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
-            utils.when(()-> EventStoreUtils.toStreamReadResults(any(ReadRequest.class), any(ReadResult.class)))
-                .thenReturn(mock(StreamReadResults.class));
-
-            doReturn(mock(CompletableFuture.class)).when(eventStoreDBClient)
-                .readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
+            utils.when(() -> EventStoreUtils.toStreamReadResults(any(ReadRequest.class), any(ReadResult.class))).thenReturn(mock(StreamReadResults.class));
 
             doReturn(Optional.empty()).when(eventStore).performRead(any(ReadRequest.class));
 
@@ -91,13 +93,9 @@ class EventStoreTest {
     }
 
     @Test
-    void read_with_no_stream_exception() {
+    void readFromStream_with_no_stream_exception() {
         try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
-            utils.when(()-> EventStoreUtils.toStreamReadResults(any(ReadRequest.class), any(ReadResult.class)))
-                .thenReturn(mock(StreamReadResults.class));
-
-            doReturn(mock(CompletableFuture.class)).when(eventStoreDBClient)
-                .readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
+            utils.when(() -> EventStoreUtils.toStreamReadResults(any(ReadRequest.class), any(ReadResult.class))).thenReturn(mock(StreamReadResults.class));
 
             doThrow(NoStreamException.class).when(eventStore).performRead(any(ReadRequest.class));
 
@@ -118,11 +116,9 @@ class EventStoreTest {
         ReadRequest readRequest = new ReadRequest(streamName, start, count, Direction.FORWARD);
 
         try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
-            utils.when(() -> EventStoreUtils.options(any(ReadRequest.class)))
-                .thenReturn(mock(ReadStreamOptions.class));
+            utils.when(() -> EventStoreUtils.options(any(ReadRequest.class))).thenReturn(mock(ReadStreamOptions.class));
 
-            doReturn(completableFuture).when(eventStoreDBClient)
-                .readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
+            doReturn(completableFuture).when(eventStoreDBClient).readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
 
             doReturn(readResult).when(completableFuture).get();
 
@@ -143,12 +139,10 @@ class EventStoreTest {
         ReadRequest readRequest = new ReadRequest(streamName, start, count, Direction.FORWARD);
 
         try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
-            utils.when(() -> EventStoreUtils.options(any(ReadRequest.class)))
-                .thenReturn(mock(ReadStreamOptions.class));
+            utils.when(() -> EventStoreUtils.options(any(ReadRequest.class))).thenReturn(mock(ReadStreamOptions.class));
 
 
-            doReturn(completableFuture).when(eventStoreDBClient)
-                .readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
+            doReturn(completableFuture).when(eventStoreDBClient).readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
 
             doThrow(InterruptedException.class).when(completableFuture).get();
 
@@ -169,11 +163,9 @@ class EventStoreTest {
         ReadRequest readRequest = new ReadRequest(streamName, start, count, Direction.FORWARD);
 
         try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
-            utils.when(() -> EventStoreUtils.options(any(ReadRequest.class)))
-                .thenReturn(mock(ReadStreamOptions.class));
+            utils.when(() -> EventStoreUtils.options(any(ReadRequest.class))).thenReturn(mock(ReadStreamOptions.class));
 
-            doReturn(completableFuture).when(eventStoreDBClient)
-                .readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
+            doReturn(completableFuture).when(eventStoreDBClient).readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
 
             doThrow(ExecutionException.class).when(completableFuture).get();
 
@@ -188,27 +180,21 @@ class EventStoreTest {
         SubscribeToStreamOptions options = mock(SubscribeToStreamOptions.class);
         SubscribeRequest subscribeRequest = mock(SubscribeRequest.class);
 
-        try(MockedStatic<EventStoreUtils> eventUtils = mockStatic(EventStoreUtils.class)) {
-            eventUtils.when(() -> EventStoreUtils.createListener(any(Consumer.class)))
-                .thenReturn(mock(SubscriptionListener.class));
+        try (MockedStatic<EventStoreUtils> eventUtils = mockStatic(EventStoreUtils.class)) {
+            eventUtils.when(() -> EventStoreUtils.createListener(any(Consumer.class))).thenReturn(mock(SubscriptionListener.class));
         }
 
         try (MockedStatic<SubscribeToStreamOptions> utils = mockStatic(SubscribeToStreamOptions.class)) {
-            utils.when(() -> SubscribeToStreamOptions.get())
-                .thenReturn(options);
+            utils.when(() -> SubscribeToStreamOptions.get()).thenReturn(options);
 
         }
-        doReturn(mock(StreamRevision.class)).when(options)
-            .fromRevision(anyLong());
+        doReturn(mock(StreamRevision.class)).when(options).fromRevision(anyLong());
 
-        doReturn(mock(SubscribeToStreamOptions.class)).when(options)
-            .resolveLinkTos();
+        doReturn(mock(SubscribeToStreamOptions.class)).when(options).resolveLinkTos();
 
-        doReturn("streamName").when(subscribeRequest)
-            .getStreamName();
+        doReturn("streamName").when(subscribeRequest).getStreamName();
 
-        doReturn(true).when(eventStore)
-            .subscribeTo(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
+        doReturn(true).when(eventStore).subscribeTo(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
 
         boolean result = eventStore.subscribeToStream(subscribeRequest);
 
@@ -220,27 +206,21 @@ class EventStoreTest {
         SubscribeToStreamOptions options = mock(SubscribeToStreamOptions.class);
         SubscribeRequest subscribeRequest = mock(SubscribeRequest.class);
 
-        try(MockedStatic<EventStoreUtils> eventUtils = mockStatic(EventStoreUtils.class)) {
-            eventUtils.when(() -> EventStoreUtils.createListener(any(Consumer.class)))
-                .thenReturn(mock(SubscriptionListener.class));
+        try (MockedStatic<EventStoreUtils> eventUtils = mockStatic(EventStoreUtils.class)) {
+            eventUtils.when(() -> EventStoreUtils.createListener(any(Consumer.class))).thenReturn(mock(SubscriptionListener.class));
         }
 
         try (MockedStatic<SubscribeToStreamOptions> utils = mockStatic(SubscribeToStreamOptions.class)) {
-            utils.when(() -> SubscribeToStreamOptions.get())
-                .thenReturn(options);
+            utils.when(() -> SubscribeToStreamOptions.get()).thenReturn(options);
 
         }
-        doReturn(mock(StreamRevision.class)).when(options)
-            .fromRevision(anyLong());
+        doReturn(mock(StreamRevision.class)).when(options).fromRevision(anyLong());
 
-        doReturn(mock(SubscribeToStreamOptions.class)).when(options)
-            .resolveLinkTos();
+        doReturn(mock(SubscribeToStreamOptions.class)).when(options).resolveLinkTos();
 
-        doReturn("streamName").when(subscribeRequest)
-            .getStreamName();
+        doReturn("streamName").when(subscribeRequest).getStreamName();
 
-        doReturn(false).when(eventStore)
-            .subscribeTo(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
+        doReturn(false).when(eventStore).subscribeTo(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
 
         boolean result = eventStore.subscribeToStream(subscribeRequest);
 
@@ -256,6 +236,7 @@ class EventStoreTest {
 
         assertThat(result, is(true));
     }
+
     @Test
     void subscribeTo_Interupted_Exception() throws ExecutionException, InterruptedException {
         boolean result = true;
@@ -268,6 +249,7 @@ class EventStoreTest {
 
         assertThat(result, is(false));
     }
+
     @Test
     void subscribeTo_Execution_Exception_with_StreamNotFound() throws ExecutionException, InterruptedException {
         boolean result = true;
