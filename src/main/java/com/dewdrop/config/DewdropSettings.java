@@ -9,9 +9,10 @@ import com.dewdrop.read.readmodel.DefaultAnnotationReadModelMapper;
 import com.dewdrop.read.readmodel.QueryStateOrchestrator;
 import com.dewdrop.read.readmodel.ReadModelFactory;
 import com.dewdrop.read.readmodel.ReadModelMapper;
-import com.dewdrop.read.readmodel.StreamDetailsFactory;
+import com.dewdrop.read.readmodel.StreamFactory;
 import com.dewdrop.streamstore.eventstore.EventStore;
-import com.dewdrop.streamstore.repository.StreamStoreRepository;
+import com.dewdrop.streamstore.process.AggregateStateCommandProcessor;
+import com.dewdrop.streamstore.process.StreamProcessor;
 import com.dewdrop.streamstore.serialize.JsonSerializer;
 import com.dewdrop.streamstore.stream.PrefixStreamNameGenerator;
 import com.dewdrop.structure.StreamNameGenerator;
@@ -42,13 +43,14 @@ public class DewdropSettings {
     private EventSerializer eventSerializer;
     private StreamStore streamStore;
     private StreamNameGenerator streamNameGenerator;
-    private StreamStoreRepository streamStoreRepository;
+    private AggregateStateCommandProcessor aggregateStateCommandProcessor;
     private AggregateStateOrchestrator aggregateStateOrchestrator;
     private QueryStateOrchestrator queryStateOrchestrator;
     private CommandMapper commandMapper;
     private ReadModelMapper readModelMapper;
-    private StreamDetailsFactory streamDetailsFactory;
+    private StreamFactory streamFactory;
     private ReadModelFactory readModelFactory;
+    private StreamProcessor streamProcessor;
 
     @Builder(buildMethodName = "create")
     public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper) {
@@ -65,14 +67,14 @@ public class DewdropSettings {
         ReflectionsConfigUtils.init(getProperties().getPackageToScan(), getProperties().getPackageToExclude());
         this.eventSerializer = Optional.ofNullable(eventSerializer).orElse(new JsonSerializer(getObjectMapper()));
         this.streamNameGenerator = new PrefixStreamNameGenerator(getProperties().getStreamPrefix());
-        this.streamDetailsFactory = new StreamDetailsFactory(getStreamNameGenerator());
-        this.streamStoreRepository = new StreamStoreRepository(getStreamStore(), getEventSerializer(), getStreamDetailsFactory());
+        this.streamFactory = new StreamFactory(getStreamStore(), getEventSerializer(), getStreamNameGenerator());
+        this.streamProcessor = new StreamProcessor(getStreamFactory());
+        this.aggregateStateCommandProcessor = new AggregateStateCommandProcessor(getStreamProcessor());
         this.commandMapper = Optional.ofNullable(commandMapper).orElse(new CommandHandlerMapper());
-        getCommandMapper().init(getStreamStoreRepository());
-        this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getStreamStoreRepository(), getStreamDetailsFactory());
+        this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getAggregateStateCommandProcessor());
         this.readModelMapper = Optional.ofNullable(readModelMapper).orElse(new DefaultAnnotationReadModelMapper());
-        this.readModelFactory = new ReadModelFactory(getStreamStore(), getEventSerializer(), getStreamDetailsFactory());
-        getReadModelMapper().init(getStreamStore(), getEventSerializer(), getStreamDetailsFactory(), getReadModelFactory());
+        this.readModelFactory = new ReadModelFactory(getStreamStore(), getEventSerializer(), getStreamFactory());
+        getReadModelMapper().init(getStreamStore(), getEventSerializer(), getStreamFactory(), getReadModelFactory());
         this.queryStateOrchestrator = new QueryStateOrchestrator(getReadModelMapper());
     }
 

@@ -2,7 +2,6 @@ package com.dewdrop.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.dewdrop.fixture.events.DewdropFundsAddedToAccount;
@@ -43,22 +42,32 @@ class CacheUtilsTest {
     }
 
     @Test
-    @DisplayName("getPrimaryCacheKey() - Given a cacheObject with the primary key annotated with @PrimaryCacheKey, return the field that is annotated")
-    void getPrimaryCacheKey() {
-        Field primaryCacheKey = CacheUtils.getPrimaryCacheKey(DewdropAccountDetails.class);
-        assertThat(primaryCacheKey, is(notNullValue()));
+    @DisplayName("getPrimaryCacheKeys() - Given a cacheObject with the primary key annotated with @PrimaryCacheKey, return the name of the field that is annotated")
+    void getPrimaryCacheKeys() {
+        List<String> primaryCacheKey = CacheUtils.getPrimaryCacheKeys(DewdropAccountDetails.class);
+        assertThat(primaryCacheKey.size(), is(1));
+        assertThat(primaryCacheKey.get(0), is("accountId"));
     }
 
     @Test
-    @DisplayName("getPrimaryCacheKey() - Given a cacheObject with multiple fields annotated with @PrimaryCacheKey, return an IllegalArgumentException")
+    @DisplayName("getPrimaryCacheKeys() - Given a cacheObject with the primary key annotated with @PrimaryCacheKey and alternateCacheKeys, return the name of the fields that are annotated")
+    void getPrimaryCacheKeys_alternateCacheKeys() {
+        List<String> primaryCacheKey = CacheUtils.getPrimaryCacheKeys(AlternatePrimaryCacheKeys.class);
+        assertThat(primaryCacheKey.size(), is(2));
+        assertThat(primaryCacheKey.get(0), is("accountId"));
+        assertThat(primaryCacheKey.get(1), is("oldAccountId"));
+    }
+
+    @Test
+    @DisplayName("getPrimaryCacheKeys() - Given a cacheObject with multiple fields annotated with @PrimaryCacheKey, return an IllegalArgumentException")
     void getPrimaryCacheKey_multiplePrimaryCacheKeys() {
-        assertThrows(IllegalArgumentException.class, () -> CacheUtils.getPrimaryCacheKey(MultiplePrimaryCacheKeys.class));
+        assertThrows(IllegalArgumentException.class, () -> CacheUtils.getPrimaryCacheKeys(MultiplePrimaryCacheKeys.class));
     }
 
     @Test
-    @DisplayName("getPrimaryCacheKey() - Given a cacheObject with no fields annotated with @PrimaryCacheKey, return an IllegalArgumentException")
+    @DisplayName("getPrimaryCacheKeys() - Given a cacheObject with no fields annotated with @PrimaryCacheKey, return an IllegalArgumentException")
     void getPrimaryCacheKey_noPrimaryCacheKeys() {
-        assertThrows(IllegalArgumentException.class, () -> CacheUtils.getPrimaryCacheKey(NoPrimaryCacheKeys.class));
+        assertThrows(IllegalArgumentException.class, () -> CacheUtils.getPrimaryCacheKeys(NoPrimaryCacheKeys.class));
     }
 
     @Test
@@ -81,6 +90,13 @@ class CacheUtilsTest {
         @PrimaryCacheKey
         UUID accountId;
         @PrimaryCacheKey
+        UUID userId;
+    }
+
+    @Data
+    private class AlternatePrimaryCacheKeys {
+        @PrimaryCacheKey(alternateCacheKeys = "oldAccountId")
+        UUID accountId;
         UUID userId;
     }
 

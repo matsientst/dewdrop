@@ -1,4 +1,4 @@
-package com.dewdrop.serialize;
+package com.dewdrop.streamstore.serialize;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;

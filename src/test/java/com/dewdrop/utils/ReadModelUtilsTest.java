@@ -18,6 +18,7 @@ import com.dewdrop.read.readmodel.annotation.DewdropCache;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -102,7 +103,7 @@ class ReadModelUtilsTest {
     @DisplayName("updateReadModelCacheField() - Given a readModel with an field annotated with @DewdropCache and a cacheProcessor update the field with the contents of cacheProcessor.getCache()")
     void updateReadModelCacheField() {
         DewdropUsersReadModel readModel = new DewdropUsersReadModel();
-        ReadModelUtils.updateReadModelCacheField(readModel, new ArrayList<>());
+        ReadModelUtils.updateReadModelCacheField(readModel, new HashMap());
         assertThat(readModel.getCache(), is(notNullValue()));
     }
 

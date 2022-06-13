@@ -59,7 +59,7 @@ public class AggregateUtils {
         AGGREGATE_ROOTS_CACHE.clear();
     }
 
-    public static <T> Optional<T> create(Class<?> classToProxy) {
+    public static Optional<AggregateRoot> create(Class<?> classToProxy) {
         // ClassPool pool = ClassPool.getDefault();
         try {
             // ProxyFactory factory = new ProxyFactory();
@@ -69,7 +69,7 @@ public class AggregateUtils {
             // Object instance = factory.create(null, null, handler);
 
             Object instance = ConstructorUtils.invokeConstructor(classToProxy);
-            return Optional.of((T) new AggregateRoot(instance));
+            return Optional.of(new AggregateRoot(instance));
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             log.error("Failed to assign AggregateRoot", e);
             return Optional.empty();

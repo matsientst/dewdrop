@@ -1,6 +1,5 @@
 package com.dewdrop.command;
 
-import com.dewdrop.streamstore.repository.StreamStoreRepository;
 import com.dewdrop.structure.api.Command;
 import com.dewdrop.utils.CommandHandlerUtils;
 import java.lang.reflect.Method;
@@ -14,12 +13,12 @@ import org.apache.commons.collections4.CollectionUtils;
 public class CommandHandlerMapper extends AbstractCommandHandlerMapper {
     Map<Class<?>, Method> commandHandlerToMethod = new java.util.HashMap<>();
 
-    public CommandHandlerMapper() {}
+    public CommandHandlerMapper() {
+        init();
+    }
 
-    public void init(StreamStoreRepository streamStoreRepository) {
+    public void init() {
         log.debug("Finding all commandHandlerMethods annotated with @CommandHandler");
-        super.construct(streamStoreRepository);
-
 
         Set<Method> commandHandlerMethods = CommandHandlerUtils.getCommandHandlerMethods();
         if (CollectionUtils.isEmpty(commandHandlerMethods)) {

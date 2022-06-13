@@ -22,18 +22,18 @@ public class MapBackedInMemoryCacheProcessor<R> implements InMemoryCacheProcesso
     private Class<?> cachedStateObjectType;
     private Map<UUID, R> cache;
     private Map<String, Map<UUID, UUID>> cacheIndex;
-    private String primaryCacheKeyName;
+    private List<String> primaryCacheKeyNames;
     private List<String> foreignCacheKeyNames;
     private Map<UUID, LinkedList<Message>> unprocessedMessages;
 
     public MapBackedInMemoryCacheProcessor(Class<?> cachedStateObjectType) {
         this.cachedStateObjectType = cachedStateObjectType;
         this.cache = new ConcurrentHashMap<>();
-        this.primaryCacheKeyName = CacheUtils.getPrimaryCacheKey(cachedStateObjectType).getName();
+        this.primaryCacheKeyNames = CacheUtils.getPrimaryCacheKeys(cachedStateObjectType);
         this.foreignCacheKeyNames = CacheUtils.getForeignCacheKeys(cachedStateObjectType).stream().map(Field::getName).collect(toList());
         this.cacheIndex = new ConcurrentHashMap<>();
         this.unprocessedMessages = new ConcurrentHashMap<>();
-        foreignCacheKeyNames.forEach(keyName -> cacheIndex.computeIfAbsent(keyName, key -> new ConcurrentHashMap<>()));
+        this.foreignCacheKeyNames.forEach(keyName -> cacheIndex.computeIfAbsent(keyName, key -> new ConcurrentHashMap<>()));
     }
 
     public <T extends Message> void process(T message) {
@@ -42,7 +42,7 @@ public class MapBackedInMemoryCacheProcessor<R> implements InMemoryCacheProcesso
         Optional<UUID> optId = CacheUtils.getCacheRootKey(message);
         optId.ifPresent(uuid -> {
             UUID id = uuid;
-            if (DewdropReflectionUtils.hasField(message, primaryCacheKeyName)) {
+            if (DewdropReflectionUtils.hasAnyField(message, primaryCacheKeyNames)) {
                 primaryCache(message, id);
             } else {
                 foreignCache(message, id);
