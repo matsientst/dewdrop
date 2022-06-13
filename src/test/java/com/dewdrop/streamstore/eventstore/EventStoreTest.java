@@ -1,11 +1,13 @@
 package com.dewdrop.streamstore.eventstore;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -22,6 +24,7 @@ import com.eventstore.dbclient.ReadResult;
 import com.eventstore.dbclient.ReadStreamOptions;
 import com.eventstore.dbclient.RecordedEvent;
 import com.eventstore.dbclient.ResolvedEvent;
+import com.eventstore.dbclient.StreamNotFoundException;
 import com.eventstore.dbclient.StreamRevision;
 import com.eventstore.dbclient.SubscribeToStreamOptions;
 import com.eventstore.dbclient.SubscriptionListener;
@@ -245,12 +248,55 @@ class EventStoreTest {
     }
 
     @Test
-    void subscribeTo() {
+    void subscribeTo() throws ExecutionException, InterruptedException {
 
-        doReturn(true).when(eventStoreDBClient).subscribeToStream(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
+        doReturn(mock(CompletableFuture.class)).when(eventStoreDBClient).subscribeToStream(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
 
         boolean result = eventStore.subscribeTo("streamName", mock(SubscriptionListener.class), mock(SubscribeToStreamOptions.class));
 
         assertThat(result, is(true));
+    }
+    @Test
+    void subscribeTo_Interupted_Exception() throws ExecutionException, InterruptedException {
+        boolean result = true;
+        CompletableFuture completableFuture = mock(CompletableFuture.class);
+        doReturn(completableFuture).when(eventStoreDBClient).subscribeToStream(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
+
+        doThrow(InterruptedException.class).when(completableFuture).get();
+
+        result = eventStore.subscribeTo("streamName", mock(SubscriptionListener.class), mock(SubscribeToStreamOptions.class));
+
+        assertThat(result, is(false));
+    }
+    @Test
+    void subscribeTo_Execution_Exception_with_StreamNotFound() throws ExecutionException, InterruptedException {
+        boolean result = true;
+        CompletableFuture completableFuture = mock(CompletableFuture.class);
+        ExecutionException exception = new ExecutionException("", new StreamNotFoundException());
+
+        doReturn(completableFuture).when(eventStoreDBClient).subscribeToStream(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
+
+        doThrow(exception).when(completableFuture).get();
+
+        result = eventStore.subscribeTo("streamName", mock(SubscriptionListener.class), mock(SubscribeToStreamOptions.class));
+
+        assertThat(result, is(false));
+    }
+
+    @Test
+    void subscribeTo_Execution_Exception_without_StreamNotFound() throws ExecutionException, InterruptedException {
+        boolean result = true;
+        CompletableFuture completableFuture = mock(CompletableFuture.class);
+        ExecutionException exception = new ExecutionException("", new NullPointerException());
+
+        doReturn(completableFuture).when(eventStoreDBClient).subscribeToStream(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
+
+        doThrow(exception).when(completableFuture).get();
+
+        try {
+            eventStore.subscribeTo("streamName", mock(SubscriptionListener.class), mock(SubscribeToStreamOptions.class));
+        } catch (RuntimeException e) {
+            assertThat(e, is(instanceOf(RuntimeException.class)));
+        }
     }
 }
