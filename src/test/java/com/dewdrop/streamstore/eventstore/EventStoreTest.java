@@ -4,7 +4,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -17,9 +19,13 @@ import static org.mockito.Mockito.verify;
 
 import com.dewdrop.structure.NoStreamException;
 import com.dewdrop.structure.events.StreamReadResults;
+import com.dewdrop.structure.events.WriteEventData;
 import com.dewdrop.structure.read.Direction;
 import com.dewdrop.structure.read.ReadRequest;
 import com.dewdrop.structure.subscribe.SubscribeRequest;
+import com.dewdrop.structure.write.WriteRequest;
+import com.eventstore.dbclient.AppendToStreamOptions;
+import com.eventstore.dbclient.EventData;
 import com.eventstore.dbclient.EventStoreDBClient;
 import com.eventstore.dbclient.ReadResult;
 import com.eventstore.dbclient.ReadStreamOptions;
@@ -29,11 +35,16 @@ import com.eventstore.dbclient.StreamNotFoundException;
 import com.eventstore.dbclient.StreamRevision;
 import com.eventstore.dbclient.SubscribeToStreamOptions;
 import com.eventstore.dbclient.SubscriptionListener;
+import com.eventstore.dbclient.proto.persistentsubscriptions.Persistent.CreateReq.StreamOptions;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+import org.apache.commons.collections4.ArrayStack;
+import org.apache.commons.collections4.ListUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -281,4 +292,70 @@ class EventStoreTest {
             assertThat(e, is(instanceOf(RuntimeException.class)));
         }
     }
+
+    @Test
+    void appendToStream() {
+        Integer currentBatchSize = eventStore.BATCH_SIZE + 1;
+        WriteRequest writeRequest = mock(WriteRequest.class);
+        List list = spy(new ArrayList());
+        doReturn(list).when(writeRequest).getEvents();
+        doReturn("streamName").when(writeRequest).getStreamName();
+        doReturn(currentBatchSize).when(list).size();
+        try (MockedStatic<ListUtils> listUtils = mockStatic(ListUtils.class)) {
+            List<EventData> eventData = spy(new ArrayList<>());
+            listUtils.when(() -> ListUtils.partition(any(List.class), anyInt())).thenReturn(List.of(List.of(eventData)));
+            doReturn(mock(ListIterator.class)).when(eventData).listIterator();
+
+            doReturn(mock(CompletableFuture.class)).when(eventStoreDBClient).appendToStream(anyString(), any(AppendToStreamOptions.class), any(ListIterator.class));
+
+            eventStore.appendToStream(writeRequest);
+            verify(eventStoreDBClient, times(1)).appendToStream(anyString(), any(AppendToStreamOptions.class), any(ListIterator.class));
+        }
+    }
+
+    @Test
+    void appendToStream_InterruptedException() throws ExecutionException, InterruptedException {
+        Integer currentBatchSize = eventStore.BATCH_SIZE;
+        WriteRequest writeRequest = mock(WriteRequest.class);
+        List list = spy(new ArrayList());
+        doReturn(list).when(writeRequest).getEvents();
+        doReturn("streamName").when(writeRequest).getStreamName();
+        try (MockedStatic<ListUtils> listUtils = mockStatic(ListUtils.class)) {
+            List<EventData> eventData = spy(new ArrayList());
+            listUtils.when(() -> ListUtils.partition(any(List.class), anyInt())).thenReturn(List.of(List.of(eventData)));
+            doReturn(mock(ListIterator.class)).when(eventData).listIterator();
+
+            CompletableFuture completableFuture = mock(CompletableFuture.class);
+            doReturn(completableFuture).when(eventStoreDBClient).appendToStream(anyString(), any(AppendToStreamOptions.class), any(ListIterator.class));
+
+            doThrow(InterruptedException.class).when(completableFuture).get();
+
+            eventStore.appendToStream(writeRequest);
+            // TODO: verify log message?
+        }
+    }
+
+    @Test
+    void appendToStream_ExecutionException() throws ExecutionException, InterruptedException {
+        Integer currentBatchSize = eventStore.BATCH_SIZE;
+        WriteRequest writeRequest = mock(WriteRequest.class);
+        doReturn(new ArrayList()).when(writeRequest).getEvents();
+        doReturn("streamName").when(writeRequest).getStreamName();
+        ExecutionException exception = new ExecutionException("", new NullPointerException());
+        try (MockedStatic<ListUtils> listUtils = mockStatic(ListUtils.class)) {
+            List<EventData> eventData = spy(new ArrayList());
+            listUtils.when(() -> ListUtils.partition(any(List.class), anyInt())).thenReturn(List.of(List.of(eventData)));
+            doReturn(mock(ListIterator.class)).when(eventData).listIterator();
+
+            CompletableFuture completableFuture = mock(CompletableFuture.class);
+            doReturn(completableFuture).when(eventStoreDBClient).appendToStream(anyString(), any(AppendToStreamOptions.class), any(ListIterator.class));
+
+            doThrow(exception).when(completableFuture).get();
+
+            eventStore.appendToStream(writeRequest);
+            // TODO: verify log message?
+        }
+    }
+
+
 }
