@@ -8,7 +8,7 @@ import com.dewdrop.read.readmodel.query.QueryHandler;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@ReadModel(resultClass = DewdropAccountSummary.class)
+@ReadModel
 @Stream(name = "DewdropFundsAddedToAccount", streamType = StreamType.EVENT)
 @Stream(name = "DewdropAccountCreated", streamType = StreamType.EVENT)
 public class DewdropAccountSummaryReadModel {

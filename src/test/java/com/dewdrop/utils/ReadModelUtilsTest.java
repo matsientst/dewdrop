@@ -29,7 +29,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @Log4j2
@@ -38,7 +37,6 @@ class ReadModelUtilsTest {
 
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
         ReflectionsConfigUtils.init("com.dewdrop");
     }
 
@@ -65,7 +63,7 @@ class ReadModelUtilsTest {
     @DisplayName("getQueryHandlerMethods() - get the methods that are decorated with @QueryHandler")
     void getQueryHandlerMethods() {
         DewdropAccountDetailsReadModel readModel = new DewdropAccountDetailsReadModel();
-        List<Method> methods = ReadModelUtils.getQueryHandlerMethods(readModel);
+        List<Method> methods = ReadModelUtils.getQueryHandlerMethods(readModel.getClass());
         assertThat(methods.isEmpty(), is(false));
     }
 
@@ -103,7 +101,7 @@ class ReadModelUtilsTest {
     @DisplayName("updateReadModelCacheField() - Given a readModel with an field annotated with @DewdropCache and a cacheProcessor update the field with the contents of cacheProcessor.getCache()")
     void updateReadModelCacheField() {
         DewdropUsersReadModel readModel = new DewdropUsersReadModel();
-        ReadModelUtils.updateReadModelCacheField(readModel, new HashMap());
+        ReadModelUtils.updateReadModelCacheField(readModel, new HashMap<>());
         assertThat(readModel.getCache(), is(notNullValue()));
     }
 

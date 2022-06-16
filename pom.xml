@@ -15,18 +15,18 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <!-- to align with the spring boot version 2.5.8 -->
-        <lombok.version>1.18.20</lombok.version>
+        <lombok.version>1.18.24</lombok.version>
         <log4j2.version>2.17.2</log4j2.version>
-        <jackson.version>2.12.1</jackson.version>
+        <jackson.version>2.13.3</jackson.version>
         <junit-jupiter.version>5.8.2</junit-jupiter.version>
         <model-mapper.version>3.0.0</model-mapper.version>
-        <mockito.version>3.12.4</mockito.version>
+        <mockito.version>4.6.1</mockito.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
-            <version>3.27.0-GA</version>
+            <version>3.29.0-GA</version>
         </dependency>
         <dependency>
             <groupId>org.yaml</groupId>
@@ -73,7 +73,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>RELEASE</version>
+            <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -137,7 +137,7 @@
         <dependency>
             <groupId>com.eventstore</groupId>
             <artifactId>db-client-java</artifactId>
-            <version>1.1.1-SNAPSHOT</version>
+            <version>3.0.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -148,12 +148,17 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-api</artifactId>
-            <version>1.39.0</version>
+            <version>1.47.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>31.1-jre</version>
+        </dependency>
+        <dependency>
+            <groupId>net.jodah</groupId>
+            <artifactId>expiringmap</artifactId>
+            <version>0.5.10</version>
         </dependency>
     </dependencies>
     <build>

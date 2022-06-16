@@ -4,6 +4,7 @@ import static com.dewdrop.utils.ReflectionsConfigUtils.EXCLUDE_PACKAGES;
 import static com.dewdrop.utils.ReflectionsConfigUtils.REFLECTIONS;
 import static java.util.stream.Collectors.toSet;
 
+import com.dewdrop.read.readmodel.annotation.ReadModel;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

@@ -6,4 +6,6 @@ public interface InMemoryCacheProcessor {
     <T extends Message> void process(T message);
 
     <T> T getCache();
+
+    Class<?> getCachedStateObjectType();
 }

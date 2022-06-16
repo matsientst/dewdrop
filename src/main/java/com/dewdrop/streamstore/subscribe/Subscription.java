@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.dewdrop.read.NameAndPosition;
 import com.dewdrop.read.StreamReader;
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.read.Handler;
 import com.dewdrop.structure.subscribe.EventProcessor;
@@ -21,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Data
-public class Subscription<T extends Message> {
+public class Subscription<T extends Event> {
     private final Map<Class<?>, List<EventProcessor<T>>> handlers = new ConcurrentHashMap<>();
     protected final StreamListener<T> listener;
     private final List<Class<?>> messageTypes;

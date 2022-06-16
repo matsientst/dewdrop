@@ -11,7 +11,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.dewdrop.api.result.Result;
 import com.dewdrop.fixture.events.DewdropAccountCreated;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.utils.EventHandlerUtils;
@@ -123,7 +122,7 @@ class EventStateMachineTest {
             utilities.when(() -> EventHandlerUtils.callEventHandler(any(), any(Message.class))).then(invocationOnMock -> null);
 
             eventStateMachine.callEventHandler(event);
-            utilities.verify(times(1), () -> EventHandlerUtils.callEventHandler(any(), any(Message.class)));
+            utilities.verify(() -> EventHandlerUtils.callEventHandler(any(), any(Message.class)), times(1));
         }
 
     }

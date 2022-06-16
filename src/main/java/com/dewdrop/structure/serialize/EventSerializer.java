@@ -1,5 +1,6 @@
 package com.dewdrop.structure.serialize;
 
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.events.ReadEventData;
 import com.dewdrop.structure.events.WriteEventData;
 import java.util.Map;
@@ -10,6 +11,6 @@ public interface EventSerializer {
 
     Optional<WriteEventData> serialize(Object event);
 
-    <T> Optional<T> deserialize(ReadEventData event);
+    <T extends Event> Optional<T> deserialize(ReadEventData event);
 }
 

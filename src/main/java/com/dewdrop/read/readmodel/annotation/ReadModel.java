@@ -10,5 +10,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface ReadModel {
-    Class<?> resultClass();
+    public static final int NEVER_DESTROY = -1;
+    public static final int DESTROY_IMMEDIATELY = 0;
+
+    boolean ephemeral() default false;
+
+    int destroyInMinutesUnused() default NEVER_DESTROY;
 }

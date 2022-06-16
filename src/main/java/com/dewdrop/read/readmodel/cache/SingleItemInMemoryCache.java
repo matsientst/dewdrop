@@ -5,9 +5,11 @@ import com.dewdrop.structure.api.Message;
 import com.dewdrop.utils.DewdropReflectionUtils;
 import com.dewdrop.utils.EventHandlerUtils;
 import java.util.Optional;
+import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
+@Data
 public class SingleItemInMemoryCache<T> implements InMemoryCacheProcessor {
     private Class<?> cachedStateObjectType;
     private T cache;

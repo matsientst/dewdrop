@@ -36,34 +36,34 @@ class DewdropTest {
 
     @Test
     void test() throws ResultException {
-        Dewdrop dewDrop = DewdropSettings.builder().properties(properties).create().start();
+        Dewdrop dewdrop = DewdropSettings.builder().properties(properties).create().start();
 
         String username = "Dewdropper Funkapuss";
         DewdropCreateUserCommand createUserCommand = new DewdropCreateUserCommand(UUID.randomUUID(), username);
-        dewDrop.executeCommand(createUserCommand);
+        dewdrop.executeCommand(createUserCommand);
 
         DewdropCreateAccountCommand command = new DewdropCreateAccountCommand(UUID.randomUUID(), "test", createUserCommand.getUserId());
-        dewDrop.executeCommand(command);
+        dewdrop.executeCommand(command);
 
         DewdropAddFundsToAccountCommand addFunds = new DewdropAddFundsToAccountCommand(command.getAccountId(), new BigDecimal(100));
-        dewDrop.executeSubsequentCommand(addFunds, command);
+        dewdrop.executeSubsequentCommand(addFunds, command);
 
         DewdropGetAccountByIdQuery query = new DewdropGetAccountByIdQuery(command.getAccountId());
-        retryUntilComplete(dewDrop, query);
+        retryUntilComplete(dewdrop, query);
 
-        Result<DewdropAccountDetails> result = dewDrop.executeQuery(query);
+        Result<DewdropAccountDetails> result = dewdrop.executeQuery(query);
         DewdropAccountDetails actual = result.get();
         assertThat(actual.getUsername(), is(username));
         assertThat(actual.getBalance(), is(addFunds.getFunds()));
 
         GetUserByIdQuery getUserById = new GetUserByIdQuery(createUserCommand.getUserId());
-        Result<DewdropUser> userById = dewDrop.executeQuery(getUserById);
+        Result<DewdropUser> userById = dewdrop.executeQuery(getUserById);
         DewdropUser dewdropUser = userById.get();
         assertThat(createUserCommand.getUserId(), is(dewdropUser.getUserId()));
         assertThat(createUserCommand.getUsername(), is(dewdropUser.getUsername()));
 
         DewdropAccountSummaryQuery dewdropAccountSummaryQuery = new DewdropAccountSummaryQuery();
-        Result<DewdropAccountSummary> summaryResult = dewDrop.executeQuery(dewdropAccountSummaryQuery);
+        Result<DewdropAccountSummary> summaryResult = dewdrop.executeQuery(dewdropAccountSummaryQuery);
         BigDecimal totalFunds = summaryResult.get().getTotalFunds();
         assertThat(totalFunds, is(greaterThan(new BigDecimal(99))));
         int countOfAccounts = summaryResult.get().getCountOfAccounts();

@@ -1,6 +1,7 @@
 package com.dewdrop.streamstore.subscribe;
 
 import com.dewdrop.structure.NoStreamException;
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.events.ReadEventData;
@@ -16,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Data
-public class StreamListener<T extends Message> {
+public class StreamListener<T extends Event> {
     private StreamStore streamStore;
     private EventSerializer serializer;
     private String streamName;

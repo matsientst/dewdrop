@@ -2,7 +2,9 @@ package com.dewdrop.utils;
 
 import static java.util.stream.Collectors.toList;
 
+import com.dewdrop.read.readmodel.ReadModel;
 import com.dewdrop.read.readmodel.annotation.EventHandler;
+import com.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
 import com.dewdrop.structure.api.Message;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,7 +17,14 @@ import lombok.extern.log4j.Log4j2;
 public class EventHandlerUtils {
     private EventHandlerUtils() {}
 
-    public static List<Class<?>> getFirstParameterForEventHandlerMethods(Class<?> target) {
+    public static List<Class<?>> getEventHandlers(ReadModel readModel) {
+        Class<?> target;
+        if (readModel.getInMemoryCacheProcessor().isPresent()) {
+            InMemoryCacheProcessor processor = (InMemoryCacheProcessor) readModel.getInMemoryCacheProcessor().get();
+            target = processor.getCachedStateObjectType();
+        } else {
+            target = readModel.getReadModel().getClass();
+        }
         Set<Method> methods = DewdropAnnotationUtils.getAnnotatedMethods(target, EventHandler.class);
         return methods.stream().filter(method -> method.getParameterTypes().length > 0).map(method -> method.getParameterTypes()[0]).collect(toList());
     }

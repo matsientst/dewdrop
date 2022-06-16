@@ -1,7 +1,7 @@
 package com.dewdrop.streamstore.serialize;
 
 import com.dewdrop.streamstore.write.StreamWriter;
-import com.dewdrop.structure.events.CorrelationCausation;
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.events.ReadEventData;
 import com.dewdrop.structure.events.WriteEventData;
 import com.dewdrop.structure.serialize.EventSerializer;
@@ -49,7 +49,7 @@ public class JsonSerializer implements EventSerializer {
     }
 
     @Override
-    public <T> Optional<T> deserialize(ReadEventData event) {
+    public <T extends Event> Optional<T> deserialize(ReadEventData event) {
         Map<String, Object> metadata = new HashMap<>();
         try {
             metadata = objectMapper.readValue(event.getMetadata(), Map.class);
@@ -67,21 +67,19 @@ public class JsonSerializer implements EventSerializer {
         return deserializeEvent(event, className, metadata);
     }
 
-    public <T> Optional<T> deserializeEvent(ReadEventData event, String className, Map<String, Object> metadata) {
+    public <T extends Event> Optional<T> deserializeEvent(ReadEventData event, String className, Map<String, Object> metadata) {
         try {
             T value = (T) objectMapper.readValue(event.getData(), Class.forName(className));
-            if (value instanceof CorrelationCausation) {
-                CorrelationCausation correlationCausation = (CorrelationCausation) value;
-                if (metadata.containsKey(StreamWriter.CAUSATION_ID)) {
-                    String uuid = (String) metadata.get(StreamWriter.CAUSATION_ID);
-                    correlationCausation.setCausationId(UUID.fromString(uuid));
-                }
-                if (metadata.containsKey(StreamWriter.CORRELATION_ID)) {
-                    String uuid = (String) metadata.get(StreamWriter.CORRELATION_ID);
-                    correlationCausation.setCorrelationId(UUID.fromString(uuid));
-                }
-            }
 
+            if (metadata.containsKey(StreamWriter.CAUSATION_ID)) {
+                String uuid = (String) metadata.get(StreamWriter.CAUSATION_ID);
+                value.setCausationId(UUID.fromString(uuid));
+            }
+            if (metadata.containsKey(StreamWriter.CORRELATION_ID)) {
+                String uuid = (String) metadata.get(StreamWriter.CORRELATION_ID);
+                value.setCorrelationId(UUID.fromString(uuid));
+            }
+            value.setVersion(event.getEventNumber());
             return Optional.of(value);
         } catch (IOException e) {
             log.error("Unable to deserialize data for class:" + className, e);

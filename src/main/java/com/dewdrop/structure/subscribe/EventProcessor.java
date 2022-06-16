@@ -2,13 +2,14 @@ package com.dewdrop.structure.subscribe;
 
 import static java.util.Objects.requireNonNull;
 
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.read.Handler;
 import java.util.List;
 import lombok.Data;
 
 @Data
-public class EventProcessor<T extends Message> {
+public class EventProcessor<T extends Event> {
     private Handler<T> handler;
     private List<Class<?>> messageTypes;
 

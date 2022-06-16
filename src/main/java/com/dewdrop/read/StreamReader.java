@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toList;
 import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.structure.NoStreamException;
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.events.ReadEventData;
@@ -87,10 +88,8 @@ public class StreamReader {
 
                 this.firstEventRead = true;
 
-                Optional<Object> event = eventSerializer.deserialize(readEventData);
-                if (event.get() instanceof Message) {
-                    streamDetails.getEventHandler().accept((Message) event.get());
-                }
+                Optional<Event> event = eventSerializer.deserialize(readEventData);
+                streamDetails.getEventHandler().accept((Message) event.get());
             } catch (Exception e) {
                 log.error("problem reading event: ", e);
             }
@@ -151,7 +150,7 @@ public class StreamReader {
 
             appliedEventCount += streamReadResults.getEvents().size();
             List<Message> messages = streamReadResults.getEvents().stream().map(evt -> {
-                Optional<Message> deserialize = eventSerializer.deserialize(evt);
+                Optional<Event> deserialize = eventSerializer.deserialize(evt);
                 if (deserialize.isPresent()) { return deserialize.get(); }
                 return null;
             }).filter(e -> e != null).collect(toList());

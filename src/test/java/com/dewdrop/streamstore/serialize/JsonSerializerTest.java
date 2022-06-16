@@ -9,10 +9,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import com.dewdrop.fixture.events.DewdropAccountCreated;
-import com.dewdrop.streamstore.serialize.JsonSerializer;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.events.ReadEventData;
 import com.dewdrop.structure.events.WriteEventData;
@@ -105,6 +105,21 @@ class JsonSerializerTest {
 
         doReturn(null).when(objectMapper).writeValueAsBytes(anyMap());
         Optional<WriteEventData> eventData = new JsonSerializer(objectMapper).serialize(message, new HashMap<>());
+        Optional<DewdropAccountCreated> response = jsonSerializer.deserialize(readEventData);
+        assertThat(response.isEmpty(), is(true));
+    }
+
+    @Test
+    void deserialize_exception_metadataHasBytes() throws IOException {
+        doThrow(IOException.class).when(objectMapper).readValue(any(byte[].class), any(Class.class));
+        ReadEventData readEventData = mock(ReadEventData.class);
+        doReturn("test".getBytes()).when(readEventData).getMetadata();
+
+        Optional<DewdropAccountCreated> result = jsonSerializer.deserialize(readEventData);
+        assertThat(result.isEmpty(), is(true));
+
+        doThrow(IOException.class).when(objectMapper).readValue(any(byte[].class), any(Class.class));
+        doReturn("test".getBytes()).doReturn(null).when(readEventData).getMetadata();
         Optional<DewdropAccountCreated> response = jsonSerializer.deserialize(readEventData);
         assertThat(response.isEmpty(), is(true));
     }

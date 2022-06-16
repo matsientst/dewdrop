@@ -11,9 +11,11 @@ import com.dewdrop.read.readmodel.query.QueryHandler;
 import com.dewdrop.structure.api.Message;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
@@ -43,22 +45,26 @@ public class ReadModelUtils {
     }
 
     public static <T extends Message> com.dewdrop.read.readmodel.ReadModel createReadModel(Object target) {
-        ReadModel annotation = target.getClass().getAnnotation(ReadModel.class);
-        Class<?> resultClass = annotation.resultClass();
-        InMemoryCacheProcessor inMemoryCacheProcessor = createInMemoryCache(target.getClass(), resultClass);
+        Optional<InMemoryCacheProcessor> inMemoryCacheProcessor = createInMemoryCache(target.getClass());
 
-        return new com.dewdrop.read.readmodel.ReadModel(target, resultClass, inMemoryCacheProcessor);
+        return new com.dewdrop.read.readmodel.ReadModel(target, inMemoryCacheProcessor);
     }
 
-    private static InMemoryCacheProcessor createInMemoryCache(Class<?> targetClass, Class<?> resultClass) {
+    private static Optional<InMemoryCacheProcessor> createInMemoryCache(Class<?> targetClass) {
         Field field = getReadModelCacheField(targetClass);
+        if (field == null) {
+            log.info("No @DewdropCache field found for {} - User will handle", targetClass.getName());
+            return Optional.empty();
+        }
         InMemoryCacheProcessor inMemoryCacheProcessor;
         if (Map.class.equals(field.getType())) {
-            inMemoryCacheProcessor = new MapBackedInMemoryCacheProcessor<>(resultClass);
+            ParameterizedType type = (ParameterizedType) field.getGenericType();
+            Class<?> clazz = (Class<?>) type.getActualTypeArguments()[1];
+            inMemoryCacheProcessor = new MapBackedInMemoryCacheProcessor<>(clazz);
         } else {
-            inMemoryCacheProcessor = new SingleItemInMemoryCache(resultClass);
+            inMemoryCacheProcessor = new SingleItemInMemoryCache(field.getType());
         }
-        return inMemoryCacheProcessor;
+        return Optional.of(inMemoryCacheProcessor);
     }
 
     static Field getReadModelCacheField(Class<?> targetClass) {
@@ -80,10 +86,10 @@ public class ReadModelUtils {
     }
 
 
-    public static List<Method> getQueryHandlerMethods(Object instance) {
-        requireNonNull(instance, "Object is required");
+    public static List<Method> getQueryHandlerMethods(Class<?> readModelClass) {
+        requireNonNull(readModelClass, "RadModel class is required");
 
-        return MethodUtils.getMethodsListWithAnnotation(instance.getClass(), QueryHandler.class);
+        return MethodUtils.getMethodsListWithAnnotation(readModelClass, QueryHandler.class);
     }
 
     static void clear() {
@@ -104,5 +110,12 @@ public class ReadModelUtils {
         } catch (IllegalAccessException e) {
             log.warn("Unable to write to the field annotated with the @DewdropCache on the ReadModel: {}", readModel.getClass().getName(), e);
         }
+    }
+
+    public static boolean isEphemeral(Class<?> readModelClass) {
+        ReadModel annotation = readModelClass.getAnnotation(ReadModel.class);
+        if (annotation == null) { return false; }
+
+        return annotation.ephemeral();
     }
 }

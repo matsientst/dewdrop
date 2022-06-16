@@ -1,7 +1,7 @@
 package com.dewdrop.read.readmodel;
 
-import com.dewdrop.read.StreamDetails;
 import com.dewdrop.read.readmodel.annotation.Stream;
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.serialize.EventSerializer;
@@ -11,7 +11,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import lombok.extern.log4j.Log4j2;
 
@@ -27,7 +26,7 @@ public class ReadModelFactory {
         this.streamFactory = streamFactory;
     }
 
-    public Optional<com.dewdrop.read.readmodel.ReadModel<Message>> constructReadModel(Class<?> target) {
+    public Optional<ReadModelConstructed> constructReadModel(Class<?> target) {
         Object instance;
         try {
             instance = target.getConstructor().newInstance();
@@ -38,22 +37,27 @@ public class ReadModelFactory {
             log.error("No default constructor found for:{}", target.getClass().getName(), e);
             return Optional.empty();
         }
+        log.info("Created @ReadModel {} - ephemeral:{}", instance.getClass().getSimpleName(), ReadModelUtils.isEphemeral(target));
 
-        com.dewdrop.read.readmodel.ReadModel<Message> value = contruct(instance).get();
-        if (value != null) { return Optional.ofNullable(value); }
+        com.dewdrop.read.readmodel.ReadModel<Event> value = contruct(instance).get();
+        if (value != null) {
+            value.subscribe();
+            return Optional.of(new ReadModelConstructed(value));
+        }
 
         return Optional.empty();
     }
 
-    public <T extends Message> Supplier<com.dewdrop.read.readmodel.ReadModel<T>> contruct(java.lang.Object target) {
+    <T extends Event> Supplier<com.dewdrop.read.readmodel.ReadModel<T>> contruct(java.lang.Object target) {
         return () -> {
             com.dewdrop.read.readmodel.ReadModel<T> readModel = ReadModelUtils.createReadModel(target);
 
             Stream[] streams = target.getClass().getAnnotationsByType(Stream.class);
-            List<Class<?>> eventHandlers = EventHandlerUtils.getFirstParameterForEventHandlerMethods(readModel.getCachedStateObjectType());
+            List<Class<?>> eventHandlers = EventHandlerUtils.getEventHandlers(readModel);
             Arrays.stream(streams).forEach(streamAnnotation -> {
-                com.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStream(streamAnnotation, (Consumer) readModel.handler(), eventHandlers);
+                com.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStream(streamAnnotation, readModel.handler(), eventHandlers);
                 readModel.addStream(stream);
+                log.info("Creating Stream for stream:{} - subscribed:{} for ReadModel:{}", stream.getStreamDetails().getStreamName(), stream.getStreamDetails().isSubscribed(), target.getClass().getSimpleName());
             });
             return readModel;
         };

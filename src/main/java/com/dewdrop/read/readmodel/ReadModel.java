@@ -2,25 +2,24 @@ package com.dewdrop.read.readmodel;
 
 import com.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
 import com.dewdrop.read.readmodel.stream.Stream;
-import com.dewdrop.structure.api.Message;
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.utils.EventHandlerUtils;
 import com.dewdrop.utils.ReadModelUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 
 @Data
 @Log4j2
-public class ReadModel<T extends Message> {
-    private Class<?> cachedStateObjectType;
+public class ReadModel<T extends Event> {
     private Object readModel;
-    private InMemoryCacheProcessor inMemoryCacheProcessor;
+    private Optional<InMemoryCacheProcessor> inMemoryCacheProcessor;
     protected List<Stream<T>> streams = new ArrayList<>();
 
-    public ReadModel(Object readModel, Class<?> cachedStateObjectType, InMemoryCacheProcessor inMemoryCacheProcessor) {
-        this.cachedStateObjectType = cachedStateObjectType;
+    public ReadModel(Object readModel, Optional<InMemoryCacheProcessor> inMemoryCacheProcessor) {
         this.readModel = readModel;
         this.inMemoryCacheProcessor = inMemoryCacheProcessor;
     }
@@ -37,9 +36,11 @@ public class ReadModel<T extends Message> {
     protected void process(T message) {
         log.debug("handling message {}", message);
 
-        inMemoryCacheProcessor.process(message);
+        if (inMemoryCacheProcessor.isPresent()) {
+            inMemoryCacheProcessor.get().process(message);
+        }
 
-        EventHandlerUtils.callEventHandler(readModel, message, inMemoryCacheProcessor.getCache());
+        EventHandlerUtils.callEventHandler(readModel, message);
     }
 
     public Consumer<T> handler() {
@@ -51,7 +52,8 @@ public class ReadModel<T extends Message> {
     }
 
     public <R> R getCachedItems() {
-        return inMemoryCacheProcessor.getCache();
+        if (inMemoryCacheProcessor.isPresent()) { return inMemoryCacheProcessor.get().getCache(); }
+        return null;
     }
 
     public Object getReadModel() {
@@ -65,6 +67,8 @@ public class ReadModel<T extends Message> {
 
     public void updateState() {
         streams.forEach(stream -> stream.updateState());
-        ReadModelUtils.updateReadModelCacheField(readModel, inMemoryCacheProcessor.getCache());
+        if (inMemoryCacheProcessor.isPresent()) {
+            ReadModelUtils.updateReadModelCacheField(readModel, inMemoryCacheProcessor.get().getCache());
+        }
     }
 }

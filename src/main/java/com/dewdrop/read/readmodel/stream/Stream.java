@@ -11,6 +11,7 @@ import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.streamstore.subscribe.StreamListener;
 import com.dewdrop.streamstore.subscribe.Subscription;
 import com.dewdrop.streamstore.write.StreamWriter;
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.read.Handler;
@@ -22,7 +23,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Data
 @Log4j2
-public class Stream<T extends Message> implements Handler<T> {
+public class Stream<T extends Event> implements Handler<T> {
     private Subscription<T> subscription;
     StreamStore streamStore;
     EventSerializer eventSerializer;
@@ -38,7 +39,6 @@ public class Stream<T extends Message> implements Handler<T> {
         this.streamStore = streamStore;
         this.eventSerializer = eventSerializer;
         this.streamPosition = new AtomicLong(0L);
-        log.info("Creating Stream for stream:{} - subscribed:{}", streamDetails.getStreamName(), streamDetails.isSubscribed());
     }
 
     public void subscribe() {

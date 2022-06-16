@@ -11,15 +11,20 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@ReadModel(resultClass = DewdropUser.class)
+@ReadModel
 @Stream(name = "DewdropUserCreated", streamType = StreamType.EVENT)
 @Getter
 public class DewdropUsersReadModel {
     @DewdropCache
     Map<UUID, DewdropUser> cache;
+    // need checkpoint here
+    // save checkpoint for the stream and playpack from checkpoint +1
+
 
     @QueryHandler
     public DewdropUser query(GetUserByIdQuery userById) {
+
+
         DewdropUser dewdropUser = cache.values().stream().filter(user -> user.getUserId().equals(userById.getUserId())).findAny().orElse(null);
         return dewdropUser;
     }

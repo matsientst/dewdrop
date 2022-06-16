@@ -28,7 +28,7 @@ public class StreamProcessor {
     }
 
 
-    public <T, R extends Message> Result<T> process(Command command, Method commandHandlerMethod, AggregateRoot aggregateRoot, UUID aggregateRootId) {
+    public <T, R extends Event> Result<T> process(Command command, Method commandHandlerMethod, AggregateRoot aggregateRoot, UUID aggregateRootId) {
         requireNonNull(command, "command is required");
         requireNonNull(commandHandlerMethod, "commandHandlerMethod is required");
         requireNonNull(aggregateRoot, "aggregateRoot is required");

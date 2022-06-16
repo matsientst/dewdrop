@@ -15,6 +15,7 @@ public class DewdropUser {
     @PrimaryCacheKey
     private UUID userId;
     private String username;
+    private Long version;
 
     @EventHandler
     public void on(DewdropUserCreated event) {
