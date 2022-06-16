@@ -96,6 +96,7 @@ class QueryHandlerUtilsTest {
         user.setUserId(query.getUserId());
         ReadModelUtils.updateReadModelCacheField(readModel, Map.of(user.getUserId(), user));
         Method spy = spy(method);
+        doReturn(new Class[] {GetUserByIdQuery.class}).when(spy).getParameterTypes();
         doReturn(Result.of(user)).when(spy).invoke(any(), any());
         try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
             utilities.when(() -> DewdropAnnotationUtils.getAnnotatedMethods(any(), any(Class.class))).thenReturn(Set.of(spy));
@@ -111,6 +112,7 @@ class QueryHandlerUtilsTest {
         user.setUserId(query.getUserId());
         ReadModelUtils.updateReadModelCacheField(readModel, Map.of(user.getUserId(), user));
         Method spy = spy(method);
+        doReturn(new Class[] {GetUserByIdQuery.class}).when(spy).getParameterTypes();
         doReturn(null).when(spy).invoke(any(), any());
         try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
             utilities.when(() -> DewdropAnnotationUtils.getAnnotatedMethods(any(), any(Class.class))).thenReturn(Set.of(spy));
