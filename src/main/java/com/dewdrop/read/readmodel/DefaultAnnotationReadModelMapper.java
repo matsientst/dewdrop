@@ -67,6 +67,15 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
         registerOnEvents();
     }
 
+    /**
+     * > Registers the query objects to the read models based on the first parameter of the method
+     * For Example: @EventHandler public void query(GetUserByIdQuery query) { ... }
+     * Which then would register GetUserByIdQuery.class -> UserReadModel.class
+     * This is how dewdrop.executeQuery(query) works
+     *
+     * @param readModelClass The class of the read model
+     * @param instance The instance of the read model that was constructed.
+     */
     void registerQueryHandlers(Class<?> readModelClass, Optional<ReadModelConstructed> instance) {
         List<Method> queryHandlerMethods = ReadModelUtils.getQueryHandlerMethods(readModelClass);
         for (Method queryHandlerMethod : queryHandlerMethods) {
@@ -78,6 +87,12 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
         }
     }
 
+    /**
+     * This will actually add the query and read model to our cache
+     *
+     * @param readModel The read model that will be used to handle the query.
+     * @param queryHandlerMethod The method that handles the query.
+     */
     void addToQueryReadModelCache(final ReadModel<Event> readModel, final Method queryHandlerMethod) {
         requireNonNull(readModel, "ReadModel is required");
         requireNonNull(queryHandlerMethod, "queryHandlerMethod is required");
@@ -87,6 +102,9 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
         QUERY_TO_READ_MODEL.computeIfAbsent(parameterType, k -> readModel);
     }
 
+    /**
+     * > For each method annotated with @OnEvent, create a read model that will be used to invoke the method when the event is received
+     */
     void registerOnEvents() {
         Set<Method> annotatedMethods = DewdropAnnotationUtils.getAnnotatedMethods(OnEvent.class);
         annotatedMethods.stream().forEach(annotatedMethod -> {
@@ -94,6 +112,18 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
         });
     }
 
+    /**
+     * This method looks for the read model based on the query object
+     * First it looks in the existing registered ReadModels, then it looks in the ephemeral ReadModels
+     * if they don't exist it will create a new one and cache it for the appropriate amount of time
+     * Which is determined by the @ReadModel annotation field destroyInMinutesUnused
+     * -1 = NEVER_DESTROY
+     *  0 = DESTROY_IMMEDIATELY
+     *  N = destroy after n minutes unused
+     *
+     * @param query The query object that is passed in from the client.
+     * @return Optional<ReadModel<Event>>
+     */
     @Override
     public Optional<ReadModel<Event>> getReadModelByQuery(Object query) {
         Class<?> queryclass = query.getClass();
@@ -111,6 +141,14 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
         return Optional.empty();
     }
 
+    /**
+     * Based on the readModelClass, construct and cache an ephemeral read model
+     * -1 = NEVER_DESTROY
+     *  0 = DESTROY_IMMEDIATELY
+     *  N = destroy after n minutes unused
+     * @param readModelClass The class of the read model to be created.
+     * @return A read model.
+     */
     ReadModel<Event> createAndCacheEphemeralReadModel(Class<?> readModelClass) {
         Optional<ReadModelConstructed> instance = readModelFactory.constructReadModel(readModelClass);
         if (instance.isPresent()) {
