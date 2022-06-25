@@ -3,7 +3,6 @@ package com.dewdrop.structure.subscribe;
 import static java.util.Objects.requireNonNull;
 
 import com.dewdrop.structure.api.Event;
-import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.read.Handler;
 import java.util.List;
 import lombok.Data;
@@ -11,9 +10,9 @@ import lombok.Data;
 @Data
 public class EventProcessor<T extends Event> {
     private Handler<T> handler;
-    private List<Class<?>> messageTypes;
+    private List<Class<? extends Event>> messageTypes;
 
-    public EventProcessor(Handler<T> handler, List<Class<?>> messageTypes) {
+    public EventProcessor(Handler<T> handler, List<Class<? extends Event>> messageTypes) {
         requireNonNull(handler, "Handler is required");
         requireNonNull(messageTypes, "messageTypes is required");
 

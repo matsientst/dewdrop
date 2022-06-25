@@ -1,6 +1,6 @@
 package com.dewdrop.fixture.readmodel.users;
 
-import com.dewdrop.read.StreamType;
+import com.dewdrop.read.readmodel.stream.StreamType;
 import com.dewdrop.read.readmodel.annotation.DewdropCache;
 import com.dewdrop.read.readmodel.annotation.ReadModel;
 import com.dewdrop.read.readmodel.annotation.Stream;
@@ -17,15 +17,11 @@ import lombok.extern.log4j.Log4j2;
 public class DewdropUsersReadModel {
     @DewdropCache
     Map<UUID, DewdropUser> cache;
-    // need checkpoint here
-    // save checkpoint for the stream and playpack from checkpoint +1
 
 
     @QueryHandler
     public DewdropUser query(GetUserByIdQuery userById) {
-
-
-        DewdropUser dewdropUser = cache.values().stream().filter(user -> user.getUserId().equals(userById.getUserId())).findAny().orElse(null);
+        DewdropUser dewdropUser = cache.get(userById.getUserId());
         return dewdropUser;
     }
 }

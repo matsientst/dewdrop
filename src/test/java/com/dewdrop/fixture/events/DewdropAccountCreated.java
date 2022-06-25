@@ -3,6 +3,7 @@ package com.dewdrop.fixture.events;
 import com.dewdrop.read.readmodel.annotation.CreationEvent;
 import java.util.UUID;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
@@ -10,6 +11,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @CreationEvent
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class DewdropAccountCreated extends DewdropAccountEvent {
     private String name;
     private UUID userId;

@@ -1,4 +1,4 @@
-package com.dewdrop.streamstore.subscribe;
+package com.dewdrop.read.readmodel.stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.dewdrop.fixture.events.DewdropUserCreated;
+import com.dewdrop.read.readmodel.stream.subscription.Subscription;
 import com.dewdrop.streamstore.eventstore.EventStore;
 import com.dewdrop.streamstore.serialize.JsonSerializer;
 import com.dewdrop.structure.datastore.StreamStore;
@@ -41,7 +42,7 @@ class StreamListenerTest {
         readEventData = mock(ReadEventData.class);
         streamStore = mock(EventStore.class);
         eventSerializer = mock(JsonSerializer.class);
-        streamListener = spy(new StreamListener<>(streamStore, eventSerializer));
+        streamListener = spy(StreamListener.getInstance(streamStore, eventSerializer));
     }
 
     @Test

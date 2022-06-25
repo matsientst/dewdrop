@@ -3,12 +3,14 @@ package com.dewdrop.fixture.events;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Data
 @NoArgsConstructor
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class DewdropFundsAddedToAccount extends DewdropAccountEvent {
     private BigDecimal funds;
 

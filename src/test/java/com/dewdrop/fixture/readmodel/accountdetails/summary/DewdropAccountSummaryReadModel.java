@@ -1,6 +1,6 @@
 package com.dewdrop.fixture.readmodel.accountdetails.summary;
 
-import com.dewdrop.read.StreamType;
+import com.dewdrop.read.readmodel.stream.StreamType;
 import com.dewdrop.read.readmodel.annotation.DewdropCache;
 import com.dewdrop.read.readmodel.annotation.ReadModel;
 import com.dewdrop.read.readmodel.annotation.Stream;
@@ -17,6 +17,7 @@ public class DewdropAccountSummaryReadModel {
 
     @QueryHandler
     public DewdropAccountSummary handle(DewdropAccountSummaryQuery query) {
+
         return dewdropAccountSummary;
     }
 

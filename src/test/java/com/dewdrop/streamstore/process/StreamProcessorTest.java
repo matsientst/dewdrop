@@ -18,7 +18,7 @@ import com.dewdrop.api.result.ResultException;
 import com.dewdrop.fixture.automated.DewdropUserAggregate;
 import com.dewdrop.fixture.command.DewdropCreateUserCommand;
 import com.dewdrop.fixture.events.DewdropUserCreated;
-import com.dewdrop.read.readmodel.StreamFactory;
+import com.dewdrop.read.readmodel.stream.StreamFactory;
 import com.dewdrop.read.readmodel.stream.Stream;
 import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.structure.api.Command;

@@ -1,7 +1,7 @@
 package com.dewdrop.streamstore.write;
 
 import com.dewdrop.aggregate.AggregateRoot;
-import com.dewdrop.read.StreamDetails;
+import com.dewdrop.read.readmodel.stream.StreamDetails;
 import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.events.WriteEventData;
@@ -31,10 +31,14 @@ public class StreamWriter {
     private static final int READ_PAGE_SIZE = 500;
 
 
-    public StreamWriter(StreamDetails streamDetails, StreamStore streamStore, EventSerializer eventSerializer) {
+    private StreamWriter(StreamDetails streamDetails, StreamStore streamStore, EventSerializer eventSerializer) {
         this.streamDetails = streamDetails;
         this.streamStore = streamStore;
         this.eventSerializer = eventSerializer;
+    }
+
+    public static StreamWriter getInstance(StreamDetails streamDetails, StreamStore streamStore, EventSerializer eventSerializer) {
+        return new StreamWriter(streamDetails, streamStore, eventSerializer);
     }
 
     public void save(AggregateRoot aggregateRoot) {
@@ -46,7 +50,6 @@ public class StreamWriter {
         List<Message> newMessages = aggregateRoot.takeEvents();
         List<WriteEventData> eventsToSave = generateEventsToSave(aggregateRoot, newMessages);
         WriteRequest request = new WriteRequest(streamDetails.getStreamName(), expectedVersion, eventsToSave);
-        log.debug("saving aggregateRoot:{}, with ID:{}", aggregateRoot.getTargetClassName(), aggregateId.get());
         streamStore.appendToStream(request);
     }
 

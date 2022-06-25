@@ -1,6 +1,6 @@
 package com.dewdrop.read.readmodel.annotation;
 
-import com.dewdrop.read.StreamType;
+import com.dewdrop.read.readmodel.stream.StreamType;
 import com.dewdrop.structure.read.Direction;
 import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;

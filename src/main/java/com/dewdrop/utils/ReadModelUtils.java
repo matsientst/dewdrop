@@ -8,6 +8,7 @@ import com.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
 import com.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
 import com.dewdrop.read.readmodel.cache.SingleItemInMemoryCache;
 import com.dewdrop.read.readmodel.query.QueryHandler;
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.api.Message;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -118,4 +119,6 @@ public class ReadModelUtils {
 
         return annotation.ephemeral();
     }
+
+
 }

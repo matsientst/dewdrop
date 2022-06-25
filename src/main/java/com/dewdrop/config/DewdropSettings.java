@@ -9,7 +9,7 @@ import com.dewdrop.read.readmodel.DefaultAnnotationReadModelMapper;
 import com.dewdrop.read.readmodel.QueryStateOrchestrator;
 import com.dewdrop.read.readmodel.ReadModelFactory;
 import com.dewdrop.read.readmodel.ReadModelMapper;
-import com.dewdrop.read.readmodel.StreamFactory;
+import com.dewdrop.read.readmodel.stream.StreamFactory;
 import com.dewdrop.streamstore.eventstore.EventStore;
 import com.dewdrop.streamstore.process.AggregateStateCommandProcessor;
 import com.dewdrop.streamstore.process.StreamProcessor;
@@ -18,6 +18,7 @@ import com.dewdrop.streamstore.stream.PrefixStreamNameGenerator;
 import com.dewdrop.structure.StreamNameGenerator;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.serialize.EventSerializer;
+import com.dewdrop.utils.DependencyInjectionUtils;
 import com.dewdrop.utils.ReflectionsConfigUtils;
 import com.eventstore.dbclient.EventStoreDBClient;
 import com.eventstore.dbclient.EventStoreDBClientSettings;
@@ -53,7 +54,8 @@ public class DewdropSettings {
     private StreamProcessor streamProcessor;
 
     @Builder(buildMethodName = "create")
-    public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper) {
+    public DewdropSettings(DewdropProperties properties, ObjectMapper objectMapper, EventStoreDBClient eventStoreDBClient, EventSerializer eventSerializer, CommandMapper commandMapper, ReadModelMapper readModelMapper,
+                    DependencyInjectionAdapter dependencyInjectionAdapter) {
         Ascii.writeAscii();
         this.properties = properties;
         this.objectMapper = Optional.ofNullable(objectMapper).orElse(defaultObjectMapper());
@@ -74,8 +76,9 @@ public class DewdropSettings {
         this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getAggregateStateCommandProcessor());
         this.readModelMapper = Optional.ofNullable(readModelMapper).orElse(new DefaultAnnotationReadModelMapper());
         this.readModelFactory = new ReadModelFactory(getStreamStore(), getEventSerializer(), getStreamFactory());
-        getReadModelMapper().init(getStreamStore(), getEventSerializer(), getStreamFactory(), getReadModelFactory());
+        getReadModelMapper().init(getReadModelFactory());
         this.queryStateOrchestrator = new QueryStateOrchestrator(getReadModelMapper());
+        DependencyInjectionUtils.setDependencyInjection(dependencyInjectionAdapter);
     }
 
     private EventStoreDBClient eventStoreDBClient(DewdropProperties properties) throws ParseError {

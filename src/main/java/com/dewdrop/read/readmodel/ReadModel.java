@@ -3,11 +3,13 @@ package com.dewdrop.read.readmodel;
 import com.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
 import com.dewdrop.read.readmodel.stream.Stream;
 import com.dewdrop.structure.api.Event;
+import com.dewdrop.utils.CacheUtils;
 import com.dewdrop.utils.EventHandlerUtils;
 import com.dewdrop.utils.ReadModelUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
@@ -34,13 +36,13 @@ public class ReadModel<T extends Event> {
     }
 
     protected void process(T message) {
-        log.debug("handling message {}", message);
+        Optional<UUID> cacheRootKey = CacheUtils.getCacheRootKey(message);
+        log.info("handling event type: {} - id:{}, version:{}", message.getClass().getSimpleName(), cacheRootKey.orElse(null), message.getVersion());
 
-        if (inMemoryCacheProcessor.isPresent()) {
-            inMemoryCacheProcessor.get().process(message);
-        }
+        inMemoryCacheProcessor.ifPresent(memoryCacheProcessor -> memoryCacheProcessor.process(message));
 
         EventHandlerUtils.callEventHandler(readModel, message);
+        EventHandlerUtils.callOnEvent(readModel, message);
     }
 
     public Consumer<T> handler() {
@@ -52,8 +54,7 @@ public class ReadModel<T extends Event> {
     }
 
     public <R> R getCachedItems() {
-        if (inMemoryCacheProcessor.isPresent()) { return inMemoryCacheProcessor.get().getCache(); }
-        return null;
+        return inMemoryCacheProcessor.<R>map(InMemoryCacheProcessor::getCache).orElse(null);
     }
 
     public Object getReadModel() {
@@ -66,9 +67,7 @@ public class ReadModel<T extends Event> {
 
 
     public void updateState() {
-        streams.forEach(stream -> stream.updateState());
-        if (inMemoryCacheProcessor.isPresent()) {
-            ReadModelUtils.updateReadModelCacheField(readModel, inMemoryCacheProcessor.get().getCache());
-        }
+        streams.forEach(Stream::updateState);
+        inMemoryCacheProcessor.ifPresent(memoryCacheProcessor -> ReadModelUtils.updateReadModelCacheField(readModel, memoryCacheProcessor.getCache()));
     }
 }

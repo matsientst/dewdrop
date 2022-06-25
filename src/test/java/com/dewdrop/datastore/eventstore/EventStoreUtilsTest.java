@@ -128,6 +128,7 @@ class EventStoreUtilsTest {
         RecordedEvent eventDbRecordedEvent = new RecordedEvent(eventStreamId, streamRevision, eventId, position, systemMetadata, eventData, userMetadata);
 
         doReturn(eventDbRecordedEvent).when(resolvedEvent).getEvent();
+        doReturn(eventDbRecordedEvent).when(resolvedEvent).getLink();
         try (MockedStatic<EventStoreUtils> utilities = mockStatic(EventStoreUtils.class)) {
             utilities.when(() -> EventStoreUtils.toReadEventData(any(RecordedEvent.class))).thenReturn(mock(ReadEventData.class));
 

@@ -20,7 +20,7 @@ public class QueryHandlerUtils {
 
         Optional<Method> targetMethod = getMethodForQuery(target.getClass(), query);
         if (targetMethod.isEmpty()) {
-            log.debug("Unable to find method annotated with @QueryHandler with method signature query({} query) on target class: {}", query.getClass().getSimpleName(), query.getClass().getSimpleName());
+            log.info("Unable to find method annotated with @QueryHandler with method signature query({} query) on target class: {}", query.getClass().getSimpleName(), query.getClass().getSimpleName());
             return Result.empty();
         }
 

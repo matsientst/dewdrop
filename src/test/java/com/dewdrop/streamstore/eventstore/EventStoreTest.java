@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -35,7 +34,6 @@ import com.eventstore.dbclient.StreamNotFoundException;
 import com.eventstore.dbclient.StreamRevision;
 import com.eventstore.dbclient.SubscribeToStreamOptions;
 import com.eventstore.dbclient.SubscriptionListener;
-import com.eventstore.dbclient.proto.persistentsubscriptions.Persistent.CreateReq.StreamOptions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -43,7 +41,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import org.apache.commons.collections4.ArrayStack;
 import org.apache.commons.collections4.ListUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +54,7 @@ class EventStoreTest {
     ReadResult readResult;
     StreamReadResults streamReadResults;
     ReadRequest readRequest;
+    CompletableFuture<ReadResult> completableFuture;
 
     @BeforeEach
     void setup() {
@@ -66,6 +64,7 @@ class EventStoreTest {
         readResult = new ReadResult(List.of(mock(ResolvedEvent.class)));
         streamReadResults = mock(StreamReadResults.class);
         readRequest = mock(ReadRequest.class);
+        completableFuture = mock(CompletableFuture.class);
     }
 
     @Test
@@ -122,8 +121,6 @@ class EventStoreTest {
         Long start = 1L;
         Long count = 1L;
 
-        CompletableFuture completableFuture = mock(CompletableFuture.class);
-
         ReadRequest readRequest = new ReadRequest(streamName, start, count, Direction.FORWARD);
 
         try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
@@ -145,13 +142,10 @@ class EventStoreTest {
         Long start = 1L;
         Long count = 1L;
 
-        CompletableFuture completableFuture = mock(CompletableFuture.class);
-
         ReadRequest readRequest = new ReadRequest(streamName, start, count, Direction.FORWARD);
 
         try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
             utils.when(() -> EventStoreUtils.options(any(ReadRequest.class))).thenReturn(mock(ReadStreamOptions.class));
-
 
             doReturn(completableFuture).when(eventStoreDBClient).readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
 
@@ -168,8 +162,6 @@ class EventStoreTest {
         String streamName = "streamName";
         Long start = 1L;
         Long count = 1L;
-
-        CompletableFuture completableFuture = mock(CompletableFuture.class);
 
         ReadRequest readRequest = new ReadRequest(streamName, start, count, Direction.FORWARD);
 
@@ -196,7 +188,7 @@ class EventStoreTest {
         }
 
         try (MockedStatic<SubscribeToStreamOptions> utils = mockStatic(SubscribeToStreamOptions.class)) {
-            utils.when(() -> SubscribeToStreamOptions.get()).thenReturn(options);
+            utils.when(SubscribeToStreamOptions::get).thenReturn(options);
 
         }
         doReturn(mock(StreamRevision.class)).when(options).fromRevision(anyLong());
@@ -222,7 +214,7 @@ class EventStoreTest {
         }
 
         try (MockedStatic<SubscribeToStreamOptions> utils = mockStatic(SubscribeToStreamOptions.class)) {
-            utils.when(() -> SubscribeToStreamOptions.get()).thenReturn(options);
+            utils.when(SubscribeToStreamOptions::get).thenReturn(options);
 
         }
         doReturn(mock(StreamRevision.class)).when(options).fromRevision(anyLong());
@@ -233,13 +225,11 @@ class EventStoreTest {
 
         doReturn(false).when(eventStore).subscribeTo(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
 
-        boolean result = eventStore.subscribeToStream(subscribeRequest);
-
-        assertThat(result, is(false)); // TODO: this test is for one line of code, is it needed?
+        assertThat(eventStore.subscribeToStream(subscribeRequest), is(false));
     }
 
     @Test
-    void subscribeTo() throws ExecutionException, InterruptedException {
+    void subscribeTo() {
 
         doReturn(mock(CompletableFuture.class)).when(eventStoreDBClient).subscribeToStream(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
 
@@ -250,36 +240,30 @@ class EventStoreTest {
 
     @Test
     void subscribeTo_Interupted_Exception() throws ExecutionException, InterruptedException {
-        boolean result = true;
-        CompletableFuture completableFuture = mock(CompletableFuture.class);
         doReturn(completableFuture).when(eventStoreDBClient).subscribeToStream(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
 
         doThrow(InterruptedException.class).when(completableFuture).get();
 
-        result = eventStore.subscribeTo("streamName", mock(SubscriptionListener.class), mock(SubscribeToStreamOptions.class));
+        boolean result = eventStore.subscribeTo("streamName", mock(SubscriptionListener.class), mock(SubscribeToStreamOptions.class));
 
         assertThat(result, is(false));
     }
 
     @Test
     void subscribeTo_Execution_Exception_with_StreamNotFound() throws ExecutionException, InterruptedException {
-        boolean result = true;
-        CompletableFuture completableFuture = mock(CompletableFuture.class);
         ExecutionException exception = new ExecutionException("", new StreamNotFoundException());
 
         doReturn(completableFuture).when(eventStoreDBClient).subscribeToStream(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
 
         doThrow(exception).when(completableFuture).get();
 
-        result = eventStore.subscribeTo("streamName", mock(SubscriptionListener.class), mock(SubscribeToStreamOptions.class));
+        boolean result = eventStore.subscribeTo("streamName", mock(SubscriptionListener.class), mock(SubscribeToStreamOptions.class));
 
         assertThat(result, is(false));
     }
 
     @Test
     void subscribeTo_Execution_Exception_without_StreamNotFound() throws ExecutionException, InterruptedException {
-        boolean result = true;
-        CompletableFuture completableFuture = mock(CompletableFuture.class);
         ExecutionException exception = new ExecutionException("", new NullPointerException());
 
         doReturn(completableFuture).when(eventStoreDBClient).subscribeToStream(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
@@ -295,9 +279,9 @@ class EventStoreTest {
 
     @Test
     void appendToStream() {
-        Integer currentBatchSize = eventStore.BATCH_SIZE + 1;
+        Integer currentBatchSize = EventStore.BATCH_SIZE + 1;
         WriteRequest writeRequest = mock(WriteRequest.class);
-        List list = spy(new ArrayList());
+        List<WriteEventData> list = spy(new ArrayList<>());
         doReturn(list).when(writeRequest).getEvents();
         doReturn("streamName").when(writeRequest).getStreamName();
         doReturn(currentBatchSize).when(list).size();
@@ -315,45 +299,39 @@ class EventStoreTest {
 
     @Test
     void appendToStream_InterruptedException() throws ExecutionException, InterruptedException {
-        Integer currentBatchSize = eventStore.BATCH_SIZE;
         WriteRequest writeRequest = mock(WriteRequest.class);
-        List list = spy(new ArrayList());
+        List<WriteEventData> list = spy(new ArrayList<>());
         doReturn(list).when(writeRequest).getEvents();
         doReturn("streamName").when(writeRequest).getStreamName();
         try (MockedStatic<ListUtils> listUtils = mockStatic(ListUtils.class)) {
-            List<EventData> eventData = spy(new ArrayList());
+            List<EventData> eventData = spy(new ArrayList<>());
             listUtils.when(() -> ListUtils.partition(any(List.class), anyInt())).thenReturn(List.of(List.of(eventData)));
             doReturn(mock(ListIterator.class)).when(eventData).listIterator();
 
-            CompletableFuture completableFuture = mock(CompletableFuture.class);
             doReturn(completableFuture).when(eventStoreDBClient).appendToStream(anyString(), any(AppendToStreamOptions.class), any(ListIterator.class));
 
             doThrow(InterruptedException.class).when(completableFuture).get();
 
             eventStore.appendToStream(writeRequest);
-            // TODO: verify log message?
         }
     }
 
     @Test
     void appendToStream_ExecutionException() throws ExecutionException, InterruptedException {
-        Integer currentBatchSize = eventStore.BATCH_SIZE;
         WriteRequest writeRequest = mock(WriteRequest.class);
-        doReturn(new ArrayList()).when(writeRequest).getEvents();
+        doReturn(new ArrayList<>()).when(writeRequest).getEvents();
         doReturn("streamName").when(writeRequest).getStreamName();
         ExecutionException exception = new ExecutionException("", new NullPointerException());
         try (MockedStatic<ListUtils> listUtils = mockStatic(ListUtils.class)) {
-            List<EventData> eventData = spy(new ArrayList());
+            List<EventData> eventData = spy(new ArrayList<>());
             listUtils.when(() -> ListUtils.partition(any(List.class), anyInt())).thenReturn(List.of(List.of(eventData)));
             doReturn(mock(ListIterator.class)).when(eventData).listIterator();
 
-            CompletableFuture completableFuture = mock(CompletableFuture.class);
             doReturn(completableFuture).when(eventStoreDBClient).appendToStream(anyString(), any(AppendToStreamOptions.class), any(ListIterator.class));
 
             doThrow(exception).when(completableFuture).get();
 
             eventStore.appendToStream(writeRequest);
-            // TODO: verify log message?
         }
     }
 

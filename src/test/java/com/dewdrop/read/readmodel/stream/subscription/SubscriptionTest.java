@@ -1,4 +1,4 @@
-package com.dewdrop.streamstore.subscribe;
+package com.dewdrop.read.readmodel.stream.subscription;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -15,9 +15,12 @@ import static org.mockito.Mockito.verify;
 
 import com.dewdrop.fixture.events.DewdropUserCreated;
 import com.dewdrop.fixture.events.DewdropUserEvent;
-import com.dewdrop.read.NameAndPosition;
-import com.dewdrop.read.StreamReader;
-import com.dewdrop.read.StreamType;
+import com.dewdrop.read.readmodel.stream.NameAndPosition;
+import com.dewdrop.read.readmodel.stream.StreamListener;
+import com.dewdrop.read.readmodel.stream.StreamReader;
+import com.dewdrop.read.readmodel.stream.StreamType;
+import com.dewdrop.read.readmodel.stream.subscription.Subscription;
+import com.dewdrop.structure.api.Event;
 import com.dewdrop.structure.read.Handler;
 import com.dewdrop.structure.subscribe.EventProcessor;
 import java.util.List;
@@ -31,7 +34,7 @@ import org.mockito.ArgumentCaptor;
 class SubscriptionTest {
     Subscription<DewdropUserEvent> subscription;
     StreamListener<DewdropUserEvent> streamListener;
-    List<Class<?>> messageTypes;
+    List<Class<? extends Event>> messageTypes;
     Handler<DewdropUserEvent> handler;
     NameAndPosition nameAndPosition;
     StreamReader streamReader;
@@ -42,7 +45,7 @@ class SubscriptionTest {
         this.messageTypes = List.of(DewdropUserEvent.class);
         this.streamListener = mock(StreamListener.class);
         this.subscription = spy(new Subscription<>(handler, messageTypes, streamListener));
-        this.nameAndPosition = new NameAndPosition(StreamType.CATEGORY, "ContentType", mock(Consumer.class));
+        this.nameAndPosition = new NameAndPosition(StreamType.CATEGORY, "ContentType");
         this.streamReader = mock(StreamReader.class);
     }
 

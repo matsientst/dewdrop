@@ -3,7 +3,7 @@ package com.dewdrop.fixture.customized;
 import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;
 import com.dewdrop.fixture.command.DewdropCreateAccountCommand;
-import com.dewdrop.read.readmodel.StreamFactory;
+import com.dewdrop.read.readmodel.stream.StreamFactory;
 import com.dewdrop.streamstore.process.StandaloneAggregateProcessor;
 import com.dewdrop.utils.AggregateIdUtils;
 import java.util.Optional;

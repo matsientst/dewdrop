@@ -2,8 +2,8 @@ package com.dewdrop.read.readmodel;
 
 import com.dewdrop.api.result.Result;
 import com.dewdrop.structure.api.Event;
-import com.dewdrop.structure.api.Message;
 import com.dewdrop.utils.QueryHandlerUtils;
+import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -15,7 +15,13 @@ public class QueryStateOrchestrator {
     }
 
     public <T, R> Result<R> executeQuery(T query) {
-        ReadModel<Event> readModel = readModelMapper.getReadModelByQuery(query);
+        Optional<ReadModel<Event>> optReadModel = readModelMapper.getReadModelByQuery(query);
+        if (optReadModel.isEmpty()) {
+            log.error("no read model found for query: {}", query.getClass().getSimpleName());
+            return Result.ofException(new IllegalStateException("no read model found for query: " + query.getClass().getSimpleName()));
+        }
+        ReadModel<Event> readModel = optReadModel.get();
+        log.info("Querying read model: {} with QueryType: {}", readModel.getClass().getSimpleName(), query.getClass().getSimpleName());
         readModel.updateState();
         return QueryHandlerUtils.callQueryHandler(readModel.getReadModel(), query);
     }

@@ -1,29 +1,28 @@
-package com.dewdrop.read;
+package com.dewdrop.read.readmodel.stream;
 
-import com.dewdrop.structure.api.Message;
-import java.util.function.Consumer;
-import lombok.AllArgsConstructor;
+import static java.util.Objects.requireNonNull;
+
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class NameAndPosition {
     private String streamName;
     private Long position;
 
     private StreamType streamType;
     private String name;
-    private Consumer<Message> consumer;
+
+    private NameAndPosition() {}
 
     @Builder(buildMethodName = "create")
-    public NameAndPosition(StreamType streamType, String name, Consumer<Message> consumer) {
+    public NameAndPosition(StreamType streamType, String name) {
+        requireNonNull(streamType, "streamType is required");
+        requireNonNull(name, "name is required");
+
         this.streamType = streamType;
         this.name = name;
-        this.consumer = consumer;
     }
 
     public boolean isComplete() {

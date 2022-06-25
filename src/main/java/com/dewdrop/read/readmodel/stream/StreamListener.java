@@ -1,12 +1,10 @@
-package com.dewdrop.streamstore.subscribe;
+package com.dewdrop.read.readmodel.stream;
 
+import com.dewdrop.read.readmodel.stream.subscription.Subscription;
 import com.dewdrop.structure.NoStreamException;
 import com.dewdrop.structure.api.Event;
-import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.events.ReadEventData;
-import com.dewdrop.structure.read.Direction;
-import com.dewdrop.structure.read.ReadRequest;
 import com.dewdrop.structure.serialize.EventSerializer;
 import com.dewdrop.structure.subscribe.SubscribeRequest;
 import java.util.Optional;
@@ -23,10 +21,14 @@ public class StreamListener<T extends Event> {
     private String streamName;
     private AtomicLong streamPosition;
 
-    public StreamListener(StreamStore streamStore, EventSerializer serializer) {
+    private StreamListener(StreamStore streamStore, EventSerializer serializer) {
         this.streamStore = streamStore;
         this.serializer = serializer;
         this.streamPosition = new AtomicLong(0L);
+    }
+
+    public static StreamListener getInstance(StreamStore streamStore, EventSerializer serializer) {
+        return new StreamListener(streamStore, serializer);
     }
 
     public boolean start(String streamName, Long checkpoint, Subscription subscription) throws NoStreamException {

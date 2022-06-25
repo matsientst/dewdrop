@@ -4,12 +4,11 @@ import static java.util.Objects.requireNonNull;
 
 import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.api.result.Result;
-import com.dewdrop.read.readmodel.StreamFactory;
+import com.dewdrop.read.readmodel.stream.StreamFactory;
 import com.dewdrop.read.readmodel.stream.Stream;
 import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.structure.api.Command;
 import com.dewdrop.structure.api.Event;
-import com.dewdrop.structure.api.Message;
 import com.dewdrop.utils.CommandHandlerUtils;
 import java.lang.reflect.Method;
 import java.util.List;

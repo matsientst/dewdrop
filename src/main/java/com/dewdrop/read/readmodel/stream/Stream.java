@@ -4,19 +4,13 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
 import com.dewdrop.aggregate.AggregateRoot;
-import com.dewdrop.read.StreamDetails;
-import com.dewdrop.read.StreamReader;
-import com.dewdrop.read.StreamType;
+import com.dewdrop.read.readmodel.stream.subscription.Subscription;
 import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
-import com.dewdrop.streamstore.subscribe.StreamListener;
-import com.dewdrop.streamstore.subscribe.Subscription;
 import com.dewdrop.streamstore.write.StreamWriter;
 import com.dewdrop.structure.api.Event;
-import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.datastore.StreamStore;
 import com.dewdrop.structure.read.Handler;
 import com.dewdrop.structure.serialize.EventSerializer;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
@@ -43,10 +37,10 @@ public class Stream<T extends Event> implements Handler<T> {
 
     public void subscribe() {
         if (!streamDetails.isSubscribed()) { return; }
-        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}, from position:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
+        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
                         streamDetails.getMessageTypes().stream().map(Class::getSimpleName).collect(joining(",")));
-        subscription = new Subscription<>(this, streamDetails.getMessageTypes(), new StreamListener<>(streamStore, eventSerializer));
-        StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails);
+        subscription = Subscription.getInstance(this);
+        StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);
 
         if (!subscription.subscribeByNameAndPosition(streamReader)) {
             log.info("Unable to find stream:{} will poll until we find then subscribe", streamDetails.getStreamName());
@@ -56,7 +50,7 @@ public class Stream<T extends Event> implements Handler<T> {
     }
 
     public void read(Long start, Long count) {
-        StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails, streamPosition);
+        StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails, streamPosition);
         streamReader.read(start, count);
         this.streamPosition = streamReader.getStreamPosition();
     }
@@ -64,10 +58,6 @@ public class Stream<T extends Event> implements Handler<T> {
     @Override
     public void handle(T event) {
         streamDetails.getEventHandler().accept(event);
-    }
-
-    public List<Class<?>> getMessageTypes() {
-        return streamDetails.getMessageTypes();
     }
 
     // If we don't have a subscription we can call read to catch up to where we need to be in our
@@ -79,14 +69,16 @@ public class Stream<T extends Event> implements Handler<T> {
     }
 
     public AggregateRoot getById(StreamStoreGetByIDRequest request) {
-        if (streamDetails.getStreamType() != StreamType.AGGREGATE) { throw new IllegalStateException("Stream is not an aggregate"); }
+        requireNonNull(request, "A StreamStoreGetByIDRequest is required");
 
-        StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails);
+        if (streamDetails.getStreamType() != StreamType.AGGREGATE) { throw new IllegalStateException("Stream is not an aggregate - we cannot get by id"); }
+
+        StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);
         return streamReader.getById(request);
     }
 
     public void save(AggregateRoot aggregateRoot) {
-        StreamWriter streamWriter = new StreamWriter(streamDetails, streamStore, eventSerializer);
+        StreamWriter streamWriter = StreamWriter.getInstance(streamDetails, streamStore, eventSerializer);
         streamWriter.save(aggregateRoot);
     }
 }

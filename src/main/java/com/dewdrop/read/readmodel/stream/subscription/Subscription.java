@@ -1,11 +1,12 @@
-package com.dewdrop.streamstore.subscribe;
+package com.dewdrop.read.readmodel.stream.subscription;
 
 import static java.util.Objects.requireNonNull;
 
-import com.dewdrop.read.NameAndPosition;
-import com.dewdrop.read.StreamReader;
+import com.dewdrop.read.readmodel.stream.NameAndPosition;
+import com.dewdrop.read.readmodel.stream.Stream;
+import com.dewdrop.read.readmodel.stream.StreamListener;
+import com.dewdrop.read.readmodel.stream.StreamReader;
 import com.dewdrop.structure.api.Event;
-import com.dewdrop.structure.api.Message;
 import com.dewdrop.structure.read.Handler;
 import com.dewdrop.structure.subscribe.EventProcessor;
 import java.util.ArrayList;
@@ -25,16 +26,20 @@ import lombok.extern.log4j.Log4j2;
 public class Subscription<T extends Event> {
     private final Map<Class<?>, List<EventProcessor<T>>> handlers = new ConcurrentHashMap<>();
     protected final StreamListener<T> listener;
-    private final List<Class<?>> messageTypes;
+    private final List<Class<? extends Event>> messageTypes;
     private final Handler<T> handler;
     private final ScheduledExecutorService executorService;
 
-    public Subscription(Handler<T> handler, List<Class<?>> messageTypes, StreamListener<T> listener) {
+    Subscription(Handler<T> handler, List<Class<? extends Event>> messageTypes, StreamListener<T> listener) {
         this.messageTypes = messageTypes;
         this.handler = handler;
-        this.executorService = Executors.newScheduledThreadPool(2);
+        this.executorService = Executors.newSingleThreadScheduledExecutor();
         this.listener = listener;
         registerHandlers();
+    }
+
+    public static Subscription getInstance(Stream stream) {
+        return new Subscription<>(stream, stream.getStreamDetails().getMessageTypes(), StreamListener.getInstance(stream.getStreamStore(), stream.getEventSerializer()));
     }
 
     void registerToMessageType(EventProcessor<T> eventProcessor, Class<?> eventType) {
@@ -85,6 +90,11 @@ public class Subscription<T extends Event> {
         return subscribed;
     }
 
+    /**
+     * When the stream has not been found create a poll task to subscribe to the stream.
+     *
+     * @param streamReader
+     */
     public void pollForCompletion(StreamReader streamReader) {
         CompletableFuture<NameAndPosition> completionFuture = new CompletableFuture<>();
         Runnable runnable = () -> {
@@ -100,12 +110,20 @@ public class Subscription<T extends Event> {
         schedule(streamReader, completionFuture, runnable);
     }
 
+    /**
+     * Schedule the lookup for the stream name and position. When found automatically subscribe.
+     *
+     * @param streamReader
+     * @param completionFuture
+     * @param runnable
+     */
     void schedule(StreamReader streamReader, CompletableFuture<NameAndPosition> completionFuture, Runnable runnable) {
-        final ScheduledFuture<?> checkFuture = executorService.scheduleAtFixedRate(runnable, 0, 3, TimeUnit.SECONDS);
+        final ScheduledFuture<?> checkFuture = executorService.scheduleAtFixedRate(runnable, 0, 1, TimeUnit.SECONDS);
         completionFuture.thenApply(result -> {
             subscribeByNameAndPosition(streamReader);
             return true;
         });
         completionFuture.whenComplete((result, thrown) -> checkFuture.cancel(false));
     }
+
 }

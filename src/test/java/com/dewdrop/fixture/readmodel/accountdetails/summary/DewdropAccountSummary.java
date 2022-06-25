@@ -19,6 +19,7 @@ public class DewdropAccountSummary {
 
     @EventHandler
     public void on(DewdropFundsAddedToAccount event) {
+        log.info("=====================> Adding funds to account:{}, funds:{}", event.getAccountId(), event.getFunds());
         this.totalFunds = totalFunds.add(event.getFunds());
     }
 

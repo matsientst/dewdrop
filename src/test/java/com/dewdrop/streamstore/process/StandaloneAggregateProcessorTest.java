@@ -17,7 +17,7 @@ import static org.mockito.Mockito.verify;
 import com.dewdrop.aggregate.AggregateRoot;
 import com.dewdrop.fixture.automated.DewdropUserAggregate;
 import com.dewdrop.fixture.command.DewdropCreateUserCommand;
-import com.dewdrop.read.readmodel.StreamFactory;
+import com.dewdrop.read.readmodel.stream.StreamFactory;
 import com.dewdrop.read.readmodel.stream.Stream;
 import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.utils.AggregateIdUtils;

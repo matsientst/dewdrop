@@ -1,5 +1,6 @@
-package com.dewdrop.read;
+package com.dewdrop.read.readmodel.stream;
 
+import static com.dewdrop.read.readmodel.stream.SubscriptionStartStrategy.READ_ALL_START_END;
 import static java.util.stream.Collectors.toList;
 
 import com.dewdrop.aggregate.AggregateRoot;
@@ -16,7 +17,6 @@ import com.dewdrop.structure.serialize.EventSerializer;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 
@@ -34,20 +34,24 @@ public class StreamReader {
     private boolean streamExists = false;
     private NameAndPosition nameAndPosition;
 
-    public StreamReader(StreamStore streamStore, EventSerializer eventSerializer, StreamDetails streamDetails, AtomicLong streamPosition) {
-        this(streamStore, eventSerializer, streamDetails);
-        this.streamPosition = streamPosition;
-    }
-
-    public StreamReader(StreamStore streamStore, EventSerializer eventSerializer, StreamDetails streamDetails) {
+    private StreamReader(StreamStore streamStore, EventSerializer eventSerializer, StreamDetails streamDetails) {
         this.streamStore = streamStore;
         this.eventSerializer = eventSerializer;
         this.streamDetails = streamDetails;
         this.streamName = streamDetails.getStreamName();
         this.streamPosition = new AtomicLong(0);
-        this.nameAndPosition = NameAndPosition.builder().streamType(streamDetails.getStreamType()).name(streamDetails.getStreamName()).consumer(streamDetails.getEventHandler()).create();
+        this.nameAndPosition = NameAndPosition.builder().streamType(streamDetails.getStreamType()).name(streamDetails.getStreamName()).create();
     }
 
+    public static StreamReader getInstance(StreamStore streamStore, EventSerializer eventSerializer, StreamDetails streamDetails, AtomicLong streamPosition) {
+        StreamReader streamReader = new StreamReader(streamStore, eventSerializer, streamDetails);
+        streamReader.setStreamPosition(streamPosition);
+        return streamReader;
+    }
+
+    public static StreamReader getInstance(StreamStore streamStore, EventSerializer eventSerializer, StreamDetails streamDetails) {
+        return new StreamReader(streamStore, eventSerializer, streamDetails);
+    }
 
     public boolean read(Long start, Long count) {
         long sliceStart = Optional.ofNullable(start).orElse(streamDetails.getDirection() == Direction.FORWARD ? -1L : 0L);
@@ -68,33 +72,23 @@ public class StreamReader {
             remaining -= readResults.getEvents().size();
             sliceStart = readResults.getNextEventPosition();
 
-            readResults.getEvents().forEach(eventRead());
+            readResults.getEvents().forEach(this::eventRead);
             streamPosition.setRelease(readResults.getNextEventPosition());
 
         } while (!readResults.isEndOfStream() && remaining != 0);
         return this.firstEventRead;
     }
 
-    protected Consumer<ReadEventData> eventRead() {
-        return readEventData -> {
-            try {
-                while (true) {
-                    long existingValue = streamPosition.get();
-                    long newValue = readEventData.getEventNumber();
-                    if (streamPosition.compareAndSet(existingValue, newValue)) {
-                        break;
-                    }
-                }
+    protected void eventRead(ReadEventData readEventData) {
+        try {
+            streamPosition.setRelease(readEventData.getEventNumber());
+            this.firstEventRead = true;
 
-                this.firstEventRead = true;
-
-                Optional<Event> event = eventSerializer.deserialize(readEventData);
-                streamDetails.getEventHandler().accept((Message) event.get());
-            } catch (Exception e) {
-                log.error("problem reading event: ", e);
-            }
-
-        };
+            Optional<Event> event = eventSerializer.deserialize(readEventData);
+            streamDetails.getEventHandler().accept(event.get());
+        } catch (Exception e) {
+            log.error("problem reading event - eventType:{}", readEventData.getEventType(), e);
+        }
     }
 
     public boolean validateStreamName(String streamName) {
@@ -109,8 +103,19 @@ public class StreamReader {
     }
 
     public NameAndPosition nameAndPosition() throws NoStreamException {
+        if (streamDetails.getSubscriptionStartStrategy() == READ_ALL_START_END) { return readAll(); }
+        return startFromEnd();
+    }
+
+    NameAndPosition startFromEnd() {
+        ReadRequest request = new ReadRequest(streamName, 0L, 1L, Direction.BACKWARD);
+        StreamReadResults readResults = streamStore.read(request);
+        if (!readResults.isStreamExists()) { return nameAndPosition; }
+        return nameAndPosition.completeTask(streamName, getPosition());
+    }
+
+    NameAndPosition readAll() {
         try {
-            Long position = getPosition();
             if (validateStreamName(streamName)) {
                 read(getPosition(), null);
                 return nameAndPosition.completeTask(streamName, getPosition());
@@ -155,8 +160,8 @@ public class StreamReader {
                 return null;
             }).filter(e -> e != null).collect(toList());
             aggregateRoot.restoreFromEvents(messages);
-
-        } while (version > streamReadResults.getNextEventPosition() && !streamReadResults.isEndOfStream());
+            log.info("version:{}, nextEventPosition:{}, endOfStream:{}", version, streamReadResults.getNextEventPosition(), streamReadResults.isEndOfStream());
+        } while (moreToRead(version, streamReadResults.getNextEventPosition(), streamReadResults.isEndOfStream()));
         //
         // if (version != Integer.MAX_VALUE && version != appliedEventCount) {throw new
         // AggregateVersionException(id, aggClass, (long) version, aggregate.getExpectedVersion());}
@@ -165,5 +170,9 @@ public class StreamReader {
         // AggregateVersionException(id, aggClass, (long) version, aggregate.getExpectedVersion());}
 
         return aggregateRoot;
+    }
+
+    boolean moreToRead(long version, long nextEventPosition, boolean isEndOfStream) {
+        return version > nextEventPosition && !isEndOfStream;
     }
 }

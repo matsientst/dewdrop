@@ -1,5 +1,6 @@
 package com.dewdrop.streamstore.eventstore;
 
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import com.dewdrop.structure.NoStreamException;
@@ -75,6 +76,7 @@ public class EventStore implements StreamStore {
         try {
             if (events.size() < BATCH_SIZE) {
                 ListIterator<EventData> iterator = data.listIterator();
+                log.info("Appending {} events to stream {}, events:{}", events.size(), streamName, events.stream().map(e -> e.getEventType()).collect(joining(",")));
                 client.appendToStream(streamName, options, iterator).get();
             } else {
                 final List<List<EventData>> batch = ListUtils.partition(data, BATCH_SIZE);

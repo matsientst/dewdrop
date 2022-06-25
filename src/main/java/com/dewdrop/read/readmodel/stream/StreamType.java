@@ -1,4 +1,4 @@
-package com.dewdrop.read;
+package com.dewdrop.read.readmodel.stream;
 
 public enum StreamType {
     CATEGORY, EVENT, AGGREGATE;

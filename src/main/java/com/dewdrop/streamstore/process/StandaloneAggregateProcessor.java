@@ -3,7 +3,7 @@ package com.dewdrop.streamstore.process;
 import static java.util.Objects.requireNonNull;
 
 import com.dewdrop.aggregate.AggregateRoot;
-import com.dewdrop.read.readmodel.StreamFactory;
+import com.dewdrop.read.readmodel.stream.StreamFactory;
 import com.dewdrop.read.readmodel.stream.Stream;
 import com.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import com.dewdrop.structure.api.Command;

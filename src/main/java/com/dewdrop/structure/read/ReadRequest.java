@@ -1,6 +1,6 @@
 package com.dewdrop.structure.read;
 
-import com.dewdrop.read.StreamDetails;
+import com.dewdrop.read.readmodel.stream.StreamDetails;
 import java.util.Optional;
 import lombok.Data;
 import lombok.ToString;
