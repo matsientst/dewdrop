@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 @Data
 @Aggregate
 public class DewdropAccountAggregate {
-
     @AggregateId
     UUID accountId;
     String name;

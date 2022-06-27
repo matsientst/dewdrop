@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 public class DewdropCreateAccountCommand extends DewdropAccountCommand {
-
     private String name;
     private UUID userId;
 
