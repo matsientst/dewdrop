@@ -51,7 +51,7 @@ public class ReadModelUtils {
         return new com.dewdrop.read.readmodel.ReadModel(target, inMemoryCacheProcessor);
     }
 
-    private static Optional<InMemoryCacheProcessor> createInMemoryCache(Class<?> targetClass) {
+    static Optional<InMemoryCacheProcessor> createInMemoryCache(Class<?> targetClass) {
         Field field = getReadModelCacheField(targetClass);
         if (field == null) {
             log.info("No @DewdropCache field found for {} - User will handle", targetClass.getName());

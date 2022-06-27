@@ -12,9 +12,12 @@ import static org.mockito.Mockito.mockStatic;
 import com.dewdrop.fixture.events.DewdropUserCreated;
 import com.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetails;
 import com.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetailsReadModel;
+import com.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryReadModel;
 import com.dewdrop.fixture.readmodel.users.DewdropUser;
 import com.dewdrop.fixture.readmodel.users.DewdropUsersReadModel;
 import com.dewdrop.read.readmodel.annotation.DewdropCache;
+import com.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
+import com.dewdrop.read.readmodel.cache.SingleItemInMemoryCache;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -117,6 +120,42 @@ class ReadModelUtilsTest {
             ReadModelUtils.updateReadModelCacheField(readModel, new ArrayList<>());
             assertThat(readModel.getCache(), is(nullValue()));
         }
+    }
+
+    @Test
+    @DisplayName("createInMemoryCache() - Given a read model class with an @DewdropCache of a map, create an MapBackedInMemoryCacheProcessor cache")
+    void createInMemoryCache() {
+        assertThat(ReadModelUtils.createInMemoryCache(DewdropUsersReadModel.class).get().getClass(), is(MapBackedInMemoryCacheProcessor.class));
+    }
+
+    @Test
+    @DisplayName("createInMemoryCache() - Given a read model class with an @DewdropCache of a single item, create an SingleItemInMemoryCache cache")
+    void createInMemoryCache_singleItemInMemoryCache() {
+        assertThat(ReadModelUtils.createInMemoryCache(DewdropAccountSummaryReadModel.class).get().getClass(), is(SingleItemInMemoryCache.class));
+    }
+
+    @Test
+    @DisplayName("createInMemoryCache() - Given a read model class without a @DewdropCache, return an empty Optional")
+    void createInMemoryCache_noCache() {
+        assertThat(ReadModelUtils.createInMemoryCache(String.class).isEmpty(), is(true));
+    }
+
+    @Test
+    @DisplayName("isEphemeral() - Given a read model class with an @ReadModel, when ephemeral is true, return true")
+    void isEphemeral() {
+        assertThat(ReadModelUtils.isEphemeral(DewdropAccountDetailsReadModel.class), is(true));
+    }
+
+    @Test
+    @DisplayName("isEphemeral() - Given a read model class with an @ReadModel, when ephemeral is false, return false")
+    void isEphemeral_false() {
+        assertThat(ReadModelUtils.isEphemeral(DewdropAccountSummaryReadModel.class), is(false));
+    }
+
+    @Test
+    @DisplayName("isEphemeral() - Given a read model class without a @ReadModel, return false")
+    void isEphemeral_noAnnotation() {
+        assertThat(ReadModelUtils.isEphemeral(String.class), is(false));
     }
 
     private class TooManyDewdropCaches {

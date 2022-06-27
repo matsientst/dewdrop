@@ -68,10 +68,10 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
     }
 
     /**
-     * > Registers the query objects to the read models based on the first parameter of the method
-     * For Example: @EventHandler public void query(GetUserByIdQuery query) { ... }
-     * Which then would register GetUserByIdQuery.class -> UserReadModel.class
-     * This is how dewdrop.executeQuery(query) works
+     * > Registers the query objects to the read models based on the first parameter of the method For
+     * Example: @EventHandler public void query(GetUserByIdQuery query) { ... } Which then would
+     * register GetUserByIdQuery.class -> UserReadModel.class This is how dewdrop.executeQuery(query)
+     * works
      *
      * @param readModelClass The class of the read model
      * @param instance The instance of the read model that was constructed.
@@ -103,7 +103,8 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
     }
 
     /**
-     * > For each method annotated with @OnEvent, create a read model that will be used to invoke the method when the event is received
+     * > For each method annotated with @OnEvent, create a read model that will be used to invoke the
+     * method when the event is received
      */
     void registerOnEvents() {
         Set<Method> annotatedMethods = DewdropAnnotationUtils.getAnnotatedMethods(OnEvent.class);
@@ -113,13 +114,11 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
     }
 
     /**
-     * This method looks for the read model based on the query object
-     * First it looks in the existing registered ReadModels, then it looks in the ephemeral ReadModels
-     * if they don't exist it will create a new one and cache it for the appropriate amount of time
-     * Which is determined by the @ReadModel annotation field destroyInMinutesUnused
-     * -1 = NEVER_DESTROY
-     *  0 = DESTROY_IMMEDIATELY
-     *  N = destroy after n minutes unused
+     * This method looks for the read model based on the query object First it looks in the existing
+     * registered ReadModels, then it looks in the ephemeral ReadModels if they don't exist it will
+     * create a new one and cache it for the appropriate amount of time Which is determined by
+     * the @ReadModel annotation field destroyInMinutesUnused -1 = NEVER_DESTROY 0 = DESTROY_IMMEDIATELY
+     * N = destroy after n minutes unused
      *
      * @param query The query object that is passed in from the client.
      * @return Optional<ReadModel<Event>>
@@ -135,17 +134,15 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
             Class<?> readModelClass = QUERY_TO_READ_MODEL_CLASS.get(queryclass);
             boolean containsKey = EPHEMERAL_READ_MODELS.containsKey(readModelClass);
             if (containsKey) { return Optional.of(EPHEMERAL_READ_MODELS.get(readModelClass)); }
-            log.info("CALLING THE MOTHERFUCKER");
             return Optional.ofNullable(createAndCacheEphemeralReadModel(readModelClass));
         }
         return Optional.empty();
     }
 
     /**
-     * Based on the readModelClass, construct and cache an ephemeral read model
-     * -1 = NEVER_DESTROY
-     *  0 = DESTROY_IMMEDIATELY
-     *  N = destroy after n minutes unused
+     * Based on the readModelClass, construct and cache an ephemeral read model -1 = NEVER_DESTROY 0 =
+     * DESTROY_IMMEDIATELY N = destroy after n minutes unused
+     *
      * @param readModelClass The class of the read model to be created.
      * @return A read model.
      */

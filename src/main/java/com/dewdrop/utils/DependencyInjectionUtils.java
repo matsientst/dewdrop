@@ -9,7 +9,7 @@ public class DependencyInjectionUtils {
     public static DependencyInjectionAdapter dependencyInjectionAdapter;
 
     public static void setDependencyInjection(DependencyInjectionAdapter dependencyInjection) {
-        if (dependencyInjectionAdapter != null) {
+        if (dependencyInjection != null) {
             DependencyInjectionUtils.dependencyInjectionAdapter = dependencyInjection;
         }
     }

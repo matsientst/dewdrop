@@ -54,7 +54,8 @@ public class StreamFactory {
      * It creates a `StreamDetails` object from an `AggregateRoot` object, and a UUID
      *
      * @param aggregateRoot The aggregate root to be serialized.
-     * @param overrideId This is the id of the aggregate root. If you don't provide it, the id will be extracted from the aggregate root.
+     * @param overrideId This is the id of the aggregate root. If you don't provide it, the id will be
+     *        extracted from the aggregate root.
      * @return A StreamDetails object
      */
     private StreamDetails fromAggregateRoot(final AggregateRoot aggregateRoot, final UUID overrideId) {
@@ -65,7 +66,8 @@ public class StreamFactory {
     }
 
     /**
-     * It creates a StreamDetails object that is used to create a stream that subscribes to an event stream
+     * It creates a StreamDetails object that is used to create a stream that subscribes to an event
+     * stream
      *
      * @param eventConsumer The consumer of the event.
      * @param eventClass The class of the event you want to listen to.
