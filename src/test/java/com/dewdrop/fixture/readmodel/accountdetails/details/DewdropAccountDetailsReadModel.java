@@ -21,21 +21,6 @@ public class DewdropAccountDetailsReadModel {
     @DewdropCache
     Map<UUID, DewdropAccountDetails> cache;
 
-
-    // list of users - listen to the usercreated event type, user deleted or user disabled
-    // accounts per user - listen to account created user assignment (create two events in aggregate) -
-    // listen for events
-    // account detail - aggregate stream account-id stream - Need to have this be constructed real time
-    // as we need it.
-    // @StreamCheckpointStart(name = "DewdropAccountAggregate")
-    // public Long checkpoint1() {
-    //
-    // }
-    //
-    // @StreamCheckpointStart(name = "DewdropUserAggregate")
-    // public Long checkpoint1() {
-    //
-    // }
     @EventHandler
     public void on(DewdropAccountCreated event, Map<UUID, DewdropAccountDetails> cachedItems) {
         log.debug("This was called");

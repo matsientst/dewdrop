@@ -9,9 +9,9 @@ import lombok.ToString;
 
 @Data
 @NoArgsConstructor
-@CreationEvent
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
+@CreationEvent
 public class DewdropAccountCreated extends DewdropAccountEvent {
     private String name;
     private UUID userId;
