@@ -1,9 +1,9 @@
 # Dewdrop
-Dewdrop is a simple, fast, and powerful java based event sourcing framework. The idea of Dewdrop is to make it easy to build a system that is event driven and easy to test by pushing all of the complex reading, writing and marshalling down deep into the framework allowing your team to focus on building out the business logic in terms of AggregateRoot behavior, Query logic, and ReadModel composition. 
+Dewdrop is a simple, fast, and powerful java based event sourcing framework. The idea of Dewdrop is to make it easy to build an event driven system easily and quickly by pushing all the complex reading, writing and marshalling down deep into the framework allowing your team to focus on building out the business logic in terms of AggregateRoot behavior, Query logic, and ReadModel composition. 
 
 If you're new to event sourcing we highly suggest understanding the main concepts around the ideas of CQRS, DDD, Event Storming and Event Modeling.
 
-Dewdrop is in its early stages of development and is not yet production ready. If you're interested in using it in a production environment, please reach out. We are looking to continue testing and devloping until it's ready for prime time. If you're only interested in using Dewdrop as a tool to understand event sourcing or for a simple project this is perfect for you. We'd also love to hear your feedback!
+Dewdrop is in its early stages of development and is not yet production ready. If you're interested in using it in a production environment, please reach out. We are looking to continue testing and devloping until it's ready for prime time. If you're only interested in using Dewdrop as a tool to understand event sourcing or for a simple project, then Dewdrop is perfect for you. We'd also love to hear your feedback!
 
 Currently, Dewdrop only supports using [EventStore](https://www.eventstore.com/) as its backing store. We will be expanding it to use other data stores and would love your feedback on what is most interesting to you in terms of next steps.
 
@@ -52,8 +52,8 @@ public class DewdropConfiguration {
     @Bean
     public DewdropProperties dewdropProperties() {
         return DewdropProperties.builder()
-            .packageToScan("com.dewdrop")
-            .packageToExclude("com.dewdrop.fixture.customized")
+            .packageToScan("org.dewdrop")
+            .packageToExclude("org.dewdrop.fixture.customized")
             .connectionString("esdb://localhost:2113?tls=false")
             .create();
     }
@@ -412,7 +412,15 @@ The `@ForeignCacheKey` annotation is used to identify the field that is the fore
 ### No Cache
 If you decide to not use a cache, then you should skip adding the `@DewdropCache` field. When you do this, you should add the `@EventHandler` method to the ReadModel itself. If you want to persist the current state in a local datastore you can make your ReadModel a spring object and then inject your repository into the ReadModel. Then on each event you can update your repository with the new state.
 
-TODO: We have not added the mechanism to read back from the starting point of each stream as of yet. We'll be adding this functionality shortly.  We will be adding an annotation to the ReadModel to identify the starting point of each stream `@StreamStartPosition` which should read from your repository and return the current version.
+You also need to add a `@StartFromPosition` decorated method that returns a long to retrieve the last version number from your cache to tell the framework where to start for that Stream. The `@StreamStartPosition` name and streamType must match the `@Stream` name and type on the same ReadModel. 
+
+```java
+    @StreamStartPosition(name = "DewdropAccountAggregate")
+    public Long startPosition() {
+        Optional<Long> position = accountDetailsRepository.lastAccountVersion();
+        return position.orElse(0L);
+    }
+```
 
 ### Querying
 To bring this all together, to query your ReadModel all you need to do is create a query object and then call the `query` method on the ReadModel.
@@ -445,3 +453,10 @@ In this query, since there is a `@DewdropCache`, you just need to look into the 
 
 If you don't have cache, then you can query against a local datastore or however, you want to architect it.
 
+### Acknowledgements
+I want to thank a number of people for their help and support in creating this library.
+
+First, I want to thank Chris Condron at Event Store, and Josh Kempner at PerkinElmer for their expertise and guidance in creating the Dewdrop client library. A lot of the basis of Dewdrop was inspired by the [reactive-domain](https://github.com/ReactiveDomain/reactive-domain) project built in C# by both Chris and Josh.
+Second, I want to thank Tom Friedhof, Kurtis Moffett, and Ryan Hartman for their contributions and effort in creating Dewdrop.
+
+Thanks Guys!

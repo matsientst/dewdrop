@@ -12,13 +12,13 @@
     <Root level="INFO">
       <AppenderRef ref="Console"/>
     </Root>
-    <Logger name="com.dewdrop" level="INFO" additivity="false">
+    <Logger name="org.dewdrop" level="INFO" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
-<!--    <Logger name="com.dewdrop.streamstore.eventstore" level="DEBUG" additivity="false">-->
+<!--    <Logger name="org.dewdrop.streamstore.eventstore" level="DEBUG" additivity="false">-->
 <!--      <AppenderRef ref="Console"/>-->
 <!--    </Logger>-->
-    <Logger name="com.dewdrop.config.ascii" level="INFO" additivity="false">
+    <Logger name="org.dewdrop.config.ascii" level="INFO" additivity="false">
       <AppenderRef ref="NoPatternConsole"/>
     </Logger>
   </Loggers>
