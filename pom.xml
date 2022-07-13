@@ -3,6 +3,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <name>Dewdrop Event Sourcing Framework</name>
+    <description>Dewdrop is a simple, fast, and powerful java based event sourcing framework.</description>
+    <url>http://dewdrop.events</url>
 
     <groupId>events.dewdrop</groupId>
     <artifactId>dewdrop</artifactId>
