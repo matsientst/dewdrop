@@ -52,8 +52,8 @@ public class DewdropConfiguration {
     @Bean
     public DewdropProperties dewdropProperties() {
         return DewdropProperties.builder()
-            .packageToScan("org.dewdrop")
-            .packageToExclude("org.dewdrop.fixture.customized")
+            .packageToScan("events.dewdrop")
+            .packageToExclude("events.dewdrop.fixture.customized")
             .connectionString("esdb://localhost:2113?tls=false")
             .create();
     }
@@ -421,6 +421,7 @@ You also need to add a `@StartFromPosition` decorated method that returns a long
         return position.orElse(0L);
     }
 ```
+
 
 ### Querying
 To bring this all together, to query your ReadModel all you need to do is create a query object and then call the `query` method on the ReadModel.
