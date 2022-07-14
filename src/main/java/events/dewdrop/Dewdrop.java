@@ -31,13 +31,18 @@ public class Dewdrop {
      * The event that is generated and returned can be of any type that extends the Event class.
      * Alternatively, it can return a List of Event objects.
      *
-     * @CommandHandler public AccountCreated createAccount(CreateAccountCommand command) {
-     *                 DewdropValidator.validate(command); return new
-     *                 AccountCreated(command.getAccountId(), command.getUserId(),
-     *                 command.getBalance()); }
+     * <pre>
+     * &#64;CommandHandler
+     * public AccountCreated createAccount(CreateAccountCommand command) {
+     *     DewdropValidator.validate(command);
+     *     return new AccountCreated(command.getAccountId(), command.getUserId(), command.getBalance());
+     * }
+     * </pre>
      *
+     * @param <T> The type of command that you are executing.
      * @param command The command to execute.
-     * @return Result<Boolean>
+     * @return {@code Result<Boolean>}
+     * @throws ValidationException If the command is invalid.
      */
     public <T extends Command> Result<Boolean> executeCommand(T command) throws ValidationException {
         return settings.getAggregateStateOrchestrator().executeCommand(command);
@@ -48,9 +53,11 @@ public class Dewdrop {
      * correlation and causation ids for the command. These are used to correlate events and ascribe a
      * tracking to understand where the event came from.
      *
+     * @param <T> The type of command that you are executing.
      * @param command The command to execute.
      * @param previous The previous command that was executed.
-     * @return Result<Boolean>
+     * @return {@code Result<Boolean>}
+     * @throws ValidationException If the command is invalid.
      */
     public <T extends Command> Result<Boolean> executeSubsequentCommand(T command, Command previous) throws ValidationException {
         return settings.getAggregateStateOrchestrator().executeSubsequentCommand(command, previous);
@@ -62,11 +69,17 @@ public class Dewdrop {
      * is decorated with @ReadModel and a method on that class that is decorated with @QueryHandler with
      * your query class as the only parameter.
      *
-     * @QueryHandler public AccountDetails getById(GetAccountByIdQuery query) { return
-     *               cache.get(query.getAccountId()); }
+     * <pre>
+     * &#64;QueryHandler
+     * public AccountDetails getById(GetAccountByIdQuery query) {
+     *     return cache.get(query.getAccountId());
+     * }
+     * </pre>
      *
+     * @param <T> The type of query that you are executing.
+     * @param <R> The expected result of the query that you are executing.
      * @param query The query to execute.
-     * @return Result<R>
+     * @return {@code Result<R>}
      */
     public <T, R> Result<R> executeQuery(T query) {
         return settings.getQueryStateOrchestrator().executeQuery(query);
@@ -75,7 +88,7 @@ public class Dewdrop {
     /**
      * `getSettings()` returns the settings object for the current Dewdrop instance
      *
-     * @return The settings object.
+     * @return DewdropSettings
      */
     public DewdropSettings getSettings() {
         return settings;

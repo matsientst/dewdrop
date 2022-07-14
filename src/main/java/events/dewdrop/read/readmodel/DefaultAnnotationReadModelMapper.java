@@ -121,7 +121,7 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
      * N = destroy after n minutes unused
      *
      * @param query The query object that is passed in from the client.
-     * @return Optional<ReadModel>
+     * @return {@code Optional<ReadModel>}
      */
     @Override
     public Optional<ReadModel<Event>> getReadModelByQuery(Object query) {

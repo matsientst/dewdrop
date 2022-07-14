@@ -29,8 +29,10 @@ public class AggregateStateOrchestrator {
      * Retrieves the appropriate command handler method for the given command and invokes it on the
      * AggregateRoot
      *
+     * @param <T> The type of the result of the command handler method
      * @param command The command to execute.
-     * @return Result<Boolean>
+     * @return {@code Result<Boolean>}
+     * @throws ValidationException If the command is invalid
      */
     public <T extends Command> Result<Boolean> executeCommand(T command) throws ValidationException {
         Optional<Method> commandHandlerMethod = commandMapper.getCommandHandlersThatSupportCommand(command);
@@ -46,9 +48,11 @@ public class AggregateStateOrchestrator {
      * and correlationIds for then this assigns the correlation and causation to the command and process
      * it.
      *
+     * @param <T> The type of the result of the command handler method
      * @param command The command to execute
      * @param previous The previous command that was executed.
-     * @return A Result<Boolean>
+     * @return {@code Result<Boolean>}
+     * @throws ValidationException If the command is invalid
      */
     public <T extends Command> Result<Boolean> executeSubsequentCommand(T command, CorrelationCausation previous) throws ValidationException {
         Optional<Method> commandHandlerMethod = commandMapper.getCommandHandlersThatSupportCommand(command);

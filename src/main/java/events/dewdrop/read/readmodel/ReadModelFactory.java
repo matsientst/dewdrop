@@ -36,7 +36,7 @@ public class ReadModelFactory {
      * Construct a read model from a read model target
      *
      * @param readModelTarget The class of the read model to be constructed.
-     * @return Optional<ReadModelConstructed>
+     * @return {@code Optional<ReadModelConstructed>}
      */
     public Optional<ReadModelConstructed> constructReadModel(Class<?> readModelTarget) {
         Optional<ReadModelWrapper> optReadModelWrapper = ReadModelWrapper.of(readModelTarget);
@@ -58,6 +58,7 @@ public class ReadModelFactory {
     /**
      * It takes a read model object and returns a read model object with streams attached to it
      *
+     * @param <T> The type event supported by the ReadModel
      * @param readModelWrapper The object that is annotated with @ReadModel
      * @return A ReadModel object
      */
@@ -85,6 +86,7 @@ public class ReadModelFactory {
     /**
      * This method creates a read model for an @OnEvent annotated method
      *
+     * @param <T> The type event supported by the ReadModel
      * @param annotatedMethod The method that is annotated with @OnEvent
      * @return A ReadModel
      */

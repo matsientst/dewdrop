@@ -36,12 +36,14 @@ public class AggregateRootLifecycle {
      * Process a command by loading the aggregate root from the event stream, executing the command on
      * the aggregate root, and saving the aggregate root back to the event stream
      *
+     * @param <T> The type of event that is handled by the stream
      * @param command The command to be processed
      * @param commandHandlerMethod The method that will be invoked on the aggregate root to process the
      *        command.
      * @param aggregateRoot The aggregate root that will be used to process the command.
      * @param aggregateRootId The id of the aggregate root
-     * @return A Result<Boolean>
+     * @return A {@code Result<Boolean>}
+     * @throws ValidationException If the command is invalid
      */
     public <T extends Event> Result<Boolean> process(Command command, Method commandHandlerMethod, AggregateRoot aggregateRoot, UUID aggregateRootId) throws ValidationException {
         requireNonNull(command, "command is required");
@@ -85,10 +87,12 @@ public class AggregateRootLifecycle {
      * an exception, throw it as a validation exception. Otherwise, process the events returned by the
      * command handler
      *
+     * @param <T> The type of event that is returned by the command handler method
      * @param command The command to execute
      * @param commandHandlerMethod The method that will be invoked to execute the command.
      * @param aggregateRoot The aggregate root that the command is being executed on.
      * @return The aggregate root that was passed in.
+     * @throws ValidationException If the command handler method throws a validation exception
      */
     protected <T> AggregateRoot executeCommand(Command command, Method commandHandlerMethod, AggregateRoot aggregateRoot) throws ValidationException {
         log.debug("executing command:{} for aggregateRoot:{}", command.getClass().getSimpleName(), aggregateRoot.getTargetClassName());
@@ -101,6 +105,7 @@ public class AggregateRootLifecycle {
     /**
      * If the events are a list, then raise each event individually, otherwise raise the event
      *
+     * @param <T> The type of event
      * @param aggregateRoot The aggregate root to apply the events to.
      * @param events The events to be processed.
      */

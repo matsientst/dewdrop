@@ -34,7 +34,8 @@ public class AggregateStateCommandProcessor {
      *
      * @param command The command to be processed.
      * @param commandHandlerMethod The method that will be invoked to process the command.
-     * @return A Result<Boolean>
+     * @return A {@code Result<Boolean>}
+     * @throws ValidationException If the command is invalid.
      */
     public Result<Boolean> processCommand(Command command, Method commandHandlerMethod) throws ValidationException {
         Optional<AggregateRoot> optAggregateRoot = AggregateUtils.createFromCommandHandlerMethod(commandHandlerMethod);
@@ -54,7 +55,8 @@ public class AggregateStateCommandProcessor {
      * @param commandHandlerMethod The method that will be invoked to process the command.
      * @param aggregateRoot The aggregate root that the command is being applied to.
      * @param aggregateRootId The id of the aggregate root that the command is being sent to.
-     * @return A CommandResult<Boolean>
+     * @return A {@code Result<Boolean>}
+     * @throws ValidationException If the command is invalid.
      */
     Result<Boolean> process(Command command, Method commandHandlerMethod, AggregateRoot aggregateRoot, UUID aggregateRootId) throws ValidationException {
         log.debug("Processing command {}", command.getClass().getSimpleName());

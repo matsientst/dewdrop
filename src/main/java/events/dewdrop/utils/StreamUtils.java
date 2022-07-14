@@ -18,9 +18,10 @@ public class StreamUtils {
      * "Find the method in the read model that is annotated with @StreamStartPosition and has the same
      * name and streamType as the stream annotation."
      *
+     * @param <T> The type event supported by the ReadModel
      * @param streamAnnotation The annotation on the read model class
      * @param readModel The read model class
-     * @return A method that is annotated with @StreamStartPosition and has the same name as the stream.
+     * @return {@code Optional<Method>} - A method that is annotated with @StreamStartPosition and has the same name as the stream.
      */
     public static <T extends Event> Optional<Method> getStreamStartPositionMethod(Stream streamAnnotation, ReadModel<T> readModel) {
         final ReadModelWrapper readModelWrapper = readModel.getReadModelWrapper();
@@ -38,7 +39,7 @@ public class StreamUtils {
      *
      * @param streamAnnotation The @Stream annotation on the class
      * @param method The method that is being invoked.
-     * @return A boolean value.
+     * @return boolean
      */
     static boolean isCorrectStreamStartPosition(Stream streamAnnotation, Method method) {
         StreamStartPosition fieldAnnotation = method.getAnnotation(StreamStartPosition.class);

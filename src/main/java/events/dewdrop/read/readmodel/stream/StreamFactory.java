@@ -3,8 +3,13 @@ package events.dewdrop.read.readmodel.stream;
 import static java.util.Objects.requireNonNull;
 
 import events.dewdrop.aggregate.AggregateRoot;
+import events.dewdrop.read.readmodel.ReadModel;
 import events.dewdrop.read.readmodel.annotation.Stream;
 import events.dewdrop.structure.StreamNameGenerator;
+import events.dewdrop.structure.api.Event;
+import events.dewdrop.structure.datastore.StreamStore;
+import events.dewdrop.structure.read.Direction;
+import events.dewdrop.structure.serialize.EventSerializer;
 import events.dewdrop.utils.EventHandlerUtils;
 import events.dewdrop.utils.StreamUtils;
 import java.lang.reflect.Method;
@@ -13,19 +18,16 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.extern.log4j.Log4j2;
-import events.dewdrop.read.readmodel.ReadModel;
-import events.dewdrop.structure.api.Event;
-import events.dewdrop.structure.datastore.StreamStore;
-import events.dewdrop.structure.read.Direction;
-import events.dewdrop.structure.serialize.EventSerializer;
 
 /**
  * Factory for creating {@link events.dewdrop.read.readmodel.stream.Stream}s. You can create a
  * stream for a read model based on the type of the stream.
  *
+ * <pre>
  * `constructStreamFromAggregateRoot()` will create a stream for the aggregate root.
  * `constructStreamFromStream()` will create a stream from an @Stream annotation.
  * `constructStreamForEvent()` will create a stream for a specific event.
+ * </pre>
  */
 @Log4j2
 public class StreamFactory {
@@ -47,6 +49,7 @@ public class StreamFactory {
     /**
      * Construct a StreamDetails from a stream annotation, an event handler, and a list of message types
      *
+     * @param <T> The type event supported by the ReadModel
      * @param streamAnnotation The annotation that was placed on the method
      * @param readModel The read model that the stream is being created for
      * @return StreamDetails
@@ -117,6 +120,7 @@ public class StreamFactory {
     /**
      * Construct a stream from a stream annotation and a ReadModel
      *
+     * @param <T> The type event supported by the ReadModel
      * @param streamAnnotation The annotation on the ReadModel class
      * @param readModel The ReadModel class that is being constructed.
      * @return A stream.
@@ -134,7 +138,7 @@ public class StreamFactory {
      * @param eventClass The class of the event that you want to listen to.
      * @return A stream.
      */
-    public <T extends Event> events.dewdrop.read.readmodel.stream.Stream constructStreamForEvent(Consumer handler, Class<? extends Event> eventClass) {
+    public events.dewdrop.read.readmodel.stream.Stream constructStreamForEvent(Consumer handler, Class<? extends Event> eventClass) {
         StreamDetails streamDetails = fromEvent(handler, eventClass);
         events.dewdrop.read.readmodel.stream.Stream stream = new events.dewdrop.read.readmodel.stream.Stream(streamDetails, streamStore, eventSerializer);
         return stream;
