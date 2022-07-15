@@ -21,7 +21,8 @@ public class StreamUtils {
      * @param <T> The type event supported by the ReadModel
      * @param streamAnnotation The annotation on the read model class
      * @param readModel The read model class
-     * @return {@code Optional<Method>} - A method that is annotated with @StreamStartPosition and has the same name as the stream.
+     * @return {@code Optional<Method>} - A method that is annotated with @StreamStartPosition and has
+     *         the same name as the stream.
      */
     public static <T extends Event> Optional<Method> getStreamStartPositionMethod(Stream streamAnnotation, ReadModel<T> readModel) {
         final ReadModelWrapper readModelWrapper = readModel.getReadModelWrapper();
