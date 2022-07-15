@@ -29,5 +29,5 @@ jobs:
     - uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
-        files: ./**/target/site/jacoco-merged-test-coverage-report/jacoco.xml
+        files: ./target/site/jacoco-merged-test-coverage-report/jacoco.xml
         verbose: true # optional (default = false)
