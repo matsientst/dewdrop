@@ -30,7 +30,6 @@ public class ReadModelWrapper {
         this.readModel = readModel;
         assignEventHandlers(this.eventToEventHandlerMethod, () -> EventHandlerUtils.getEventToEventHandlerMethod(this.originalReadModelClass), originalReadModelClass, readModel);
         this.cacheField = ReadModelUtils.getMatchingReadModelCacheField(this);
-
     }
 
     private void assignEventHandlers(final Map<Class<? extends Event>, Method> eventToHandler, Supplier<Map<Class<? extends Event>, Method>> getEventToHandlers, Class<?> originalReadModelClass, Object readModel) {

@@ -1,6 +1,7 @@
 package events.dewdrop.fixture.customized;
 
 import events.dewdrop.aggregate.AggregateRoot;
+import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;
 import events.dewdrop.read.readmodel.stream.StreamFactory;
 import events.dewdrop.streamstore.process.StandaloneAggregateProcessor;
 import events.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;

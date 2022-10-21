@@ -22,6 +22,7 @@ public class ReadModel<T extends Event> {
     public ReadModel(ReadModelWrapper readModelWrapper, Optional<InMemoryCacheProcessor> inMemoryCacheProcessor) {
         this.readModelWrapper = readModelWrapper;
         this.inMemoryCacheProcessor = inMemoryCacheProcessor;
+
     }
     // on demand read through cache
     // live subscription to category stream and throw away any events for account not currently in

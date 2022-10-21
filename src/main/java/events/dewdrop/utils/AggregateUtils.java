@@ -6,19 +6,21 @@ import events.dewdrop.structure.api.Command;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
-import org.apache.commons.lang3.reflect.MethodUtils;
 
 @Log4j2
 public class AggregateUtils {
     private AggregateUtils() {}
 
     private static final List<Class<?>> AGGREGATE_ROOTS_CACHE = new ArrayList<>();
+    private static final Map<Class<?>, List<Method>> AGGREGATE_ROOTS_METHOD_CACHE = new HashMap<>();
 
     public static List<Class<?>> getAggregateRootsThatSupportCommand(Command command) {
         if (AGGREGATE_ROOTS_CACHE.isEmpty()) {
@@ -27,11 +29,10 @@ public class AggregateUtils {
 
         List<Class<?>> result = new ArrayList<>();
 
-        AGGREGATE_ROOTS_CACHE.forEach(aggregateRoot -> {
-            if (MethodUtils.getMatchingAccessibleMethod(aggregateRoot, "handle", command.getClass()) != null) {
-                result.add(aggregateRoot);
-            }
-        });
+        List<Method> methods = AGGREGATE_ROOTS_METHOD_CACHE.get(command.getClass());
+        if (!CollectionUtils.isEmpty(methods)) {
+            methods.forEach(method -> result.add(method.getDeclaringClass()));
+        }
 
         if (CollectionUtils.isEmpty(result)) {
             log.error("No AggregateRoots found that have an @CommandHandler for handle({} command)", command.getClass().getSimpleName());
@@ -48,6 +49,11 @@ public class AggregateUtils {
         aggregates.forEach(aggregate -> {
             log.info("Registering class annotated as @AggregateRoot {}", aggregate.getSimpleName());
             AGGREGATE_ROOTS_CACHE.add(aggregate);
+
+            List<Method> commandHandlersForAggregateRoot = CommandHandlerUtils.getCommandHandlersForAggregateRoot(aggregate);
+            commandHandlersForAggregateRoot.forEach(method -> {
+                AGGREGATE_ROOTS_METHOD_CACHE.computeIfAbsent(method.getParameterTypes()[0], key -> new ArrayList<>()).add(method);
+            });
         });
 
         if (CollectionUtils.isEmpty(AGGREGATE_ROOTS_CACHE)) {

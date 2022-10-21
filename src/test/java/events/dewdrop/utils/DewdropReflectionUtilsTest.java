@@ -86,7 +86,7 @@ class DewdropReflectionUtilsTest {
     @Test
     @DisplayName("callMethod() - Given a valid argument, are we able to call a method on a target object and validate the response")
     void callMethod() {
-        Result<DewdropUserCreated> result = DewdropReflectionUtils.callMethod(aggregate, "handle", command);
+        Result<DewdropUserCreated> result = DewdropReflectionUtils.callMethod(aggregate, "createUser", command);
 
         DewdropUserCreated response = result.get();
         assertThat(response, is(notNullValue()));

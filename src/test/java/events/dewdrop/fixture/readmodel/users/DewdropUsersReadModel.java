@@ -18,7 +18,6 @@ public class DewdropUsersReadModel {
     @DewdropCache
     Map<UUID, DewdropUser> cache;
 
-
     @QueryHandler
     public DewdropUser query(GetUserByIdQuery userById) {
         DewdropUser dewdropUser = cache.get(userById.getUserId());

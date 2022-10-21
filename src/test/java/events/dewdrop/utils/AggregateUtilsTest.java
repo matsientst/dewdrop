@@ -30,7 +30,6 @@ class AggregateUtilsTest {
     void getAggregateRootsThatSupportCommand() {
         DewdropCreateUserCommand command = new DewdropCreateUserCommand(UUID.randomUUID(), "Test");
         assertThat(AggregateUtils.getAggregateRootsThatSupportCommand(command).get(0), is(DewdropUserAggregate.class));
-
     }
 
     @Test

@@ -4,6 +4,7 @@ import events.dewdrop.aggregate.annotation.Aggregate;
 import events.dewdrop.aggregate.annotation.AggregateId;
 import events.dewdrop.api.validators.ValidationException;
 import events.dewdrop.command.CommandHandler;
+import events.dewdrop.fixture.events.DewdropAccountEvent;
 import events.dewdrop.read.readmodel.annotation.EventHandler;
 import events.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;
 import events.dewdrop.fixture.command.DewdropCreateAccountCommand;
@@ -26,7 +27,7 @@ public class DewdropAccountAggregate {
     public DewdropAccountAggregate() {}
 
     @CommandHandler
-    public List<DewdropAccountCreated> handle(DewdropCreateAccountCommand command) throws ValidationException {
+    public List<DewdropAccountEvent> handle(DewdropCreateAccountCommand command) throws ValidationException {
         DewdropValidator.validate(command);
 
         return List.of(new DewdropAccountCreated(command.getAccountId(), command.getName(), command.getUserId()));

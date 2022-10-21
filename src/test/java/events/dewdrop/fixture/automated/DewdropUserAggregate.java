@@ -2,13 +2,14 @@ package events.dewdrop.fixture.automated;
 
 import events.dewdrop.aggregate.annotation.Aggregate;
 import events.dewdrop.aggregate.annotation.AggregateId;
+import events.dewdrop.api.validators.ValidationException;
 import events.dewdrop.command.CommandHandler;
-import events.dewdrop.read.readmodel.annotation.EventHandler;
 import events.dewdrop.fixture.command.DewdropCreateUserCommand;
 import events.dewdrop.fixture.events.DewdropUserCreated;
+import events.dewdrop.read.readmodel.annotation.EventHandler;
+import events.dewdrop.structure.api.validator.DewdropValidator;
 import java.util.UUID;
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -22,10 +23,8 @@ public class DewdropUserAggregate {
     public DewdropUserAggregate() {}
 
     @CommandHandler
-    public DewdropUserCreated handle(DewdropCreateUserCommand command) {
-        if (StringUtils.isEmpty(command.getUsername())) { throw new IllegalArgumentException("Username cannot be empty"); }
-        if (command.getUserId() == null) { throw new IllegalArgumentException("UserId cannot be empty"); }
-
+    public DewdropUserCreated createUser(DewdropCreateUserCommand command) throws ValidationException {
+        DewdropValidator.validate(command);
         return new DewdropUserCreated(command.getUserId(), command.getUsername());
     }
 

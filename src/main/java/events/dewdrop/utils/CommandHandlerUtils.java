@@ -6,10 +6,12 @@ import events.dewdrop.aggregate.AggregateRoot;
 import events.dewdrop.command.CommandHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Set;
 import lombok.extern.log4j.Log4j2;
 import events.dewdrop.api.result.Result;
 import events.dewdrop.structure.api.Command;
+import org.apache.commons.lang3.reflect.MethodUtils;
 
 @Log4j2
 public class CommandHandlerUtils {
@@ -55,6 +57,11 @@ public class CommandHandlerUtils {
         if (annotation.value() == void.class) { return commandHandlerMethod.getDeclaringClass(); }
 
         return annotation.value();
+    }
+
+    public static List<Method> getCommandHandlersForAggregateRoot(Class<?> aggregateRootClass) {
+        List<Method> methodsListWithAnnotation = MethodUtils.getMethodsListWithAnnotation(aggregateRootClass, CommandHandler.class);
+        return methodsListWithAnnotation;
     }
 
     public static Set<Method> getCommandHandlerMethods() {
