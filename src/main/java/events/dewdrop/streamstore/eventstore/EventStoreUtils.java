@@ -3,19 +3,20 @@ package events.dewdrop.streamstore.eventstore;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
-import events.dewdrop.structure.read.ReadRequest;
-import events.dewdrop.structure.events.ReadEventData;
-import events.dewdrop.structure.events.StreamReadResults;
-import events.dewdrop.structure.events.WriteEventData;
-import events.dewdrop.structure.read.Direction;
 import com.eventstore.dbclient.EventData;
+import com.eventstore.dbclient.EventDataBuilder;
 import com.eventstore.dbclient.ReadResult;
 import com.eventstore.dbclient.ReadStreamOptions;
 import com.eventstore.dbclient.RecordedEvent;
 import com.eventstore.dbclient.ResolvedEvent;
-import com.eventstore.dbclient.StreamRevision;
+import com.eventstore.dbclient.StreamPosition;
 import com.eventstore.dbclient.Subscription;
 import com.eventstore.dbclient.SubscriptionListener;
+import events.dewdrop.structure.events.ReadEventData;
+import events.dewdrop.structure.events.StreamReadResults;
+import events.dewdrop.structure.events.WriteEventData;
+import events.dewdrop.structure.read.Direction;
+import events.dewdrop.structure.read.ReadRequest;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -31,7 +32,7 @@ public class EventStoreUtils {
 
         Long currentRevision = events.stream().map(ResolvedEvent::getLink).mapToLong(link -> {
             if (link == null) { return 0L; }
-            return link.getStreamRevision().getValueUnsigned();
+            return link.getRevision();
         }).max().orElse(0L);
 
         boolean isEndOfStream = readResult.getEvents().isEmpty() || readResult.getEvents().size() < readRequest.getCount();
@@ -39,14 +40,14 @@ public class EventStoreUtils {
     }
 
     public static ReadEventData toReadEventData(RecordedEvent recordedEvent) {
-        return new ReadEventData(recordedEvent.getStreamId(), UUID.fromString(recordedEvent.getEventId().toString()), recordedEvent.getStreamRevision().getValueUnsigned(), recordedEvent.getEventType(), recordedEvent.getEventData(),
-                        recordedEvent.getUserMetadata(), true, recordedEvent.getCreated());
+        return new ReadEventData(recordedEvent.getStreamId(), UUID.fromString(recordedEvent.getEventId().toString()), recordedEvent.getRevision(), recordedEvent.getEventType(), recordedEvent.getEventData(), recordedEvent.getUserMetadata(), true,
+                        recordedEvent.getCreated());
     }
 
     public static ReadEventData toReadEventData(ResolvedEvent resolvedEvent) {
         RecordedEvent link = resolvedEvent.getLink();
         RecordedEvent event = resolvedEvent.getEvent();
-        return new ReadEventData(link.getStreamId(), UUID.fromString(link.getEventId().toString()), link.getStreamRevision().getValueUnsigned(), event.getEventType(), event.getEventData(), event.getUserMetadata(), true, event.getCreated());
+        return new ReadEventData(link.getStreamId(), UUID.fromString(link.getEventId().toString()), link.getRevision(), event.getEventType(), event.getEventData(), event.getUserMetadata(), true, event.getCreated());
     }
 
 
@@ -55,12 +56,12 @@ public class EventStoreUtils {
 
         readStreamOptions.resolveLinkTos();
         if (readRequest.getDirection() == Direction.FORWARD) {
-            StreamRevision streamRevision = readRequest.getStart() == null ? StreamRevision.START : new StreamRevision(readRequest.getStart());
+            StreamPosition streamRevision = readRequest.getStart() == null ? StreamPosition.start() : StreamPosition.position(readRequest.getStart());
             readStreamOptions.fromRevision(streamRevision);
             readStreamOptions.forwards();
         } else {
             readStreamOptions.backwards();
-            readStreamOptions.fromRevision(StreamRevision.END);
+            readStreamOptions.fromRevision(StreamPosition.end());
         }
 
         readStreamOptions.resolveLinkTos(true);
@@ -73,7 +74,7 @@ public class EventStoreUtils {
             public void onEvent(Subscription subscription, ResolvedEvent event) {
                 RecordedEvent recordedEvent = event.getLink();
                 String eventType = event.getEvent().getEventType();
-                log.debug("Received event:{}, from stream:{}, position:{}", eventType, recordedEvent.getStreamId(), recordedEvent.getStreamRevision().getValueUnsigned());
+                log.debug("Received event:{}, from stream:{}, position:{}", eventType, recordedEvent.getStreamId(), recordedEvent.getRevision());
                 try {
                     eventAppeared.accept(EventStoreUtils.toReadEventData(event));
                 } catch (Exception e) {
@@ -95,6 +96,7 @@ public class EventStoreUtils {
     }
 
     public static EventData toEventData(WriteEventData eventData) {
-        return new EventData(eventData.getEventId(), eventData.getEventType(), eventData.getEventType(), eventData.getData(), eventData.getMetadata());
+        EventDataBuilder eventDataBuilder = EventDataBuilder.json(eventData.getEventId(), eventData.getEventType(), eventData.getData()).metadataAsBytes(eventData.getMetadata());
+        return eventDataBuilder.build();
     }
 }

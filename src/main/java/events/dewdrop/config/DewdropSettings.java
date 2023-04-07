@@ -23,7 +23,6 @@ import events.dewdrop.utils.DependencyInjectionUtils;
 import com.eventstore.dbclient.EventStoreDBClient;
 import com.eventstore.dbclient.EventStoreDBClientSettings;
 import com.eventstore.dbclient.EventStoreDBConnectionString;
-import com.eventstore.dbclient.ParseError;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -63,7 +62,7 @@ public class DewdropSettings {
             if (properties == null) { throw new IllegalArgumentException("properties cannot be null"); }
             this.eventStoreDBClient = Optional.ofNullable(eventStoreDBClient).orElse(eventStoreDBClient(properties));
             this.streamStore = new EventStore(getEventStoreDBClient());
-        } catch (ParseError e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException("Unable to parse EventStore connection", e);
         }
         DependencyInjectionUtils.setDependencyInjection(dependencyInjectionAdapter);
@@ -81,7 +80,7 @@ public class DewdropSettings {
         this.queryStateOrchestrator = new QueryStateOrchestrator(getReadModelMapper());
     }
 
-    private EventStoreDBClient eventStoreDBClient(DewdropProperties properties) throws ParseError {
+    private EventStoreDBClient eventStoreDBClient(DewdropProperties properties) {
         EventStoreDBClientSettings settings = EventStoreDBConnectionString.parseOrThrow(properties.getConnectionString());
         return EventStoreDBClient.create(settings);
     }

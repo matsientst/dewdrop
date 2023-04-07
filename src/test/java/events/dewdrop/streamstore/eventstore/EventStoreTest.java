@@ -16,13 +16,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import events.dewdrop.structure.NoStreamException;
-import events.dewdrop.structure.events.StreamReadResults;
-import events.dewdrop.structure.events.WriteEventData;
-import events.dewdrop.structure.read.Direction;
-import events.dewdrop.structure.read.ReadRequest;
-import events.dewdrop.structure.subscribe.SubscribeRequest;
-import events.dewdrop.structure.write.WriteRequest;
 import com.eventstore.dbclient.AppendToStreamOptions;
 import com.eventstore.dbclient.EventData;
 import com.eventstore.dbclient.EventStoreDBClient;
@@ -31,9 +24,15 @@ import com.eventstore.dbclient.ReadStreamOptions;
 import com.eventstore.dbclient.RecordedEvent;
 import com.eventstore.dbclient.ResolvedEvent;
 import com.eventstore.dbclient.StreamNotFoundException;
-import com.eventstore.dbclient.StreamRevision;
 import com.eventstore.dbclient.SubscribeToStreamOptions;
 import com.eventstore.dbclient.SubscriptionListener;
+import events.dewdrop.structure.NoStreamException;
+import events.dewdrop.structure.events.StreamReadResults;
+import events.dewdrop.structure.events.WriteEventData;
+import events.dewdrop.structure.read.Direction;
+import events.dewdrop.structure.read.ReadRequest;
+import events.dewdrop.structure.subscribe.SubscribeRequest;
+import events.dewdrop.structure.write.WriteRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -62,11 +61,13 @@ class EventStoreTest {
         eventStoreDBClient = mock(EventStoreDBClient.class);
         eventStore = Mockito.spy(new EventStore(eventStoreDBClient));
         recordedEvent = mock(RecordedEvent.class);
-        readResult = new ReadResult(List.of(mock(ResolvedEvent.class)));
+        readResult = mock(ReadResult.class);
         streamReadResults = mock(StreamReadResults.class);
         readRequest = mock(ReadRequest.class);
         completableFuture = mock(CompletableFuture.class);
+        doReturn(List.of(mock(ResolvedEvent.class))).when(readResult).getEvents();
     }
+
 
     @Test
     void read() {
@@ -127,7 +128,7 @@ class EventStoreTest {
         try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
             utils.when(() -> EventStoreUtils.options(any(ReadRequest.class))).thenReturn(mock(ReadStreamOptions.class));
 
-            doReturn(completableFuture).when(eventStoreDBClient).readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
+            doReturn(completableFuture).when(eventStoreDBClient).readStream(anyString(), any(ReadStreamOptions.class));
 
             doReturn(readResult).when(completableFuture).get();
 
@@ -148,7 +149,7 @@ class EventStoreTest {
         try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
             utils.when(() -> EventStoreUtils.options(any(ReadRequest.class))).thenReturn(mock(ReadStreamOptions.class));
 
-            doReturn(completableFuture).when(eventStoreDBClient).readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
+            doReturn(completableFuture).when(eventStoreDBClient).readStream(anyString(), any(ReadStreamOptions.class));
 
             doThrow(InterruptedException.class).when(completableFuture).get();
 
@@ -169,7 +170,7 @@ class EventStoreTest {
         try (MockedStatic<EventStoreUtils> utils = mockStatic(EventStoreUtils.class)) {
             utils.when(() -> EventStoreUtils.options(any(ReadRequest.class))).thenReturn(mock(ReadStreamOptions.class));
 
-            doReturn(completableFuture).when(eventStoreDBClient).readStream(anyString(), anyLong(), any(ReadStreamOptions.class));
+            doReturn(completableFuture).when(eventStoreDBClient).readStream(anyString(), any(ReadStreamOptions.class));
 
             doThrow(ExecutionException.class).when(completableFuture).get();
 
@@ -192,7 +193,9 @@ class EventStoreTest {
             utils.when(SubscribeToStreamOptions::get).thenReturn(options);
 
         }
-        doReturn(mock(StreamRevision.class)).when(options).fromRevision(anyLong());
+        // TODO: fix
+        // doReturn(mock(StreamRevision.class)).when(options)
+        // .fromRevision(anyLong());
 
         doReturn(mock(SubscribeToStreamOptions.class)).when(options).resolveLinkTos();
 
@@ -218,7 +221,9 @@ class EventStoreTest {
             utils.when(SubscribeToStreamOptions::get).thenReturn(options);
 
         }
-        doReturn(mock(StreamRevision.class)).when(options).fromRevision(anyLong());
+        // TODO: fix
+        // doReturn(mock(StreamRevision.class)).when(options)
+        // .fromRevision(anyLong());
 
         doReturn(mock(SubscribeToStreamOptions.class)).when(options).resolveLinkTos();
 
@@ -252,7 +257,7 @@ class EventStoreTest {
 
     @Test
     void subscribeTo_Execution_Exception_with_StreamNotFound() throws ExecutionException, InterruptedException {
-        ExecutionException exception = new ExecutionException("", new StreamNotFoundException());
+        ExecutionException exception = new ExecutionException("", mock(StreamNotFoundException.class));
 
         doReturn(completableFuture).when(eventStoreDBClient).subscribeToStream(anyString(), any(SubscriptionListener.class), any(SubscribeToStreamOptions.class));
 

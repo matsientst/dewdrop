@@ -115,11 +115,10 @@ public class EventStore implements StreamStore {
 
     Optional<ReadResult> performRead(ReadRequest readRequest) throws NoStreamException {
         String streamName = readRequest.getStreamName();
-        Long count = readRequest.getCount();
         ReadStreamOptions readStreamOptions = EventStoreUtils.options(readRequest);
         try {
             log.debug("ReadRequest: {}", readRequest);
-            ReadResult readResult = client.readStream(streamName, count, readStreamOptions).get();
+            ReadResult readResult = client.readStream(streamName, readStreamOptions).get();
             return Optional.of(readResult);
         } catch (InterruptedException e) {
             log.error("Stream interrupted", e);
