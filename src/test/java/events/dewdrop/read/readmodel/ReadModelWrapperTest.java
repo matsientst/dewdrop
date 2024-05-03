@@ -44,7 +44,7 @@ class ReadModelWrapperTest {
     }
 
     @Test
-    @DisplayName("of() - Given a class annotated with @ReadModel, when we retrieve an object from DI, then the ReadModelWrapper is created")
+    @DisplayName("of_dependencyInjected() - Given a class annotated with @ReadModel, when we retrieve an object from DI, then the ReadModelWrapper is created")
     void of_dependencyInjected() {
         try (MockedStatic<DependencyInjectionUtils> utilities = mockStatic(DependencyInjectionUtils.class)) {
             utilities.when(() -> DependencyInjectionUtils.getInstance(any(Class.class))).thenReturn(Optional.of(new SameAsDewdropAccountDetailsReadModel()));
@@ -118,11 +118,14 @@ class ReadModelWrapperTest {
         assertThat(readModelWrapper.getSupportedEvents(), is(List.of(DewdropAccountCreated.class)));
     }
 
-    private class SameAsDewdropAccountDetailsReadModel {
-        Map<UUID, DewdropAccountDetails> cache;
 
-        public void on(DewdropAccountCreated event, Map<UUID, DewdropAccountDetails> cachedItems) {
+}
 
-        }
+
+class SameAsDewdropAccountDetailsReadModel {
+    Map<UUID, DewdropAccountDetails> cache;
+
+    public void on(DewdropAccountCreated event) {
+
     }
 }

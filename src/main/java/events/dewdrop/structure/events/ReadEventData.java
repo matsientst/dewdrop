@@ -3,8 +3,9 @@ package events.dewdrop.structure.events;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 public class ReadEventData {
     protected UUID eventId;
     protected String eventType;

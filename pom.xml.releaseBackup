@@ -4,7 +4,7 @@
 
     <groupId>events.dewdrop</groupId>
     <artifactId>dewdrop</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.3-SNAPSHOT</version>
 
     <name>Dewdrop Event Sourcing Framework</name>
     <description>Dewdrop is a simple, fast, and powerful java based event sourcing framework.</description>
@@ -39,14 +39,13 @@
         <java.version>11</java.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <!-- to align with the spring boot version 2.5.8 -->
         <lombok.version>1.18.24</lombok.version>
         <log4j2.version>2.17.2</log4j2.version>
         <jackson.version>2.13.3</jackson.version>
         <junit-jupiter.version>5.8.2</junit-jupiter.version>
         <model-mapper.version>3.0.0</model-mapper.version>
         <mockito.version>4.6.1</mockito.version>
-        <grpc.version>1.61.1</grpc.version>
-        <slf4j.version>2.0.13</slf4j.version>
     </properties>
     <dependencies>
         <dependency>
@@ -63,7 +62,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -98,14 +96,19 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>2.0.1.Final</version>
+        </dependency>
+        <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
-            <version>8.0.1.Final</version>
+            <version>6.2.3.Final</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.el</artifactId>
-            <version>4.0.2</version>
+            <artifactId>javax.el</artifactId>
+            <version>3.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -174,7 +177,7 @@
         <dependency>
             <groupId>com.eventstore</groupId>
             <artifactId>db-client-java</artifactId>
-            <version>5.3.2</version>
+            <version>4.1.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -185,24 +188,12 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-api</artifactId>
-            <version>${grpc.version}</version>
+            <version>1.47.0</version>
         </dependency>
         <dependency>
             <groupId>net.jodah</groupId>
             <artifactId>expiringmap</artifactId>
             <version>0.5.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
@@ -252,7 +243,13 @@
                 <version>0.8.7</version>
                 <configuration>
                     <excludes>
-
+                        <exclude>com/ibm/lighthouse/commons/kernel/domain/messages/*</exclude>
+                        <exclude>com/ibm/lighthouse/commons/kernel/usecases/*</exclude>
+                        <exclude>com/ibm/lighthouse/commons/config/ClassCollector.class</exclude>
+                        <exclude>com/ibm/lighthouse/commons/config/*.class</exclude>
+                        <exclude>
+                            com/ibm/lighthouse/commons/kernel/domain/eventsourcing/messaging/bus/QueuedHandler.class
+                        </exclude>
                     </excludes>
                 </configuration>
                 <executions>

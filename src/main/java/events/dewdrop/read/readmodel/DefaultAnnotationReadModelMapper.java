@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +50,9 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
      * handlers for them Then create ReadModels associated with @OnEvent
      */
     protected void registerReadModels() {
-        List<Class<?>> annotatedReadModels = ReadModelUtils.getAnnotatedReadModels();
+        QUERY_TO_READ_MODEL_CLASS.clear();
+        QUERY_TO_READ_MODEL.clear();
+        Queue<Class<?>> annotatedReadModels = ReadModelUtils.getAnnotatedReadModels();
         AtomicInteger ephemeralCount = new AtomicInteger(0);
         annotatedReadModels.forEach(readModelClass -> {
             Optional<ReadModelConstructed> instance = Optional.empty();
@@ -79,6 +82,9 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
     void registerQueryHandlers(Class<?> readModelClass, Optional<ReadModelConstructed> instance) {
         List<Method> queryHandlerMethods = ReadModelUtils.getQueryHandlerMethods(readModelClass);
         for (Method queryHandlerMethod : queryHandlerMethods) {
+            if (QUERY_TO_READ_MODEL_CLASS.containsKey(queryHandlerMethod.getParameterTypes()[0])) {
+                throw new IllegalStateException(String.format("The query object:%s is duplicated in multiple ReadModels which is not allowed", queryHandlerMethod.getParameterTypes()[0].getSimpleName()));
+            }
             QUERY_TO_READ_MODEL_CLASS.put(queryHandlerMethod.getParameterTypes()[0], readModelClass);
 
             if (instance.isPresent()) {
@@ -98,8 +104,9 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
         requireNonNull(queryHandlerMethod, "queryHandlerMethod is required");
 
         Class<?> parameterType = queryHandlerMethod.getParameterTypes()[0];
-        log.info("Registering @QueryHandler for {} to be handled by {}", parameterType.getSimpleName(), readModel.getTargetClassSimpleName());
-        QUERY_TO_READ_MODEL.computeIfAbsent(parameterType, k -> readModel);
+        log.info("Registering @QueryHandler for {} to be handled by: {}", parameterType.getSimpleName(), readModel.getTargetClassSimpleName());
+
+        QUERY_TO_READ_MODEL.putIfAbsent(parameterType, readModel);
     }
 
     /**

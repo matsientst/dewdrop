@@ -3,6 +3,7 @@ package events.dewdrop.read.readmodel.stream.subscription;
 import static java.util.Objects.requireNonNull;
 
 import events.dewdrop.read.readmodel.stream.NameAndPosition;
+import events.dewdrop.read.readmodel.stream.SubscriptionStartStrategy;
 import events.dewdrop.structure.subscribe.EventProcessor;
 import events.dewdrop.read.readmodel.stream.Stream;
 import events.dewdrop.read.readmodel.stream.StreamListener;
@@ -12,6 +13,7 @@ import events.dewdrop.structure.read.Handler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;

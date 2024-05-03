@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.with;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import events.dewdrop.api.result.Result;
 import events.dewdrop.api.validators.ValidationException;
@@ -17,10 +18,14 @@ import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDet
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropGetAccountByIdQuery;
 import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummary;
 import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryQuery;
+import events.dewdrop.fixture.readmodel.users.DewdropGetUserByIdQuery;
 import events.dewdrop.fixture.readmodel.users.DewdropUser;
 import events.dewdrop.fixture.readmodel.users.GetUserByIdQuery;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -28,37 +33,50 @@ import org.junit.jupiter.api.Test;
 
 @Log4j2
 class DewdropTest {
-    DewdropProperties properties = DewdropProperties.builder().packageToScan("events.dewdrop").packageToExclude("events.dewdrop.fixture.customized").connectionString("esdb://localhost:2113?tls=false").create();
+    DewdropProperties properties = DewdropProperties.builder().packageToScan("events.dewdrop").packageToExclude(List.of("events.dewdrop.fixture.customized", "events.dewdrop.fixture.readmodel.users.lifecycle"))
+                    .connectionString("esdb://localhost:2113?tls=false").create();
 
     @Test
-    void test() throws ValidationException {
-        Dewdrop dewdrop = DewdropSettings.builder().properties(properties).create().start();
+    void test() throws ValidationException, ExecutionException, InterruptedException {
+
+        Dewdrop dewdrop = CompletableFuture.supplyAsync(() -> DewdropSettings.builder().properties(properties).create().start()).get();
 
         DewdropCreateUserCommand createUserCommand = createUser(dewdrop);
         DewdropCreateAccountCommand createAccountCommand = createAccount(dewdrop, createUserCommand);
-        DewdropAddFundsToAccountCommand addFunds = addFunds(dewdrop, createAccountCommand);
+        final DewdropAddFundsToAccountCommand addFunds = addFunds(dewdrop, createAccountCommand);
 
         DewdropGetAccountByIdQuery query = new DewdropGetAccountByIdQuery(createAccountCommand.getAccountId());
         BigDecimal balance = new BigDecimal(100);
         retryUntilComplete(dewdrop, query, (result) -> {
+            if (result.isEmpty()) {
+                log.info("Query not found:{}", query);
+                return false;
+            }
             DewdropAccountDetails dewdropAccountDetails = (DewdropAccountDetails) result.get();
             if (StringUtils.isNotEmpty(dewdropAccountDetails.getUsername()) && dewdropAccountDetails.getBalance().equals(balance)) { return true; }
             return false;
         });
+        retryUntilComplete(dewdrop, query, (result) -> {
+            if (result.isEmpty()) {
+                log.info("Query not found:{}", query);
+                return false;
+            }
+            DewdropAccountDetails actual = (DewdropAccountDetails) result.get();
+            assertThat(actual.getUsername(), is(createUserCommand.getUsername()));
+            assertThat(actual.getBalance(), is(addFunds.getFunds()));
+            return true;
+        });
 
-        Result<DewdropAccountDetails> result = dewdrop.executeQuery(query);
-        DewdropAccountDetails actual = result.get();
-        assertThat(actual.getUsername(), is(createUserCommand.getUsername()));
-        assertThat(actual.getBalance(), is(addFunds.getFunds()));
-
-        DewdropCreateUserCommand userCommand = createUser(dewdrop);
+        createUser(dewdrop);
         createAccountCommand = createAccount(dewdrop, createUserCommand);
-        addFunds = addFunds(dewdrop, createAccountCommand);
+        addFunds(dewdrop, createAccountCommand);
 
-        GetUserByIdQuery getUserById = new GetUserByIdQuery(createUserCommand.getUserId());
+        DewdropGetUserByIdQuery getUserById = new DewdropGetUserByIdQuery(createUserCommand.getUserId());
         retryUntilComplete(dewdrop, getUserById, (userResult) -> {
-            log.info("userResult: {}", userResult);
-            if (!userResult.isValuePresent()) { return false; }
+            if (userResult.isEmpty()) {
+                log.info("Query not found:{}", query);
+                return false;
+            }
             DewdropUser dewdropUser = (DewdropUser) userResult.get();
             if (StringUtils.isNotEmpty(dewdropUser.getUsername()) && dewdropUser.getUserId().equals(createUserCommand.getUserId())) { return true; }
             return false;
@@ -70,7 +88,10 @@ class DewdropTest {
 
         DewdropAccountSummaryQuery dewdropAccountSummaryQuery = new DewdropAccountSummaryQuery();
         retryUntilComplete(dewdrop, dewdropAccountSummaryQuery, (summaryResult) -> {
-            if (!summaryResult.isValuePresent()) { return false; }
+            if (summaryResult.isEmpty()) {
+                log.info("Query not found:{}", query);
+                return false;
+            }
             DewdropAccountSummary summary = (DewdropAccountSummary) summaryResult.get();
             if (summary.getTotalFunds().equals(new BigDecimal(100).multiply(new BigDecimal(summary.getCountOfAccounts())))) {
                 log.info("TOTAL ACCOUNTS: {}", summary.getCountOfAccounts());
@@ -92,10 +113,18 @@ class DewdropTest {
         return command;
     }
 
-    private DewdropCreateUserCommand createUser(Dewdrop dewdrop) throws ValidationException {
-        DewdropCreateUserCommand createUserCommand = new DewdropCreateUserCommand(UUID.randomUUID(), "Dewdropper Funkapuss");
-        dewdrop.executeCommand(createUserCommand);
-        return createUserCommand;
+    private DewdropCreateUserCommand createUser(Dewdrop dewdrop) throws ValidationException, ExecutionException, InterruptedException {
+        CompletableFuture<DewdropCreateUserCommand> command = CompletableFuture.supplyAsync(() -> {
+            try {
+                DewdropCreateUserCommand createUserCommand = new DewdropCreateUserCommand(UUID.randomUUID(), "Dewdropper Funkapuss");
+                dewdrop.executeCommand(createUserCommand);
+                return createUserCommand;
+            } catch (ValidationException e) {
+                fail();
+                return null;
+            }
+        });
+        return command.get();
     }
 
     private <T> void retryUntilComplete(Dewdrop dewdrop, Object query, Predicate<Result> predicate) {

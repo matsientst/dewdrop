@@ -33,11 +33,13 @@ public class DewdropAccountDetails {
 
     @EventHandler
     public void on(DewdropFundsAddedToAccount event) {
+        log.info("processing DewdropFundsAddedToAccount:{}", event);
         this.balance = this.balance.add(event.getFunds());
     }
 
     @EventHandler
     public void on(DewdropUserCreated userCreated) {
+        log.info("processing DewdropUserCreated:{}", userCreated);
         this.username = userCreated.getUsername();
     }
 }

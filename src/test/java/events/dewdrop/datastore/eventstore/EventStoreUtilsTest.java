@@ -130,9 +130,7 @@ class EventStoreUtilsTest {
         SubscriptionListener listener = EventStoreUtils.createListener(eventAppeared);
         listener.onEvent(subscription, resolvedEvent);
 
-        listener.onCancelled(subscription);
-        IllegalArgumentException exception = new IllegalArgumentException("", new RuntimeException("Bad things happened"));
-        listener.onError(subscription, exception);
+        listener.onCancelled(subscription, mock(Throwable.class));
     }
 
     private RecordedEvent recordedEvent(String eventStreamId, Long streamRevision, UUID eventId, Position position, HashMap<String, String> systemMetadata, byte[] eventData, byte[] userMetadata) {

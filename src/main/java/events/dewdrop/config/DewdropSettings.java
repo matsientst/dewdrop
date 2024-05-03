@@ -69,15 +69,20 @@ public class DewdropSettings {
         ReflectionsConfigUtils.init(getProperties().getPackageToScan(), getProperties().getPackageToExclude());
         this.eventSerializer = Optional.ofNullable(eventSerializer).orElse(new JsonSerializer(getObjectMapper()));
         this.streamNameGenerator = new PrefixStreamNameGenerator(getProperties().getStreamPrefix());
+
+        // Streams
         this.streamFactory = new StreamFactory(getStreamStore(), getEventSerializer(), getStreamNameGenerator());
         this.streamProcessor = new AggregateRootLifecycle(getStreamFactory());
-        this.aggregateStateCommandProcessor = new AggregateStateCommandProcessor(getStreamProcessor());
-        this.commandMapper = Optional.ofNullable(commandMapper).orElse(new CommandHandlerMapper());
-        this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getAggregateStateCommandProcessor());
+
+        // Read Models (before commands)
         this.readModelMapper = Optional.ofNullable(readModelMapper).orElse(new DefaultAnnotationReadModelMapper());
         this.readModelFactory = new ReadModelFactory(getStreamStore(), getEventSerializer(), getStreamFactory());
         getReadModelMapper().init(getReadModelFactory());
         this.queryStateOrchestrator = new QueryStateOrchestrator(getReadModelMapper());
+
+        this.aggregateStateCommandProcessor = new AggregateStateCommandProcessor(getStreamProcessor());
+        this.commandMapper = Optional.ofNullable(commandMapper).orElse(new CommandHandlerMapper());
+        this.aggregateStateOrchestrator = new AggregateStateOrchestrator(getCommandMapper(), getAggregateStateCommandProcessor());
     }
 
     private EventStoreDBClient eventStoreDBClient(DewdropProperties properties) {

@@ -148,10 +148,7 @@ public class StreamReader {
 
     NameAndPosition readAll() {
         try {
-            if (validateStreamName(streamName)) {
-                read(getPosition(), null);
-                return nameAndPosition.completeTask(streamName, getPosition());
-            }
+            if (validateStreamName(streamName)) { return nameAndPosition.completeTask(streamName, 0L); }
             return nameAndPosition;
         } catch (Exception e) {
             log.error("There was a problem reading from: {}", streamName, e);

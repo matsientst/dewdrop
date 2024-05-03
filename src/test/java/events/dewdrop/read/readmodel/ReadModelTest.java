@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 
 import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;
 import events.dewdrop.fixture.events.DewdropUserCreated;
+import events.dewdrop.fixture.readmodel.users.lifecycle.UsersReadModel;
 import events.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
 import events.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
 import events.dewdrop.read.readmodel.stream.Stream;
@@ -73,6 +74,7 @@ class ReadModelTest {
         doNothing().when(inMemoryCacheProcessor).process(any(Event.class));
 
         ReadModelWrapper readModelWrapper = mock(ReadModelWrapper.class);
+        doReturn(UsersReadModel.class).when(readModelWrapper).getOriginalReadModelClass();
         doNothing().when(readModelWrapper).callEventHandlers(any(Event.class));
         readModel.setReadModelWrapper(readModelWrapper);
         try (MockedStatic<CacheUtils> utilities = mockStatic(CacheUtils.class)) {

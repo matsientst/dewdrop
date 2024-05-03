@@ -17,7 +17,9 @@ import lombok.Data;
 import events.dewdrop.structure.api.Event;
 import events.dewdrop.utils.DependencyInjectionUtils;
 import events.dewdrop.utils.ReadModelUtils;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 @Data
 public class ReadModelWrapper {
     private Class<?> originalReadModelClass;
@@ -26,6 +28,7 @@ public class ReadModelWrapper {
     private Optional<Field> cacheField;
 
     private ReadModelWrapper(Class<?> originalReadModelClass, Object readModel) {
+        log.info("Constructing ReadModelWrapper for originalReadModelClass:{}, readModel:{}", originalReadModelClass.getSimpleName(), readModel.getClass().getSimpleName());
         this.originalReadModelClass = originalReadModelClass;
         this.readModel = readModel;
         assignEventHandlers(this.eventToEventHandlerMethod, () -> EventHandlerUtils.getEventToEventHandlerMethod(this.originalReadModelClass), originalReadModelClass, readModel);
@@ -74,5 +77,9 @@ public class ReadModelWrapper {
     // Returning a list of all the events that the read model supports.
     public List<Class<? extends Event>> getSupportedEvents() {
         return eventToEventHandlerMethod.keySet().stream().collect(toList());
+    }
+
+    public String toString() {
+        return originalReadModelClass.getSimpleName();
     }
 }

@@ -12,7 +12,7 @@ import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@ReadModel(ephemeral = true, destroyInMinutesUnused = ReadModel.DESTROY_IMMEDIATELY)
+@ReadModel(destroyInMinutesUnused = ReadModel.DESTROY_IMMEDIATELY)
 @Stream(name = "DewdropAccountAggregate", subscribed = true)
 @Stream(name = "DewdropUserAggregate", subscribed = false)
 public class DewdropAccountDetailsReadModel {
@@ -20,14 +20,15 @@ public class DewdropAccountDetailsReadModel {
     Map<UUID, DewdropAccountDetails> cache;
 
     @EventHandler
-    public void on(DewdropAccountCreated event, Map<UUID, DewdropAccountDetails> cachedItems) {
+    public void on(DewdropAccountCreated event) {
         log.debug("This was called");
     }
 
     @QueryHandler
     public Result<DewdropAccountDetails> handle(DewdropGetAccountByIdQuery query) {
+        log.info("Querying:{}, cache:{}", query, cache.values());
         DewdropAccountDetails dewdropAccountDetails = cache.get(query.getAccountId());
-        if (dewdropAccountDetails != null) { return Result.of(dewdropAccountDetails); }
-        return Result.empty();
+        log.info("dewdropAccountDetails: {}", dewdropAccountDetails);
+        return (dewdropAccountDetails != null) ? Result.of(dewdropAccountDetails) : Result.empty();
     }
 }

@@ -341,13 +341,9 @@ class StreamReaderTest {
     @DisplayName("readAll() - Given a call to readAll(), when the streamExists, then confirm we return the streamName and position")
     void readAll() {
         doReturn(true).when(streamReader).validateStreamName(anyString());
-        doReturn(true).when(streamReader).read(anyLong(), isNull());
-
         NameAndPosition nameAndPosition = streamReader.readAll();
         assertThat(nameAndPosition.getStreamName(), is("DewdropUserAggregate"));
         assertThat(nameAndPosition.getPosition(), is(0L));
-
-        verify(streamReader, times(1)).read(anyLong(), isNull());
     }
 
     @Test

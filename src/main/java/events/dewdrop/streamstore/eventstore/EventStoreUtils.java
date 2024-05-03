@@ -84,12 +84,7 @@ public class EventStoreUtils {
             }
 
             @Override
-            public void onError(Subscription subscription, Throwable throwable) {
-                log.error("There was an error receiving the event? the subscription id:{}", subscription.getSubscriptionId(), throwable.getCause().getMessage());
-            }
-
-            @Override
-            public void onCancelled(Subscription subscription) {
+            public void onCancelled(Subscription subscription, Throwable exception) {
                 log.error("Cancelling subscription id:" + subscription.getSubscriptionId());
             }
         };

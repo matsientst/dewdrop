@@ -360,8 +360,8 @@ public class DewdropAccountDetails {
     }
 
     @EventHandler
-    public void on(DewdropUserCreated userCreated) {
-        this.username = userCreated.getUsername();
+    public void on(DewdropUserCreated userSignedup) {
+        this.username = userSignedup.getUsername();
     }
 }
 ```
