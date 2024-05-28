@@ -4,7 +4,7 @@
 
     <groupId>events.dewdrop</groupId>
     <artifactId>dewdrop</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.4.3</version>
 
     <name>Dewdrop Event Sourcing Framework</name>
     <description>Dewdrop is a simple, fast, and powerful java based event sourcing framework.</description>
@@ -30,7 +30,7 @@
         <url>https://github.com/matsientst/dewdrop</url>
         <connection>scm:git:git://github.com/matsientst/dewdrop.git</connection>
         <developerConnection>scm:git:git@github.com:matsientst/dewdrop.git</developerConnection>
-      <tag>HEAD</tag>
+        <tag>HEAD</tag>
   </scm>
 
     <properties>
@@ -41,7 +41,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <lombok.version>1.18.24</lombok.version>
         <log4j2.version>2.17.2</log4j2.version>
-        <jackson.version>2.13.3</jackson.version>
+        <jackson.version>2.17.1</jackson.version>
         <junit-jupiter.version>5.8.2</junit-jupiter.version>
         <model-mapper.version>3.0.0</model-mapper.version>
         <mockito.version>4.6.1</mockito.version>
@@ -412,6 +412,13 @@
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-scm-plugin</artifactId>
+                        <version>1.8.1</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
         <pluginManagement>

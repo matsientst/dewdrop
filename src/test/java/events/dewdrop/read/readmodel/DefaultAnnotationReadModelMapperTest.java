@@ -1,5 +1,13 @@
 package events.dewdrop.read.readmodel;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.with;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
@@ -21,18 +29,11 @@ import static org.mockito.Mockito.verify;
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetailsReadModel;
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropGetAccountByIdQuery;
 import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryQuery;
-import events.dewdrop.utils.DewdropAnnotationUtils;
-import events.dewdrop.utils.ReadModelUtils;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import net.jodah.expiringmap.ExpiringMap;
 import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryReadModel;
 import events.dewdrop.structure.api.Event;
+import events.dewdrop.utils.DewdropAnnotationUtils;
+import events.dewdrop.utils.ReadModelUtils;
+import net.jodah.expiringmap.ExpiringMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -71,6 +72,8 @@ class DefaultAnnotationReadModelMapperTest {
         ReadModelConstructed readModelConstructed = mock(ReadModelConstructed.class);
         doNothing().when(readModelMapper).registerQueryHandlers(any(Class.class), any(Optional.class));
         doReturn(Optional.of(readModelConstructed)).when(readModelFactory).constructReadModel(any(Class.class));
+        ReadModel mockedReadModel = mock(ReadModel.class);
+        doReturn(mockedReadModel).when(readModelConstructed).getReadModel();
         doNothing().when(readModelMapper).registerOnEvents();
         try (MockedStatic<ReadModelUtils> utilities = mockStatic(ReadModelUtils.class)) {
             utilities.when(() -> ReadModelUtils.getAnnotatedReadModels()).thenReturn(new LinkedList(List.of(DewdropAccountDetailsReadModel.class, DewdropAccountSummaryReadModel.class)));
@@ -88,6 +91,8 @@ class DefaultAnnotationReadModelMapperTest {
     void registerReadModels_noEphemeral() {
         readModelMapper.EPHEMERAL_READ_MODELS = null;
         ReadModelConstructed readModelConstructed = mock(ReadModelConstructed.class);
+        ReadModel mockedReadModel = mock(ReadModel.class);
+        doReturn(mockedReadModel).when(readModelConstructed).getReadModel();
         doNothing().when(readModelMapper).registerQueryHandlers(any(Class.class), any(Optional.class));
         doReturn(Optional.of(readModelConstructed)).when(readModelFactory).constructReadModel(any(Class.class));
         doNothing().when(readModelMapper).registerOnEvents();
@@ -161,7 +166,7 @@ class DefaultAnnotationReadModelMapperTest {
     @Test
     @DisplayName("addToQueryReadModelCache() - Given a readModel and a queryMethodHandler, when addToQueryReadModelCache() is called, then confirm that QUERY_TO_READ_MODEL has the first parameter of the method as the key and the readModel as the value")
     @Disabled
-    // This is throwing a StackOverflow and I'm not sure why
+    // Throwing stackoverflow for some reason
     void addToQueryReadModelCache() {
         Method method = mock(Method.class);
         doReturn(new Class[] {queryClass}).when(method).getParameterTypes();

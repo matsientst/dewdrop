@@ -87,7 +87,7 @@ public class PrefixStreamNameGenerator implements StreamNameGenerator {
     public String generateForEvent(String aggregateClassName) {
         StringBuilder builder = new StringBuilder();
         builder.append("$et").append("-");
-        appendPrefix(builder);
+        // appendPrefix(builder);
         builder.append(aggregateClassName);
         return builder.toString();
     }

@@ -31,8 +31,8 @@ public class ReadModelWrapper {
         log.info("Constructing ReadModelWrapper for originalReadModelClass:{}, readModel:{}", originalReadModelClass.getSimpleName(), readModel.getClass().getSimpleName());
         this.originalReadModelClass = originalReadModelClass;
         this.readModel = readModel;
-        assignEventHandlers(this.eventToEventHandlerMethod, () -> EventHandlerUtils.getEventToEventHandlerMethod(this.originalReadModelClass), originalReadModelClass, readModel);
         this.cacheField = ReadModelUtils.getMatchingReadModelCacheField(this);
+        assignEventHandlers(this.eventToEventHandlerMethod, () -> EventHandlerUtils.getEventToEventHandlerMethod(this.originalReadModelClass), originalReadModelClass, readModel);
     }
 
     private void assignEventHandlers(final Map<Class<? extends Event>, Method> eventToHandler, Supplier<Map<Class<? extends Event>, Method>> getEventToHandlers, Class<?> originalReadModelClass, Object readModel) {

@@ -1,12 +1,7 @@
 package events.dewdrop.read.readmodel;
 
-import static java.util.Objects.requireNonNull;
-
-import events.dewdrop.read.readmodel.annotation.OnEvent;
-import events.dewdrop.structure.api.Event;
-import events.dewdrop.utils.DewdropAnnotationUtils;
-import events.dewdrop.utils.ReadModelUtils;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +10,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.util.Objects.requireNonNull;
+
+import events.dewdrop.read.readmodel.annotation.OnEvent;
+import events.dewdrop.structure.api.Event;
+import events.dewdrop.utils.DewdropAnnotationUtils;
+import events.dewdrop.utils.ReadModelUtils;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import net.jodah.expiringmap.ExpiringMap;
@@ -31,6 +33,7 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
     protected static Map<Class<?>, Class<?>> QUERY_TO_READ_MODEL_CLASS = new ConcurrentHashMap<>();
     protected static Map<Class<?>, ReadModel<Event>> QUERY_TO_READ_MODEL = new ConcurrentHashMap<>();
     protected static ExpiringMap<Class<?>, ReadModel<Event>> EPHEMERAL_READ_MODELS;
+    protected static List<ReadModel<Event>> SUBSCRIBE = new ArrayList<>();
 
     /**
      * "This function is called when the application starts up, and it registers all the read models
@@ -58,6 +61,9 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
             Optional<ReadModelConstructed> instance = Optional.empty();
             if (!ReadModelUtils.isEphemeral(readModelClass)) {
                 instance = readModelFactory.constructReadModel(readModelClass);
+                if (instance.isPresent()) {
+                    SUBSCRIBE.add(instance.get().getReadModel());
+                }
             } else {
                 ephemeralCount.incrementAndGet();
             }
@@ -68,13 +74,24 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
             EPHEMERAL_READ_MODELS = ExpiringMap.builder().maxSize(ephemeralCount.get()).variableExpiration().build();
         }
         registerOnEvents();
+        subscribeReadModels();
+    }
+
+    /**
+     * After all the read models are created we can then subscribe them. This avoids the issue of a read
+     * model being created and subscribing, but another read model not being created yet
+     */
+    private void subscribeReadModels() {
+        SUBSCRIBE.stream().forEach(ReadModel::subscribe);
     }
 
     /**
      * > Registers the query objects to the read models based on the first parameter of the method For
-     * Example: @EventHandler public void query(GetUserByIdQuery query) { ... } Which then would
-     * register GetUserByIdQuery.class -> UserReadModel.class This is how dewdrop.executeQuery(query)
-     * works
+     * Example:
+     *
+     * @EventHandler public void query(GetUserByIdQuery query) { ... } Which then would register
+     *               GetUserByIdQuery.class -> UserReadModel.class This is how
+     *               dewdrop.executeQuery(query) works
      *
      * @param readModelClass The class of the read model
      * @param instance The instance of the read model that was constructed.
@@ -116,7 +133,8 @@ public class DefaultAnnotationReadModelMapper implements ReadModelMapper {
     void registerOnEvents() {
         Set<Method> annotatedMethods = DewdropAnnotationUtils.getAnnotatedMethods(OnEvent.class);
         annotatedMethods.stream().forEach(annotatedMethod -> {
-            readModelFactory.createReadModelForOnEvent(annotatedMethod);
+            ReadModel<Event> readModelForOnEvent = readModelFactory.createReadModelForOnEvent(annotatedMethod);
+            SUBSCRIBE.add(readModelForOnEvent);
         });
     }
 

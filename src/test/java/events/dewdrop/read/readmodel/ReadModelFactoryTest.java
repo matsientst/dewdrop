@@ -71,7 +71,7 @@ class ReadModelFactoryTest {
 
             Optional<ReadModelConstructed> readModelConstructed = readModelFactory.constructReadModel(DewdropAccountSummaryReadModel.class);
             assertThat(readModelConstructed.isPresent(), is(true));
-            verify(readModel, times(1)).subscribe();
+            verify(readModel, times(0)).subscribe();
         }
     }
 
@@ -151,7 +151,7 @@ class ReadModelFactoryTest {
 
             ReadModel<Event> result = readModelFactory.createReadModelForOnEvent(method);
             assertThat(result, is(notNullValue()));
-            verify(stream, times(1)).subscribe();
+            verify(stream, times(0)).subscribe();
         }
     }
 

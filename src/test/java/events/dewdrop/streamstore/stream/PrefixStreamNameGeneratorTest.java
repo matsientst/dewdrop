@@ -7,6 +7,7 @@ import events.dewdrop.fixture.automated.DewdropUserAggregate;
 import events.dewdrop.fixture.events.DewdropUserCreated;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class PrefixStreamNameGeneratorTest {
@@ -33,8 +34,9 @@ class PrefixStreamNameGeneratorTest {
     }
 
     @Test
+    @DisplayName("Prefix is not honored for events in eventstore")
     void generateForEvent() {
         assertThat(nameGenerator.generateForEvent(DewdropUserCreated.class.getSimpleName()), is("$et-DewdropUserCreated"));
-        assertThat(prefixedNameGenerator.generateForEvent(DewdropUserCreated.class.getSimpleName()), is("$et-test.DewdropUserCreated"));
+        assertThat(prefixedNameGenerator.generateForEvent(DewdropUserCreated.class.getSimpleName()), is("$et-DewdropUserCreated"));
     }
 }
