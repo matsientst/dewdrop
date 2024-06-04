@@ -13,6 +13,7 @@ import events.dewdrop.read.readmodel.annotation.Stream;
 import events.dewdrop.utils.DependencyInjectionUtils;
 import events.dewdrop.utils.DewdropReflectionUtils;
 import events.dewdrop.utils.ReadModelUtils;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
 import events.dewdrop.fixture.events.DewdropAccountCreated;
 import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;

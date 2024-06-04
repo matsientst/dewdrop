@@ -9,10 +9,12 @@ import events.dewdrop.structure.events.StreamReadResults;
 import events.dewdrop.structure.read.ReadRequest;
 import events.dewdrop.utils.DependencyInjectionUtils;
 import events.dewdrop.utils.DewdropReflectionUtils;
+
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import events.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
@@ -123,18 +125,17 @@ public class StreamReader {
         Optional<Method> startPositionMethod = streamDetails.getStartPositionMethod();
         if (startPositionMethod.isEmpty()) { throw new IllegalStateException("startPositionMethod is not set"); }
 
-        if (validateStreamName(streamName)) {
-            Method method = startPositionMethod.get();
-            Optional<Object> instance = DependencyInjectionUtils.getInstance(method.getDeclaringClass());
-            if (instance.isPresent()) {
-                Result<Long> position = DewdropReflectionUtils.callMethod(instance.get(), method);
-                if (position.isValuePresent()) {
-                    streamPosition.set(position.get());
-                    firstEventRead = true;
-                    return nameAndPosition.completeTask(streamName, getPosition());
-                }
+        Method method = startPositionMethod.get();
+        Optional<Object> instance = DependencyInjectionUtils.getInstance(method.getDeclaringClass());
+        if (instance.isPresent()) {
+            Result<Long> position = DewdropReflectionUtils.callMethod(instance.get(), method);
+            if (position.isValuePresent()) {
+                streamPosition.set(position.get());
+                firstEventRead = true;
+                return nameAndPosition.completeTask(streamName, getPosition());
             }
         }
+
         return nameAndPosition;
     }
 
@@ -148,8 +149,7 @@ public class StreamReader {
 
     NameAndPosition readAll() {
         try {
-            if (validateStreamName(streamName)) { return nameAndPosition.completeTask(streamName, 0L); }
-            return nameAndPosition;
+            return nameAndPosition.completeTask(streamName, 0L);
         } catch (Exception e) {
             log.error("There was a problem reading from: {}", streamName, e);
             return nameAndPosition;

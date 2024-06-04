@@ -1,5 +1,12 @@
 package events.dewdrop;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.with;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
@@ -20,13 +27,6 @@ import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSum
 import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryQuery;
 import events.dewdrop.fixture.readmodel.users.DewdropGetUserByIdQuery;
 import events.dewdrop.fixture.readmodel.users.DewdropUser;
-import events.dewdrop.fixture.readmodel.users.GetUserByIdQuery;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Predicate;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;

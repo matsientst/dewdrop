@@ -38,16 +38,16 @@ public class EventHandlerUtils {
             boolean noParameter = method.getParameterTypes().length > 0;
             if (!noParameter) {
                 String methodName = method.getName();
-                log.error("The method annotated with @EventHandler {}.{}() has no parameter and is invalid and cannot handle any events. Please add the event you want to handle like {}(ExampleEvent event) where ExampleEvent extends Event as the first parameter",
-                                method.getDeclaringClass(), methodName, methodName);
+                log.error("The method annotated with @{} {}.{}() has no parameter and is invalid and cannot handle any events. Please add the event you want to handle like {}(ExampleEvent event) where ExampleEvent extends Event as the first parameter",
+                                annotationClass.getSimpleName(), method.getDeclaringClass(), methodName, methodName);
             }
             return noParameter;
         }).filter(method -> {
             boolean isAssignable = Event.class.isAssignableFrom(method.getParameterTypes()[0]);
             if (!isAssignable) {
                 String methodName = method.getName();
-                log.error("The method annotated with @EventHandler {}.{}({} event) has a parameter that is not an event. Please add the event you want to handle like {}(ExampleEvent event) where ExampleEvent extends Event as the first parameter",
-                                method.getDeclaringClass(), methodName, method.getParameterTypes()[0].getSimpleName(), methodName);
+                log.error("The method annotated with @{} {}.{}({} event) has a parameter that is not an event. Please add the event you want to handle like {}(ExampleEvent event) where ExampleEvent extends Event as the first parameter",
+                                annotationClass.getSimpleName(), method.getDeclaringClass(), methodName, method.getParameterTypes()[0].getSimpleName(), methodName);
             }
             return isAssignable;
         }).collect(toMap(method -> (Class<? extends Event>) method.getParameterTypes()[0], Function.identity()));
@@ -55,6 +55,10 @@ public class EventHandlerUtils {
 
     public static Map<Class<? extends Event>, Method> getEventToEventHandlerMethod(Class<?> readModelClass) {
         return getEventToHandlerMethod(readModelClass, EventHandler.class);
+    }
+
+    public static Map<Class<? extends Event>, Method> getEventToOnEventHandlerMethod(Class<?> readModelClass) {
+        return getEventToHandlerMethod(readModelClass, OnEvent.class);
     }
 
     public static <T extends Message> void callEventHandler(Object target, T event) {

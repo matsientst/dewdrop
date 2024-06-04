@@ -83,6 +83,7 @@ public class Subscription<T extends Event> {
     }
 
     public boolean subscribeByNameAndPosition(StreamReader streamReader) {
+        if (!streamReader.validateStreamName(streamReader.getStreamName())) { return false; }
         NameAndPosition nameAndPosition = streamReader.nameAndPosition();
         if (!streamReader.isStreamExists()) { return false; }
         boolean subscribed = listener.start(nameAndPosition.getStreamName(), nameAndPosition.getPosition(), this);
@@ -92,40 +93,5 @@ public class Subscription<T extends Event> {
         return subscribed;
     }
 
-    /**
-     * When the stream has not been found create a poll task to subscribe to the stream.
-     *
-     * @param streamReader - A constructed streamReader to read from the stream
-     */
-    public void pollForCompletion(StreamReader streamReader) {
-        CompletableFuture<NameAndPosition> completionFuture = new CompletableFuture<>();
-        Runnable runnable = () -> {
-            NameAndPosition result = streamReader.nameAndPosition();
-            if (result.isComplete()) {
-                log.info("Finally discovered stream: {}", result.getStreamName());
-                completionFuture.complete(result);
-            }
-            if (!streamReader.isStreamExists()) {
-                log.info("Stream: {} still not found", streamReader.getStreamName());
-            }
-        };
-        schedule(streamReader, completionFuture, runnable);
-    }
-
-    /**
-     * Schedule the lookup for the stream name and position. When found automatically subscribe.
-     *
-     * @param streamReader
-     * @param completionFuture
-     * @param runnable
-     */
-    void schedule(StreamReader streamReader, CompletableFuture<NameAndPosition> completionFuture, Runnable runnable) {
-        final ScheduledFuture<?> checkFuture = executorService.scheduleAtFixedRate(runnable, 0, 1, TimeUnit.SECONDS);
-        completionFuture.thenApply(result -> {
-            subscribeByNameAndPosition(streamReader);
-            return true;
-        });
-        completionFuture.whenComplete((result, thrown) -> checkFuture.cancel(false));
-    }
 
 }
