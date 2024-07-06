@@ -1,5 +1,12 @@
 package events.dewdrop.read.readmodel.stream;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
@@ -11,13 +18,6 @@ import events.dewdrop.structure.api.Event;
 import events.dewdrop.structure.datastore.StreamStore;
 import events.dewdrop.structure.read.Handler;
 import events.dewdrop.structure.serialize.EventSerializer;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 
@@ -46,7 +46,7 @@ public class Stream<T extends Event> implements Handler<T> {
     public void subscribe() {
         if (!streamDetails.isSubscribed()) { return; }
         log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
-                        streamDetails.getMessageTypes().stream().map(Class::getSimpleName).collect(joining(",")));
+                        streamDetails.getMessageTypes().stream().map(event -> event.getClass().getSimpleName()).collect(joining(",")));
         subscription = Subscription.getInstance(this);
         StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);
 
@@ -59,7 +59,6 @@ public class Stream<T extends Event> implements Handler<T> {
 
     /**
      * When the stream has not been found create a poll task to subscribe to the stream.
-     *
      */
     public void pollForCompletion() {
         StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);

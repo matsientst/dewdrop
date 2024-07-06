@@ -1,18 +1,17 @@
 package events.dewdrop.read.readmodel.cache;
 
-import static java.util.stream.Collectors.toList;
-
-import events.dewdrop.utils.CacheUtils;
-import events.dewdrop.utils.DewdropReflectionUtils;
-import events.dewdrop.utils.ReadModelUtils;
-import events.dewdrop.structure.api.Message;
-import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
+import events.dewdrop.structure.api.Event;
+import events.dewdrop.structure.api.Message;
+import events.dewdrop.utils.CacheUtils;
+import events.dewdrop.utils.DewdropReflectionUtils;
+import events.dewdrop.utils.ReadModelUtils;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 
@@ -20,6 +19,7 @@ import lombok.extern.log4j.Log4j2;
 @Data
 public class MapBackedInMemoryCacheProcessor<R> implements InMemoryCacheProcessor {
     private Class<?> cachedStateObjectType;
+    private Class<? extends Event> primaryEvent;
     private Map<UUID, R> cache;
     private Map<String, Map<UUID, UUID>> cacheIndex;
     private List<String> primaryCacheKeyNames;
@@ -30,7 +30,9 @@ public class MapBackedInMemoryCacheProcessor<R> implements InMemoryCacheProcesso
         this.cachedStateObjectType = cachedStateObjectType;
         this.cache = new ConcurrentHashMap<>();
         this.primaryCacheKeyNames = CacheUtils.getPrimaryCacheKeys(cachedStateObjectType);
-        this.foreignCacheKeyNames = CacheUtils.getForeignCacheKeys(cachedStateObjectType).stream().map(Field::getName).collect(toList());
+        this.foreignCacheKeyNames = CacheUtils.getForeignCacheKeys(cachedStateObjectType);
+        this.primaryEvent = CacheUtils.getCreationEventClass(cachedStateObjectType);
+
         this.cacheIndex = new ConcurrentHashMap<>();
         this.unprocessedMessages = new ConcurrentHashMap<>();
         this.foreignCacheKeyNames.forEach(keyName -> cacheIndex.computeIfAbsent(keyName, key -> new ConcurrentHashMap<>()));
@@ -42,12 +44,16 @@ public class MapBackedInMemoryCacheProcessor<R> implements InMemoryCacheProcesso
         Optional<UUID> optId = CacheUtils.getCacheRootKey(message);
         optId.ifPresent(uuid -> {
             UUID id = uuid;
-            if (DewdropReflectionUtils.hasAnyField(message, primaryCacheKeyNames)) {
+            if (isPrimary(message) && DewdropReflectionUtils.hasAnyField(message, primaryCacheKeyNames)) {
                 primaryCache(message, id);
             } else {
                 foreignCache(message, id);
             }
         });
+    }
+
+    private <T extends Message> boolean isPrimary(T message) {
+        return this.primaryEvent.isAssignableFrom(message.getClass());
     }
 
     <T extends Message> void foreignCache(T message, UUID id) {

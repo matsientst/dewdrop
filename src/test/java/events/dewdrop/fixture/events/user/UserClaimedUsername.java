@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@CreationEvent
 public class UserClaimedUsername extends UserEvent {
     String username;
 

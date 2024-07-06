@@ -12,6 +12,7 @@ import static org.awaitility.Awaitility.with;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import events.dewdrop.api.result.Result;
@@ -43,6 +44,7 @@ class DewdropTest {
 
         DewdropCreateUserCommand createUserCommand = createUser(dewdrop);
         DewdropCreateAccountCommand createAccountCommand = createAccount(dewdrop, createUserCommand);
+        final UUID causationId = createAccountCommand.getCausationId();
         final DewdropAddFundsToAccountCommand addFunds = addFunds(dewdrop, createAccountCommand);
 
         DewdropGetAccountByIdQuery query = new DewdropGetAccountByIdQuery(createAccountCommand.getAccountId());
@@ -53,7 +55,11 @@ class DewdropTest {
                 return false;
             }
             DewdropAccountDetails dewdropAccountDetails = (DewdropAccountDetails) result.get();
-            if (StringUtils.isNotEmpty(dewdropAccountDetails.getUsername()) && dewdropAccountDetails.getBalance().equals(balance)) { return true; }
+
+            if (StringUtils.isNotEmpty(dewdropAccountDetails.getUsername()) && dewdropAccountDetails.getBalance().equals(balance)) {
+                assertEquals(causationId, dewdropAccountDetails.getCausationId());
+                return true;
+            }
             return false;
         });
         retryUntilComplete(dewdrop, query, (result) -> {
@@ -109,6 +115,7 @@ class DewdropTest {
 
     private DewdropCreateAccountCommand createAccount(Dewdrop dewdrop, DewdropCreateUserCommand createUserCommand) throws ValidationException {
         DewdropCreateAccountCommand command = new DewdropCreateAccountCommand(UUID.randomUUID(), "test", createUserCommand.getUserId());
+        command.setCausationId(UUID.randomUUID());
         dewdrop.executeCommand(command);
         return command;
     }

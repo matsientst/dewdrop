@@ -145,7 +145,7 @@ class ReadModelFactoryTest {
         doReturn(new Class[] {DewdropAccountCreated.class}).when(method).getParameterTypes();
         Stream stream = mock(Stream.class);
 
-        doReturn(stream).when(streamFactory).constructStreamForEvent(any(Consumer.class), any(Class.class));
+        doReturn(stream).when(streamFactory).constructStreamForEvent(any(ReadModel.class), any(Class.class));
         try (MockedStatic<DependencyInjectionUtils> utilities = mockStatic(DependencyInjectionUtils.class)) {
             utilities.when(() -> DependencyInjectionUtils.getInstance(any(Class.class))).thenReturn(Optional.of(mock(AccountCreatedService.class)));
 

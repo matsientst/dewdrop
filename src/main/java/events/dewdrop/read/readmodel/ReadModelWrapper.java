@@ -43,7 +43,7 @@ public class ReadModelWrapper {
             eventToHandler.putAll(mapOfHandlers);
         } else {
             mapOfHandlers.forEach((eventClass, method) -> {
-                Optional<Method> proxiedMethod = DewdropReflectionUtils.getMatchingMethod(method, readModel);
+                Optional<Method> proxiedMethod = DewdropReflectionUtils.getMatchingMethod(method, readModel.getClass());
                 if (proxiedMethod.isPresent()) {
                     eventToHandler.put(eventClass, proxiedMethod.get());
                 }

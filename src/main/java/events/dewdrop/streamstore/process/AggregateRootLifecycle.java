@@ -96,6 +96,7 @@ public class AggregateRootLifecycle {
      */
     protected <T> AggregateRoot executeCommand(Command command, Method commandHandlerMethod, AggregateRoot aggregateRoot) throws ValidationException {
         log.debug("executing command:{} for aggregateRoot:{}", command.getClass().getSimpleName(), aggregateRoot.getTargetClassName());
+        aggregateRoot.setSource(command);
         Result<T> result = CommandHandlerUtils.executeCommand(commandHandlerMethod, command, aggregateRoot);
         if (result.isExceptionPresent()) { throw ValidationException.of(result.getException()); }
         result.ifPresent(events -> processEvents(aggregateRoot, events));

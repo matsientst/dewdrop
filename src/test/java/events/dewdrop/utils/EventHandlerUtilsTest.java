@@ -1,5 +1,14 @@
 package events.dewdrop.utils;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
@@ -11,26 +20,19 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-import events.dewdrop.read.readmodel.ReadModelWrapper;
-import events.dewdrop.read.readmodel.annotation.EventHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import lombok.Data;
 import events.dewdrop.fixture.events.DewdropAccountCreated;
 import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;
 import events.dewdrop.fixture.events.DewdropUserCreated;
+import events.dewdrop.fixture.events.UserLoggedIn;
 import events.dewdrop.fixture.readmodel.AccountCreatedService;
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetails;
 import events.dewdrop.fixture.readmodel.users.DewdropUser;
 import events.dewdrop.read.readmodel.ReadModel;
+import events.dewdrop.read.readmodel.ReadModelWrapper;
+import events.dewdrop.read.readmodel.annotation.EventHandler;
 import events.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
 import events.dewdrop.structure.api.Event;
+import lombok.Data;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,17 +69,18 @@ class EventHandlerUtilsTest {
         doReturn(DewdropAccountDetails.class).when(inMemoryCacheProcessor).getCachedStateObjectType();
 
         List<Class<? extends Event>> results = EventHandlerUtils.getEventHandlers(readModel);
-        assertThat(results, containsInAnyOrder(DewdropAccountCreated.class, DewdropFundsAddedToAccount.class, DewdropUserCreated.class));
+        assertThat(results, containsInAnyOrder(DewdropAccountCreated.class, DewdropFundsAddedToAccount.class, DewdropUserCreated.class, UserLoggedIn.class));
     }
 
     @Test
     @DisplayName("getEventToHandlerMethod() - Given a DTO class with @EventHandler annotations, when getEventToHandlerMethod() is called, then return the map of event to handler method")
     void getEventToHandlerMethod() {
         Map<Class<? extends Event>, Method> eventToHandlerMethod = EventHandlerUtils.getEventToHandlerMethod(DewdropAccountDetails.class, EventHandler.class);
-        assertThat(eventToHandlerMethod.size(), is(3));
+        assertThat(eventToHandlerMethod.size(), is(4));
         assertThat(eventToHandlerMethod.get(DewdropAccountCreated.class), is(notNullValue()));
         assertThat(eventToHandlerMethod.get(DewdropFundsAddedToAccount.class), is(notNullValue()));
         assertThat(eventToHandlerMethod.get(DewdropUserCreated.class), is(notNullValue()));
+        assertThat(eventToHandlerMethod.get(UserLoggedIn.class), is(notNullValue()));
     }
 
     @Test

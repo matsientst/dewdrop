@@ -72,6 +72,8 @@ public class JsonSerializer implements EventSerializer {
         try {
             T value = (T) objectMapper.readValue(event.getData(), Class.forName(className));
             value.setEventId(event.getEventId());
+            value.setPosition(event.getEventNumber());
+            value.setCreated(event.getCreated());
             if (metadata.containsKey(StreamWriter.CAUSATION_ID)) {
                 String uuid = (String) metadata.get(StreamWriter.CAUSATION_ID);
                 value.setCausationId(UUID.fromString(uuid));
@@ -80,7 +82,6 @@ public class JsonSerializer implements EventSerializer {
                 String uuid = (String) metadata.get(StreamWriter.CORRELATION_ID);
                 value.setCorrelationId(UUID.fromString(uuid));
             }
-            value.setVersion(event.getEventNumber());
             return Optional.of(value);
         } catch (IOException e) {
             log.error("Unable to deserialize data for class:" + className, e);

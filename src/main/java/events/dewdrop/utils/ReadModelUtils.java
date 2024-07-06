@@ -1,25 +1,25 @@
 package events.dewdrop.utils;
 
-import static java.util.Objects.requireNonNull;
-
-import events.dewdrop.read.readmodel.ReadModelWrapper;
-import events.dewdrop.read.readmodel.annotation.DewdropCache;
-import events.dewdrop.read.readmodel.annotation.ReadModel;
-import events.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
-import events.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
-import events.dewdrop.read.readmodel.cache.SingleItemInMemoryCache;
-import events.dewdrop.read.readmodel.query.QueryHandler;
-import events.dewdrop.structure.api.Message;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static java.util.Objects.requireNonNull;
+
+import events.dewdrop.read.readmodel.ReadModelWrapper;
+import events.dewdrop.read.readmodel.annotation.DewdropCache;
+import events.dewdrop.read.readmodel.annotation.ReadModel;
+import events.dewdrop.read.readmodel.cache.ImprovedMapBackedInMemoryCacheProcessor;
+import events.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
+import events.dewdrop.read.readmodel.cache.SingleItemInMemoryCache;
+import events.dewdrop.read.readmodel.query.QueryHandler;
+import events.dewdrop.structure.api.Message;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -63,7 +63,7 @@ public class ReadModelUtils {
         if (Map.class.equals(field.getType())) {
             ParameterizedType type = (ParameterizedType) field.getGenericType();
             Class<?> clazz = (Class<?>) type.getActualTypeArguments()[1];
-            inMemoryCacheProcessor = new MapBackedInMemoryCacheProcessor<>(clazz);
+            inMemoryCacheProcessor = new ImprovedMapBackedInMemoryCacheProcessor<>(clazz);
         } else {
             inMemoryCacheProcessor = new SingleItemInMemoryCache(field.getType());
         }

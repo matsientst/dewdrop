@@ -15,7 +15,7 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 @Log4j2
 public class User {
-    @PrimaryCacheKey
+    @PrimaryCacheKey(creationEvent = UserSignedUp.class)
     private UUID userId;
     private String username;
     private String email;
@@ -30,7 +30,6 @@ public class User {
 
     @EventHandler
     private void on(UserClaimedUsername event) {
-
         log.info("Processing UserClaimedUsername:{}", event);
         this.username = event.getUsername();
     }

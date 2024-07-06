@@ -107,7 +107,7 @@ public class ReadModelFactory {
             return null;
         }
         log.info("Created @OnEvent ReadModel:{} for eventType:{}", readModelWrapper, eventType.getSimpleName());
-        events.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStreamForEvent(readModel.handler(), (Class<? extends Event>) eventType);
+        events.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStreamForEvent(readModel, (Class<? extends Event>) eventType);
         readModel.addStream(stream);
         return readModel;
     }

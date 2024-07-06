@@ -46,10 +46,10 @@ class StreamUtilsTest {
         try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
             try (MockedStatic<DewdropReflectionUtils> reflectionUtils = mockStatic(DewdropReflectionUtils.class)) {
                 utilities.when(() -> DewdropAnnotationUtils.getAnnotatedMethods(any(Class.class), any(Class.class))).thenReturn(Set.of(streamStartPositionMethod));
-                reflectionUtils.when(() -> DewdropReflectionUtils.getMatchingMethod(any(Method.class), any(Object.class))).thenReturn(Optional.of(streamStartPositionMethod));
+                reflectionUtils.when(() -> DewdropReflectionUtils.getMatchingMethod(any(Method.class), any(Class.class))).thenReturn(Optional.of(streamStartPositionMethod));
 
 
-                Optional<Method> method = StreamUtils.getStreamStartPositionMethod(annotation, readModel);
+                Optional<Method> method = StreamUtils.getStreamStartPositionMethod(annotation.name(), annotation.streamType(), readModel);
                 assertThat(method.isPresent(), is(true));
                 assertThat(method.get(), is(method.get()));
             }
@@ -67,10 +67,10 @@ class StreamUtilsTest {
         try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
             try (MockedStatic<DewdropReflectionUtils> reflectionUtils = mockStatic(DewdropReflectionUtils.class)) {
                 utilities.when(() -> DewdropAnnotationUtils.getAnnotatedMethods(any(Class.class), any(Class.class))).thenReturn(Set.of(streamStartPositionMethod));
-                reflectionUtils.when(() -> DewdropReflectionUtils.getMatchingMethod(any(Method.class), any(Object.class))).thenReturn(Optional.empty());
+                reflectionUtils.when(() -> DewdropReflectionUtils.getMatchingMethod(any(Method.class), any(Class.class))).thenReturn(Optional.empty());
 
 
-                Optional<Method> method = StreamUtils.getStreamStartPositionMethod(annotation, readModel);
+                Optional<Method> method = StreamUtils.getStreamStartPositionMethod(annotation.name(), annotation.streamType(), readModel);
                 assertThat(method.isEmpty(), is(true));
             }
         }
@@ -79,7 +79,7 @@ class StreamUtilsTest {
     @Test
     @DisplayName("isCorrectStreamStartPosition() - Given a stream annotation and a method annotated with @StreamStartPosition, when they have the same name and stream type, then return true")
     void isCorrectStreamStartPosition() {
-        assertThat(StreamUtils.isCorrectStreamStartPosition(annotation, streamStartPositionMethod), is(true));
+        assertThat(StreamUtils.isCorrectStreamStartPosition(annotation.name(), annotation.streamType(), streamStartPositionMethod), is(true));
     }
 
 
@@ -87,7 +87,7 @@ class StreamUtilsTest {
     @DisplayName("isCorrectStreamStartPosition() - Given a stream annotation and a method annotated with @StreamStartPosition, when they do not have the same name, then return false")
     void isCorrectStreamStartPosition_wrongName() {
         doReturn("test").when(annotation).name();
-        assertThat(StreamUtils.isCorrectStreamStartPosition(annotation, streamStartPositionMethod), is(false));
+        assertThat(StreamUtils.isCorrectStreamStartPosition(annotation.name(), annotation.streamType(), streamStartPositionMethod), is(false));
     }
 
     @Test
@@ -95,7 +95,7 @@ class StreamUtilsTest {
     void isCorrectStreamStartPosition_wrongStreamType() {
         doReturn("stream1").when(annotation).name();
         Mockito.doReturn(StreamType.AGGREGATE).when(annotation).streamType();
-        assertThat(StreamUtils.isCorrectStreamStartPosition(annotation, streamStartPositionMethod), is(false));
+        assertThat(StreamUtils.isCorrectStreamStartPosition(annotation.name(), annotation.streamType(), streamStartPositionMethod), is(false));
     }
 
     @Stream(name = "stream1", streamType = StreamType.EVENT)

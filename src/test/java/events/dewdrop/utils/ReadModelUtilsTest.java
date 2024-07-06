@@ -17,6 +17,7 @@ import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDet
 import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryReadModel;
 import events.dewdrop.fixture.readmodel.users.DewdropUser;
 import events.dewdrop.fixture.readmodel.users.DewdropUsersReadModel;
+import events.dewdrop.read.readmodel.cache.ImprovedMapBackedInMemoryCacheProcessor;
 import events.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
 import events.dewdrop.read.readmodel.cache.SingleItemInMemoryCache;
 import java.lang.reflect.Field;
@@ -130,7 +131,7 @@ class ReadModelUtilsTest {
     @Test
     @DisplayName("createInMemoryCache() - Given a read model class with an @DewdropCache of a map, create an MapBackedInMemoryCacheProcessor cache")
     void createInMemoryCache() {
-        assertThat(ReadModelUtils.createInMemoryCache(DewdropUsersReadModel.class).get().getClass(), is(MapBackedInMemoryCacheProcessor.class));
+        assertThat(ReadModelUtils.createInMemoryCache(DewdropUsersReadModel.class).get().getClass(), is(ImprovedMapBackedInMemoryCacheProcessor.class));
     }
 
     @Test

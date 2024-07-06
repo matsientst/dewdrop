@@ -1,5 +1,12 @@
 package events.dewdrop.streamstore.serialize;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
@@ -12,18 +19,12 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import events.dewdrop.fixture.events.DewdropAccountCreated;
 import events.dewdrop.structure.api.Message;
 import events.dewdrop.structure.events.ReadEventData;
 import events.dewdrop.structure.events.WriteEventData;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import org.apache.commons.collections4.map.HashedMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -96,6 +97,7 @@ class JsonSerializerTest {
 
         assertThat(result.getAccountId(), is(castedEvent.getAccountId()));
         assertThat(result.getName(), is(castedEvent.getName()));
+        assertThat(result.getPosition(), is(eventData.getEventNumber()));
     }
 
     @Test

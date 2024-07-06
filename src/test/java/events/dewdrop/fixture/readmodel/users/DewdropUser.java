@@ -14,7 +14,7 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 @Log4j2
 public class DewdropUser {
-    @PrimaryCacheKey
+    @PrimaryCacheKey(creationEvent = DewdropUserCreated.class)
     private UUID userId;
     private String username;
     private Long version;
