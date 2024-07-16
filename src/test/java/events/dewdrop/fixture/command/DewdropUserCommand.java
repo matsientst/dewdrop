@@ -2,7 +2,7 @@ package events.dewdrop.fixture.command;
 
 import events.dewdrop.aggregate.annotation.AggregateId;
 import java.util.UUID;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;

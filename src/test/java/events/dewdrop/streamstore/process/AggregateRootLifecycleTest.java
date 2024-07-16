@@ -1,32 +1,35 @@
 package events.dewdrop.streamstore.process;
 
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.UUID;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import events.dewdrop.aggregate.AggregateRoot;
 import events.dewdrop.api.result.Result;
+import events.dewdrop.api.validators.ValidationError;
 import events.dewdrop.api.validators.ValidationException;
-import events.dewdrop.read.readmodel.stream.StreamFactory;
-import events.dewdrop.utils.CommandHandlerUtils;
 import events.dewdrop.fixture.automated.DewdropUserAggregate;
 import events.dewdrop.fixture.command.DewdropCreateUserCommand;
 import events.dewdrop.fixture.events.DewdropUserCreated;
 import events.dewdrop.read.readmodel.stream.Stream;
+import events.dewdrop.read.readmodel.stream.StreamFactory;
 import events.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
 import events.dewdrop.structure.api.Command;
 import events.dewdrop.structure.api.Event;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.UUID;
+import events.dewdrop.utils.CommandHandlerUtils;
+import org.apache.commons.lang3.reflect.MethodUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -132,5 +135,15 @@ class AggregateRootLifecycleTest {
         verify(aggregateRootLifecycle, times(1)).getById(any(Stream.class), any(Command.class), any(AggregateRoot.class), any(UUID.class));
         verify(aggregateRootLifecycle, times(1)).executeCommand(any(Command.class), any(Method.class), any(AggregateRoot.class));
         verify(aggregateRootLifecycle, times(1)).save(any(Stream.class), any(AggregateRoot.class));
+    }
+
+
+    @Test
+    void validateCommand() throws ValidationException {
+        DewdropCreateUserCommand command = new DewdropCreateUserCommand(null, null);
+        Method method = MethodUtils.getMatchingMethod(DewdropUserAggregate.class, "createUser", DewdropCreateUserCommand.class);
+        ValidationException validationException = assertThrows(ValidationException.class, () -> aggregateRootLifecycle.validateCommand(command, method));
+        List<ValidationError> validationErrors = validationException.getValidationResult().get();
+        assertThat(validationErrors.size(), is(2));
     }
 }

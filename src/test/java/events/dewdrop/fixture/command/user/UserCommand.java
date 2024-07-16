@@ -3,13 +3,13 @@ package events.dewdrop.fixture.command.user;
 import events.dewdrop.aggregate.annotation.AggregateId;
 import events.dewdrop.structure.api.Command;
 import java.util.UUID;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserCommand extends Command {
 
     @NotNull(message = "UserId is required")

@@ -1,5 +1,10 @@
 package events.dewdrop.streamstore.process;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.List;
+import java.util.UUID;
+
 import static java.util.Objects.requireNonNull;
 
 import events.dewdrop.aggregate.AggregateRoot;
@@ -8,13 +13,12 @@ import events.dewdrop.api.validators.ValidationException;
 import events.dewdrop.read.readmodel.stream.Stream;
 import events.dewdrop.read.readmodel.stream.StreamFactory;
 import events.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
-import events.dewdrop.utils.CommandHandlerUtils;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.UUID;
-import lombok.extern.log4j.Log4j2;
 import events.dewdrop.structure.api.Command;
 import events.dewdrop.structure.api.Event;
+import events.dewdrop.structure.api.validator.DewdropValidator;
+import events.dewdrop.utils.CommandHandlerUtils;
+import jakarta.validation.Valid;
+import lombok.extern.log4j.Log4j2;
 
 
 /**
@@ -53,10 +57,22 @@ public class AggregateRootLifecycle {
 
         log.debug("Processing command {}", command.getClass().getSimpleName());
         Stream<T> stream = streamFactory.constructStreamFromAggregateRoot(aggregateRoot, aggregateRootId);
+        validateCommand(command, commandHandlerMethod);
         aggregateRoot = getById(stream, command, aggregateRoot, aggregateRootId);
         aggregateRoot = executeCommand(command, commandHandlerMethod, aggregateRoot);
         save(stream, aggregateRoot);
         return Result.of(true);
+    }
+
+    protected void validateCommand(Command command, Method commandHandlerMethod) throws ValidationException {
+        Parameter[] parameters = commandHandlerMethod.getParameters();
+        if (parameters != null && parameters.length > 0) {
+            boolean isValidate = parameters[0].isAnnotationPresent(Valid.class);
+            boolean isCommand = ((Class<?>) parameters[0].getParameterizedType()) == command.getClass();
+            if (isValidate && isCommand) {
+                DewdropValidator.validate(command);
+            }
+        }
     }
 
 
