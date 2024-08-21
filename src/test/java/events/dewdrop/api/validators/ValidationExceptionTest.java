@@ -1,13 +1,13 @@
 package events.dewdrop.api.validators;
 
+import org.junit.jupiter.api.Test;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import org.junit.jupiter.api.Test;
 
 class ValidationExceptionTest {
     @Test
@@ -17,6 +17,16 @@ class ValidationExceptionTest {
         ValidationException exception = new ValidationException(result);
 
         assertEquals(message, exception.getValidationResult().get().get(0).getMessage());
+    }
+    @Test
+    void validationException_withField() {
+        String field = "username";
+        String message = "REQUIRED";
+        ValidationResult result = ValidationResult.of(new ValidationError(field, message));
+        ValidationException exception = new ValidationException(result);
+
+        assertEquals(message, exception.getValidationResult().get().get(0).getMessage());
+        assertEquals(field, exception.getValidationResult().get().get(0).getField());
     }
 
     @Test

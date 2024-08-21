@@ -44,9 +44,11 @@ public class Stream<T extends Event> implements Handler<T> {
     }
 
     public void subscribe() {
-        if (!streamDetails.isSubscribed()) { return; }
-        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
-                        streamDetails.getMessageTypes().stream().map(event -> event.getClass().getSimpleName()).collect(joining(",")));
+        if (!streamDetails.isSubscribed()) {return;}
+        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}",
+            streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
+            streamDetails.getMessageTypes().stream().map(event -> event.getClass().getSimpleName())
+                .collect(joining(",")));
         subscription = Subscription.getInstance(this);
         StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);
 
@@ -86,15 +88,15 @@ public class Stream<T extends Event> implements Handler<T> {
     void schedule(StreamReader streamReader, CompletableFuture<Boolean> completionFuture, Runnable runnable) {
         final ScheduledFuture<?> checkFuture = executorService.scheduleAtFixedRate(runnable, 1, 5, TimeUnit.SECONDS);
         completionFuture.thenApply(result -> {
-            log.info("GOT TO HERE");
-            subscription.subscribeByNameAndPosition(streamReader);;
+            subscription.subscribeByNameAndPosition(streamReader);
             return true;
         });
         completionFuture.whenComplete((result, thrown) -> checkFuture.cancel(false));
     }
 
     public void read(Long start, Long count) {
-        StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails, streamPosition);
+        StreamReader streamReader =
+            StreamReader.getInstance(streamStore, eventSerializer, streamDetails, streamPosition);
         streamReader.read(start, count);
         this.streamPosition = streamReader.getStreamPosition();
     }
@@ -115,7 +117,9 @@ public class Stream<T extends Event> implements Handler<T> {
     public AggregateRoot getById(StreamStoreGetByIDRequest request) {
         requireNonNull(request, "A StreamStoreGetByIDRequest is required");
 
-        if (streamDetails.getStreamType() != StreamType.AGGREGATE) { throw new IllegalStateException("Stream is not an aggregate - we cannot get by id"); }
+        if (streamDetails.getStreamType() != StreamType.AGGREGATE) {
+            throw new IllegalStateException("Stream is not an aggregate - we cannot get by id");
+        }
 
         StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);
         return streamReader.getById(request);
