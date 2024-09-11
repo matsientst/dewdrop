@@ -1,31 +1,5 @@
 package events.dewdrop.read.readmodel.stream;
 
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 import events.dewdrop.aggregate.AggregateRoot;
 import events.dewdrop.api.result.Result;
 import events.dewdrop.fixture.automated.DewdropUserAggregate;
@@ -53,6 +27,32 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 class StreamReaderTest {
 
     StreamDetails streamDetails;
@@ -65,9 +65,9 @@ class StreamReaderTest {
     void setup() {
         StreamNameGenerator streamNameGenerator = mock(PrefixStreamNameGenerator.class);
         Consumer<Event> eventConsumer = mock(Consumer.class);
-        doReturn("DewdropUserAggregate").when(streamNameGenerator).generateForAggregate(any(Class.class), any(UUID.class));
-        streamDetails = spy(StreamDetails.builder().streamType(StreamType.AGGREGATE).direction(Direction.FORWARD).aggregateRoot(new AggregateRoot()).streamNameGenerator(streamNameGenerator).id(UUID.randomUUID()).subscribed(true)
-                        .messageTypes(List.of(DewdropUserEvent.class)).eventHandler(eventConsumer).create());
+        doReturn("DewdropUserAggregate").when(streamNameGenerator).generateForAggregate(anyString(), any(UUID.class));
+        streamDetails = spy(StreamDetails.builder().streamType(StreamType.AGGREGATE).direction(Direction.FORWARD).aggregateName(new AggregateRoot().getTarget().getClass().getSimpleName()).streamNameGenerator(streamNameGenerator).id(UUID.randomUUID())
+                        .subscribed(true).messageTypes(List.of(DewdropUserEvent.class)).eventHandler(eventConsumer).create());
         streamStore = mock(EventStore.class);
         eventSerializer = mock(JsonSerializer.class);
         streamReader = spy(StreamReader.getInstance(streamStore, eventSerializer, streamDetails));

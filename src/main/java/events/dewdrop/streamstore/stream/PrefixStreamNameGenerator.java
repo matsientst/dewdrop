@@ -32,16 +32,18 @@ public class PrefixStreamNameGenerator implements StreamNameGenerator {
      * It takes the aggregate class name, and the ID and generates the stream name. For Example:
      * DewdropUserAggregate-fc19e182-045a-4f91-9c61-ae081383ed36
      *
-     * @param aggregateClass The class of the aggregate.
+     * @param aggregateName The class of the aggregate.
      * @param id The id of the aggregate
      * @return A string that is the name of the stream.
      */
     @Override
-    public String generateForAggregate(Class<?> aggregateClass, UUID id) {
+    public String generateForAggregate(String aggregateName, UUID id) {
         StringBuilder builder = new StringBuilder();
         appendPrefix(builder);
-        builder.append(aggregateClass.getSimpleName()).append("-");
-        builder.append(id);
+        builder.append(aggregateName);
+        if (id != null) {
+            builder.append("-").append(id);
+        }
         return builder.toString();
     }
 

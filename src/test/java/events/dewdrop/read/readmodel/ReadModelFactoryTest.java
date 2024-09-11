@@ -1,5 +1,28 @@
 package events.dewdrop.read.readmodel;
 
+import events.dewdrop.fixture.events.DewdropAccountCreated;
+import events.dewdrop.fixture.readmodel.AccountCreatedService;
+import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummary;
+import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryReadModel;
+import events.dewdrop.read.readmodel.stream.Stream;
+import events.dewdrop.read.readmodel.stream.StreamAnnotationDetails;
+import events.dewdrop.read.readmodel.stream.StreamDetails;
+import events.dewdrop.read.readmodel.stream.StreamFactory;
+import events.dewdrop.structure.api.Event;
+import events.dewdrop.structure.datastore.StreamStore;
+import events.dewdrop.structure.serialize.EventSerializer;
+import events.dewdrop.utils.DependencyInjectionUtils;
+import events.dewdrop.utils.EventHandlerUtils;
+import events.dewdrop.utils.ReadModelUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Optional;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -12,28 +35,6 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-
-import events.dewdrop.fixture.readmodel.AccountCreatedService;
-import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummary;
-import events.dewdrop.read.readmodel.stream.Stream;
-import events.dewdrop.read.readmodel.stream.StreamDetails;
-import events.dewdrop.read.readmodel.stream.StreamFactory;
-import events.dewdrop.utils.DependencyInjectionUtils;
-import events.dewdrop.utils.EventHandlerUtils;
-import events.dewdrop.utils.ReadModelUtils;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
-import events.dewdrop.fixture.events.DewdropAccountCreated;
-import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryReadModel;
-import events.dewdrop.structure.api.Event;
-import events.dewdrop.structure.datastore.StreamStore;
-import events.dewdrop.structure.serialize.EventSerializer;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 
 class ReadModelFactoryTest {
     StreamStore streamStore;
@@ -110,7 +111,7 @@ class ReadModelFactoryTest {
         doReturn("test").when(streamDetails).getStreamName();
         doReturn(true).when(streamDetails).isSubscribed();
         doReturn(streamDetails).when(stream).getStreamDetails();
-        doReturn(stream).when(streamFactory).constructStreamFromStream(any(events.dewdrop.read.readmodel.annotation.Stream.class), any(ReadModel.class));
+        doReturn(stream).when(streamFactory).constructStreamFromStream(any(StreamAnnotationDetails.class), any(ReadModel.class));
         doNothing().when(readModel).addStream(any(Stream.class));
         try (MockedStatic<ReadModelUtils> utilities = mockStatic(ReadModelUtils.class)) {
             utilities.when(() -> ReadModelUtils.createReadModel(any())).thenReturn(readModel);

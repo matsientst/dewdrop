@@ -1,15 +1,5 @@
 package events.dewdrop.read.readmodel.stream;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
-
 import events.dewdrop.aggregate.AggregateRoot;
 import events.dewdrop.read.readmodel.stream.subscription.Subscription;
 import events.dewdrop.streamstore.repository.StreamStoreGetByIDRequest;
@@ -20,6 +10,18 @@ import events.dewdrop.structure.read.Handler;
 import events.dewdrop.structure.serialize.EventSerializer;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
+
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 
 @Data
 @Log4j2
@@ -44,11 +46,9 @@ public class Stream<T extends Event> implements Handler<T> {
     }
 
     public void subscribe() {
-        if (!streamDetails.isSubscribed()) {return;}
-        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}",
-            streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
-            streamDetails.getMessageTypes().stream().map(event -> event.getClass().getSimpleName())
-                .collect(joining(",")));
+        if (!streamDetails.isSubscribed()) { return; }
+        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
+                        streamDetails.getMessageTypes().stream().map(event -> event.getClass().getSimpleName()).collect(joining(",")));
         subscription = Subscription.getInstance(this);
         StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);
 
@@ -95,8 +95,13 @@ public class Stream<T extends Event> implements Handler<T> {
     }
 
     public void read(Long start, Long count) {
-        StreamReader streamReader =
-            StreamReader.getInstance(streamStore, eventSerializer, streamDetails, streamPosition);
+        StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails, streamPosition);
+        streamReader.read(start, count);
+        this.streamPosition = streamReader.getStreamPosition();
+    }
+
+    public void read(StreamDetails idBasedDetails, Long start, Long count) {
+        StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, idBasedDetails, streamPosition);
         streamReader.read(start, count);
         this.streamPosition = streamReader.getStreamPosition();
     }
@@ -108,8 +113,13 @@ public class Stream<T extends Event> implements Handler<T> {
 
     // If we don't have a subscription we can call read to catch up to where we need to be in our
     // version
-    public void updateState() {
-        if (!streamDetails.isSubscribed()) {
+    public void updateQueryState(Optional<UUID> aggregateId) {
+        if (aggregateId.isPresent()) {
+            StreamDetails idDetails = StreamDetails.builder().streamType(streamDetails.getStreamType()).direction(streamDetails.getDirection()).eventHandler(streamDetails.getEventHandler()).aggregateName(streamDetails.getStreamName())
+                            .streamNameGenerator(streamDetails.getStreamNameGenerator()).messageTypes(streamDetails.getMessageTypes()).name(streamDetails.getStreamName()).id(aggregateId.get()).subscribed(streamDetails.isSubscribed())
+                            .startPositionMethod(streamDetails.getStartPositionMethod()).create();
+            this.read(idDetails, this.streamPosition.get(), null);
+        } else if (!streamDetails.isSubscribed()) {
             this.read(this.streamPosition.get(), null);
         }
     }
@@ -117,9 +127,7 @@ public class Stream<T extends Event> implements Handler<T> {
     public AggregateRoot getById(StreamStoreGetByIDRequest request) {
         requireNonNull(request, "A StreamStoreGetByIDRequest is required");
 
-        if (streamDetails.getStreamType() != StreamType.AGGREGATE) {
-            throw new IllegalStateException("Stream is not an aggregate - we cannot get by id");
-        }
+        if (streamDetails.getStreamType() != StreamType.AGGREGATE) { throw new IllegalStateException("Stream is not an aggregate - we cannot get by id"); }
 
         StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);
         return streamReader.getById(request);

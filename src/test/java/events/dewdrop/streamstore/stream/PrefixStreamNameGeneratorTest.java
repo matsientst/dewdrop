@@ -29,8 +29,8 @@ class PrefixStreamNameGeneratorTest {
     @Test
     void generateForAggregate() {
         UUID id = UUID.randomUUID();
-        assertThat(nameGenerator.generateForAggregate(DewdropUserAggregate.class, id), is("DewdropUserAggregate-" + id));
-        assertThat(prefixedNameGenerator.generateForAggregate(DewdropUserAggregate.class, id), is("test.DewdropUserAggregate-" + id));
+        assertThat(nameGenerator.generateForAggregate(DewdropUserAggregate.class.getSimpleName(), id), is("DewdropUserAggregate-" + id));
+        assertThat(prefixedNameGenerator.generateForAggregate(DewdropUserAggregate.class.getSimpleName(), id), is("test.DewdropUserAggregate-" + id));
     }
 
     @Test

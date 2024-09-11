@@ -1,10 +1,13 @@
 package events.dewdrop.read.readmodel;
 
 import events.dewdrop.api.result.Result;
-import events.dewdrop.utils.QueryHandlerUtils;
 import events.dewdrop.structure.api.Event;
-import java.util.Optional;
+import events.dewdrop.utils.AggregateIdUtils;
+import events.dewdrop.utils.QueryHandlerUtils;
 import lombok.extern.log4j.Log4j2;
+
+import java.util.Optional;
+import java.util.UUID;
 
 @Log4j2
 public class QueryStateOrchestrator {
@@ -22,7 +25,9 @@ public class QueryStateOrchestrator {
         }
         ReadModel<Event> readModel = optReadModel.get();
         log.info("Querying read model: {} with QueryType: {}", readModel.getClass().getSimpleName(), query.getClass().getSimpleName());
-        readModel.updateState();
+
+        Optional<UUID> aggregateId = AggregateIdUtils.hasAggregateId(query) ? AggregateIdUtils.getAggregateId(query) : Optional.empty();
+        readModel.updateQueryState(aggregateId);
         return QueryHandlerUtils.callQueryHandler(readModel.getReadModelWrapper(), query);
     }
 }

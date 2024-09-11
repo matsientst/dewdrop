@@ -1,18 +1,18 @@
 package events.dewdrop.fixture.readmodel.users;
 
 import events.dewdrop.read.readmodel.annotation.DewdropCache;
+import events.dewdrop.read.readmodel.annotation.EventStream;
 import events.dewdrop.read.readmodel.annotation.ReadModel;
-import events.dewdrop.read.readmodel.annotation.Stream;
 import events.dewdrop.read.readmodel.query.QueryHandler;
-import events.dewdrop.read.readmodel.stream.StreamType;
-import java.util.Map;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.Map;
+import java.util.UUID;
+
 @Log4j2
 @ReadModel
-@Stream(name = "DewdropUserCreated", streamType = StreamType.EVENT)
+@EventStream(name = "DewdropUserCreated")
 @Getter
 public class DewdropUsersReadModel {
     @DewdropCache

@@ -1,19 +1,20 @@
 package events.dewdrop.read.readmodel;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.times;
-
+import events.dewdrop.fixture.events.DewdropAccountCreated;
+import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetails;
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetailsReadModel;
-import events.dewdrop.read.readmodel.annotation.Stream;
+import events.dewdrop.read.readmodel.annotation.AggregateStream;
+import events.dewdrop.read.readmodel.stream.StreamAnnotationDetails;
 import events.dewdrop.utils.DependencyInjectionUtils;
 import events.dewdrop.utils.DewdropReflectionUtils;
 import events.dewdrop.utils.ReadModelUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -23,12 +24,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
-import events.dewdrop.fixture.events.DewdropAccountCreated;
-import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 
 class ReadModelWrapperTest {
     @Test
@@ -67,9 +68,9 @@ class ReadModelWrapperTest {
     @DisplayName("getStreamAnnotations() - Given a class annotated with @ReadModel, when we retrieve the @Stream annotations, then the stream annotations are returned")
     void getStreamAnnotations() {
         ReadModelWrapper readModelWrapper = ReadModelWrapper.of(DewdropAccountDetailsReadModel.class).get();
-        List<Stream> streamAnnotations = readModelWrapper.getStreamAnnotations();
-        assertThat(streamAnnotations.stream().filter(strm -> StringUtils.equalsAnyIgnoreCase(strm.name(), "DewdropAccountAggregate")).findAny().isPresent(), is(true));
-        assertThat(streamAnnotations.stream().filter(strm -> StringUtils.equalsAnyIgnoreCase(strm.name(), "DewdropUserAggregate")).findAny().isPresent(), is(true));
+        List<StreamAnnotationDetails> streamAnnotations = readModelWrapper.getStreamAnnotations();
+        assertThat(streamAnnotations.stream().filter(strm -> StringUtils.equalsAnyIgnoreCase(strm.getStreamName(), "DewdropAccountAggregate")).findAny().isPresent(), is(true));
+        assertThat(streamAnnotations.stream().filter(strm -> StringUtils.equalsAnyIgnoreCase(strm.getStreamName(), "DewdropUserAggregate")).findAny().isPresent(), is(true));
     }
 
     @Test

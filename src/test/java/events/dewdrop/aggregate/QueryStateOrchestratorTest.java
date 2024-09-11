@@ -40,13 +40,13 @@ class QueryStateOrchestratorTest {
     @DisplayName("executeQuery() - Given a query, when we find the read model, then we execute the query by calling QueryHandlerUtils.callQueryHandler()")
     void executeQuery() {
         ReadModel readModel = mock(ReadModel.class);
-        doNothing().when(readModel).updateState();
+        doNothing().when(readModel).updateQueryState(any());
         doReturn(Optional.of(readModel)).when(readModelMapper).getReadModelByQuery(any());
 
         try (MockedStatic<QueryHandlerUtils> utilities = mockStatic(QueryHandlerUtils.class)) {
             utilities.when(() -> QueryHandlerUtils.callQueryHandler(any(ReadModelWrapper.class), any())).thenReturn(Result.of(new DewdropAccountDetails()));
             queryStateOrchestrator.executeQuery(new Object());
-            verify(readModel, times(1)).updateState();
+            verify(readModel, times(1)).updateQueryState(Optional.empty());
         }
     }
 
@@ -54,13 +54,13 @@ class QueryStateOrchestratorTest {
     @DisplayName("executeQuery() - Given a query, when there is no read model, then return a Result with an exception")
     void executeQuer_noReadModel() {
         ReadModel readModel = mock(ReadModel.class);
-        doNothing().when(readModel).updateState();
+        doNothing().when(readModel).updateQueryState(any());
         doReturn(Optional.empty()).when(readModelMapper).getReadModelByQuery(any());
 
         Result<Object> result = queryStateOrchestrator.executeQuery(new Object());
         assertThat(result.isExceptionPresent(), is(true));
         assertThat(result.getException().getMessage(), Matchers.containsString("no read model found for query"));
-        verify(readModel, times(0)).updateState();
+        verify(readModel, times(0)).updateQueryState(Optional.empty());
     }
 
 

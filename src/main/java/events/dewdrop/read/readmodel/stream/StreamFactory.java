@@ -1,5 +1,17 @@
 package events.dewdrop.read.readmodel.stream;
 
+import events.dewdrop.aggregate.AggregateRoot;
+import events.dewdrop.read.readmodel.ReadModel;
+import events.dewdrop.structure.StreamNameGenerator;
+import events.dewdrop.structure.api.Event;
+import events.dewdrop.structure.datastore.StreamStore;
+import events.dewdrop.structure.read.Direction;
+import events.dewdrop.structure.serialize.EventSerializer;
+import events.dewdrop.utils.AggregateIdUtils;
+import events.dewdrop.utils.EventHandlerUtils;
+import events.dewdrop.utils.StreamUtils;
+import lombok.extern.log4j.Log4j2;
+
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
@@ -7,18 +19,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
-
-import events.dewdrop.aggregate.AggregateRoot;
-import events.dewdrop.read.readmodel.ReadModel;
-import events.dewdrop.read.readmodel.annotation.Stream;
-import events.dewdrop.structure.StreamNameGenerator;
-import events.dewdrop.structure.api.Event;
-import events.dewdrop.structure.datastore.StreamStore;
-import events.dewdrop.structure.read.Direction;
-import events.dewdrop.structure.serialize.EventSerializer;
-import events.dewdrop.utils.EventHandlerUtils;
-import events.dewdrop.utils.StreamUtils;
-import lombok.extern.log4j.Log4j2;
 
 /**
  * Factory for creating {@link events.dewdrop.read.readmodel.stream.Stream}s. You can create a
@@ -55,26 +55,30 @@ public class StreamFactory {
      * @param readModel The read model that the stream is being created for
      * @return StreamDetails
      */
-    <T extends Event> StreamDetails fromStreamAnnotation(events.dewdrop.read.readmodel.annotation.Stream streamAnnotation, ReadModel<T> readModel) {
+    <T extends Event> StreamDetails fromStreamAnnotation(StreamAnnotationDetails streamAnnotation, ReadModel<T> readModel) {
         List<Class<? extends Event>> eventHandlers = EventHandlerUtils.getEventHandlers(readModel);
         Consumer eventHandler = readModel.handler();
         requireNonNull(streamAnnotation, "StreamAnnotation is required");
         requireNonNull(eventHandler, "EventHandler is required");
+        String streamName = streamAnnotation.getStreamName();
+        StreamType streamType = streamAnnotation.getStreamType();
+        boolean subscribed = streamAnnotation.isSubscribed();
+        Direction direction = streamAnnotation.getDirection();
 
         Optional<Method> streamStartPositionMethod = Optional.empty();
         if (readModel.getInMemoryCacheProcessor().isEmpty()) {
-            streamStartPositionMethod = StreamUtils.getStreamStartPositionMethod(streamAnnotation.name(), streamAnnotation.streamType(), readModel);
+            streamStartPositionMethod = StreamUtils.getStreamStartPositionMethod(streamName, streamType, readModel);
             if (streamStartPositionMethod.isEmpty()) {
                 String simpleName = readModel.getReadModelWrapper().getOriginalReadModelClass().getSimpleName();
                 log.error("Unable to create a valid stream for the ReadModel: {} - @Stream(name={}, streamType={}) - Create a method decorated with @StreamStartPosition(name = {}, streamType = {}) with the same name and streamType for the stream, which is required if the inMemoryCacheProcessor is not set. This should return a long which is your last position for that stream.",
-                                simpleName, streamAnnotation.name(), streamAnnotation.streamType(), streamAnnotation.name(), streamAnnotation.streamType());
+                                simpleName, streamName, streamType, streamName, streamType);
                 throw new IllegalStateException(String.format(
                                 "Unable to create a valid stream for the ReadModel: %s - @Stream(name=%s, streamType=%s) - Create a method decorated with @StreamStartPosition(name = %s, streamType = %s) with the same name and streamType for the stream, which is required if the inMemoryCacheProcessor is not set.  This should return a long which is your last position for that stream.",
-                                simpleName, streamAnnotation.name(), streamAnnotation.streamType(), streamAnnotation.name(), streamAnnotation.streamType()));
+                                simpleName, streamName, streamType, streamName, streamType));
             }
         }
-        return StreamDetails.builder().streamType(streamAnnotation.streamType()).direction(streamAnnotation.direction()).eventHandler(eventHandler).streamNameGenerator(streamNameGenerator).messageTypes(eventHandlers).name(streamAnnotation.name())
-                        .subscribed(streamAnnotation.subscribed()).startPositionMethod(streamStartPositionMethod).create();
+        return StreamDetails.builder().streamType(streamType).direction(direction).eventHandler(eventHandler).streamNameGenerator(streamNameGenerator).messageTypes(eventHandlers).name(streamName).aggregateName(streamName).subscribed(subscribed)
+                        .startPositionMethod(streamStartPositionMethod).create();
 
     }
 
@@ -87,7 +91,8 @@ public class StreamFactory {
      * @return A StreamDetails object
      */
     StreamDetails fromAggregateRoot(final AggregateRoot aggregateRoot, final UUID overrideId) {
-        return StreamDetails.builder().streamType(StreamType.AGGREGATE).direction(Direction.FORWARD).aggregateRoot(aggregateRoot).streamNameGenerator(streamNameGenerator).id(overrideId).create();
+        return StreamDetails.builder().streamType(StreamType.AGGREGATE).direction(Direction.FORWARD).aggregateName(aggregateRoot.getTarget().getClass().getSimpleName()).id(AggregateIdUtils.getAggregateId(aggregateRoot).orElse(overrideId))
+                        .streamNameGenerator(streamNameGenerator).id(overrideId).create();
     }
 
     /**
@@ -133,7 +138,7 @@ public class StreamFactory {
      * @param readModel The ReadModel class that is being constructed.
      * @return A stream.
      */
-    public <T extends Event> events.dewdrop.read.readmodel.stream.Stream constructStreamFromStream(Stream streamAnnotation, ReadModel<T> readModel) {
+    public <T extends Event> events.dewdrop.read.readmodel.stream.Stream constructStreamFromStream(StreamAnnotationDetails streamAnnotation, ReadModel<T> readModel) {
         StreamDetails streamDetails = fromStreamAnnotation(streamAnnotation, readModel);
         events.dewdrop.read.readmodel.stream.Stream stream = new events.dewdrop.read.readmodel.stream.Stream(streamDetails, streamStore, eventSerializer);
         return stream;

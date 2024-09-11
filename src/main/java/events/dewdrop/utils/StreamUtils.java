@@ -1,20 +1,27 @@
 package events.dewdrop.utils;
 
+import events.dewdrop.read.readmodel.ReadModel;
 import events.dewdrop.read.readmodel.ReadModelWrapper;
-import events.dewdrop.read.readmodel.annotation.Stream;
+import events.dewdrop.read.readmodel.annotation.AggregateStream;
+import events.dewdrop.read.readmodel.annotation.CategoryStream;
+import events.dewdrop.read.readmodel.annotation.EventStream;
 import events.dewdrop.read.readmodel.annotation.StreamStartPosition;
+import events.dewdrop.read.readmodel.stream.StreamAnnotationDetails;
+import events.dewdrop.read.readmodel.stream.StreamType;
+import events.dewdrop.structure.api.Event;
+import org.apache.commons.lang3.StringUtils;
+
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
-
-import events.dewdrop.read.readmodel.stream.StreamType;
-import org.apache.commons.lang3.StringUtils;
-import events.dewdrop.read.readmodel.ReadModel;
-import events.dewdrop.structure.api.Event;
 
 public class StreamUtils {
     private StreamUtils() {}
@@ -53,5 +60,19 @@ public class StreamUtils {
         StreamStartPosition fieldAnnotation = method.getAnnotation(StreamStartPosition.class);
         String fieldStreamName = fieldAnnotation.name();
         return StringUtils.equalsAnyIgnoreCase(fieldStreamName, streamName) && fieldAnnotation.streamType() == streamType;
+    }
+
+    public static List<StreamAnnotationDetails> getStreamAnnotationDetails(Class<?> clazz) {
+        CategoryStream[] categoryStreams = clazz.getAnnotationsByType(CategoryStream.class);
+        AggregateStream[] aggregateStreams = clazz.getAnnotationsByType(AggregateStream.class);
+        EventStream[] eventStreams = clazz.getAnnotationsByType(EventStream.class);
+
+        List<Annotation> streams = new ArrayList<>();
+        streams.addAll(Arrays.asList(categoryStreams));
+        streams.addAll(Arrays.asList(aggregateStreams));
+        streams.addAll(Arrays.asList(eventStreams));
+
+        List<StreamAnnotationDetails> details = streams.stream().map(stream -> new StreamAnnotationDetails(stream)).collect(toList());
+        return details;
     }
 }
