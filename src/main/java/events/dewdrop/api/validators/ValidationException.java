@@ -1,7 +1,10 @@
 package events.dewdrop.api.validators;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import lombok.Data;
 
 /**
@@ -22,8 +25,17 @@ public class ValidationException extends Exception {
         return new ValidationException(ValidationResult.of(new ValidationError(message)));
     }
 
+    public static ValidationException of(ValidationError error) {
+        return new ValidationException(ValidationResult.of(error));
+    }
+
+    public static ValidationException of(List<ValidationError> errors) {
+        return new ValidationException(ValidationResult.of(errors));
+    }
+
     public static ValidationException of(Exception exception) {
         if (exception instanceof ValidationException) { return (ValidationException) exception; }
+        if (exception instanceof InvocationTargetException && ((InvocationTargetException) exception).getTargetException() instanceof ValidationException) { return (ValidationException) ((InvocationTargetException) exception).getTargetException(); }
         return ValidationException.of(exception.getMessage());
     }
 

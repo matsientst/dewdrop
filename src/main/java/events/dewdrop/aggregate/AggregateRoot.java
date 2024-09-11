@@ -1,10 +1,12 @@
 package events.dewdrop.aggregate;
 
-import events.dewdrop.structure.api.Message;
-import events.dewdrop.structure.events.CorrelationCausation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
+import events.dewdrop.structure.api.Message;
+import events.dewdrop.structure.events.CorrelationCausation;
 import lombok.Getter;
 
 @Getter
@@ -32,7 +34,7 @@ public class AggregateRoot extends EventStateMachine {
         if (correlationId != null && recorder.hasRecordedEvents()) { throw new IllegalStateException("Cannot change source unless there are no recorded events, or current source is null"); }
 
         this.correlationId = command.getCorrelationId();
-        this.causationId = command.getMessageId();
+        this.causationId = Optional.ofNullable(command.getCausationId()).orElse(command.getMessageId());
     }
 
     @Override

@@ -1,5 +1,12 @@
 package events.dewdrop.read.readmodel.stream;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
@@ -11,7 +18,6 @@ import events.dewdrop.structure.api.Event;
 import events.dewdrop.structure.datastore.StreamStore;
 import events.dewdrop.structure.read.Handler;
 import events.dewdrop.structure.serialize.EventSerializer;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 
@@ -23,6 +29,7 @@ public class Stream<T extends Event> implements Handler<T> {
     EventSerializer eventSerializer;
     StreamDetails streamDetails;
     private AtomicLong streamPosition;
+    private final ScheduledExecutorService executorService;
 
     public Stream(StreamDetails streamDetails, StreamStore streamStore, EventSerializer eventSerializer) {
         requireNonNull(streamDetails, "StreamDetails needed for a valid stream");
@@ -33,24 +40,63 @@ public class Stream<T extends Event> implements Handler<T> {
         this.streamStore = streamStore;
         this.eventSerializer = eventSerializer;
         this.streamPosition = new AtomicLong(0L);
+        this.executorService = Executors.newSingleThreadScheduledExecutor();
     }
 
     public void subscribe() {
-        if (!streamDetails.isSubscribed()) { return; }
-        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}", streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
-                        streamDetails.getMessageTypes().stream().map(Class::getSimpleName).collect(joining(",")));
+        if (!streamDetails.isSubscribed()) {return;}
+        log.debug("Creating Subscription for:{} - direction: {}, type: {}, messageType:{}",
+            streamDetails.getStreamName(), streamDetails.getDirection(), streamDetails.getStreamType(),
+            streamDetails.getMessageTypes().stream().map(event -> event.getClass().getSimpleName())
+                .collect(joining(",")));
         subscription = Subscription.getInstance(this);
         StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);
 
         if (!subscription.subscribeByNameAndPosition(streamReader)) {
             log.info("Unable to find stream:{} will poll until we find then subscribe", streamDetails.getStreamName());
-            subscription.pollForCompletion(streamReader);
+            pollForCompletion();
             return;
         }
     }
 
+    /**
+     * When the stream has not been found create a poll task to subscribe to the stream.
+     */
+    public void pollForCompletion() {
+        StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);
+        CompletableFuture<Boolean> completionFuture = new CompletableFuture<>();
+        Runnable runnable = () -> {
+            Boolean complete = subscription.subscribeByNameAndPosition(streamReader);
+            if (complete) {
+                log.info("Finally discovered stream: {}", streamReader.getStreamName());
+                completionFuture.complete(complete);
+            }
+            if (!streamReader.isStreamExists()) {
+                log.info("Stream: {} still not found", streamReader.getStreamName());
+            }
+        };
+        schedule(streamReader, completionFuture, runnable);
+    }
+
+    /**
+     * Schedule the lookup for the stream name and position. When found automatically subscribe.
+     *
+     * @param streamReader
+     * @param completionFuture
+     * @param runnable
+     */
+    void schedule(StreamReader streamReader, CompletableFuture<Boolean> completionFuture, Runnable runnable) {
+        final ScheduledFuture<?> checkFuture = executorService.scheduleAtFixedRate(runnable, 1, 5, TimeUnit.SECONDS);
+        completionFuture.thenApply(result -> {
+            subscription.subscribeByNameAndPosition(streamReader);
+            return true;
+        });
+        completionFuture.whenComplete((result, thrown) -> checkFuture.cancel(false));
+    }
+
     public void read(Long start, Long count) {
-        StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails, streamPosition);
+        StreamReader streamReader =
+            StreamReader.getInstance(streamStore, eventSerializer, streamDetails, streamPosition);
         streamReader.read(start, count);
         this.streamPosition = streamReader.getStreamPosition();
     }
@@ -71,7 +117,9 @@ public class Stream<T extends Event> implements Handler<T> {
     public AggregateRoot getById(StreamStoreGetByIDRequest request) {
         requireNonNull(request, "A StreamStoreGetByIDRequest is required");
 
-        if (streamDetails.getStreamType() != StreamType.AGGREGATE) { throw new IllegalStateException("Stream is not an aggregate - we cannot get by id"); }
+        if (streamDetails.getStreamType() != StreamType.AGGREGATE) {
+            throw new IllegalStateException("Stream is not an aggregate - we cannot get by id");
+        }
 
         StreamReader streamReader = StreamReader.getInstance(streamStore, eventSerializer, streamDetails);
         return streamReader.getById(request);

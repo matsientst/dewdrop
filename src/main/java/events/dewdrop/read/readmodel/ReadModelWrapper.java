@@ -17,19 +17,24 @@ import lombok.Data;
 import events.dewdrop.structure.api.Event;
 import events.dewdrop.utils.DependencyInjectionUtils;
 import events.dewdrop.utils.ReadModelUtils;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 @Data
 public class ReadModelWrapper {
     private Class<?> originalReadModelClass;
     private Object readModel;
-    private Map<Class<? extends Event>, Method> eventToEventHandlerMethod = new ConcurrentHashMap<>();
+    private Map<Class<? extends Event>, Method> eventToReadModelEventHandler = new ConcurrentHashMap<>();
+    private Map<Class<? extends Event>, Method> eventToOnEventEventHandler = new ConcurrentHashMap<>();
     private Optional<Field> cacheField;
 
     private ReadModelWrapper(Class<?> originalReadModelClass, Object readModel) {
+        log.info("Constructing ReadModelWrapper for originalReadModelClass:{}, readModel:{}", originalReadModelClass.getSimpleName(), readModel.getClass().getSimpleName());
         this.originalReadModelClass = originalReadModelClass;
         this.readModel = readModel;
-        assignEventHandlers(this.eventToEventHandlerMethod, () -> EventHandlerUtils.getEventToEventHandlerMethod(this.originalReadModelClass), originalReadModelClass, readModel);
         this.cacheField = ReadModelUtils.getMatchingReadModelCacheField(this);
+        assignEventHandlers(this.eventToReadModelEventHandler, () -> EventHandlerUtils.getEventToEventHandlerMethod(this.originalReadModelClass), originalReadModelClass, readModel);
+        assignEventHandlers(this.eventToOnEventEventHandler, () -> EventHandlerUtils.getEventToOnEventHandlerMethod(this.originalReadModelClass), originalReadModelClass, readModel);
     }
 
     private void assignEventHandlers(final Map<Class<? extends Event>, Method> eventToHandler, Supplier<Map<Class<? extends Event>, Method>> getEventToHandlers, Class<?> originalReadModelClass, Object readModel) {
@@ -38,7 +43,7 @@ public class ReadModelWrapper {
             eventToHandler.putAll(mapOfHandlers);
         } else {
             mapOfHandlers.forEach((eventClass, method) -> {
-                Optional<Method> proxiedMethod = DewdropReflectionUtils.getMatchingMethod(method, readModel);
+                Optional<Method> proxiedMethod = DewdropReflectionUtils.getMatchingMethod(method, readModel.getClass());
                 if (proxiedMethod.isPresent()) {
                     eventToHandler.put(eventClass, proxiedMethod.get());
                 }
@@ -59,8 +64,12 @@ public class ReadModelWrapper {
     }
 
     public <T extends Event> void callEventHandlers(T message) {
-        if (eventToEventHandlerMethod.containsKey(message.getClass())) {
-            Method method = eventToEventHandlerMethod.get(message.getClass());
+        if (eventToReadModelEventHandler.containsKey(message.getClass())) {
+            Method method = eventToReadModelEventHandler.get(message.getClass());
+            DewdropReflectionUtils.callMethod(readModel, method, message);
+        }
+        if (eventToOnEventEventHandler.containsKey(message.getClass())) {
+            Method method = eventToOnEventEventHandler.get(message.getClass());
             DewdropReflectionUtils.callMethod(readModel, method, message);
         }
     }
@@ -73,6 +82,10 @@ public class ReadModelWrapper {
 
     // Returning a list of all the events that the read model supports.
     public List<Class<? extends Event>> getSupportedEvents() {
-        return eventToEventHandlerMethod.keySet().stream().collect(toList());
+        return eventToReadModelEventHandler.keySet().stream().collect(toList());
+    }
+
+    public String toString() {
+        return originalReadModelClass.getSimpleName();
     }
 }

@@ -88,10 +88,10 @@ public class DewdropReflectionUtils {
         return false;
     }
 
-    public static Optional<Method> getMatchingMethod(Method method, Object readModel) {
-        Method sameMethod = MethodUtils.getMatchingMethod(readModel.getClass(), method.getName(), method.getParameterTypes());
+    public static Optional<Method> getMatchingMethod(Method method, Class<?> target) {
+        Method sameMethod = MethodUtils.getMatchingMethod(target, method.getName(), method.getParameterTypes());
         if (sameMethod == null) {
-            log.info("Unable to find matching method for {} on {}", method, readModel.getClass().getSimpleName());
+            log.info("Unable to find matching method for {} on {}", method, target.getSimpleName());
             return Optional.empty();
         }
         return Optional.of(sameMethod);

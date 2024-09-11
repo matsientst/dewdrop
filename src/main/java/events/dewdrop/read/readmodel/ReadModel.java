@@ -36,7 +36,7 @@ public class ReadModel<T extends Event> {
 
     protected void process(T message) {
         Optional<UUID> cacheRootKey = CacheUtils.getCacheRootKey(message);
-        log.info("handling event type: {} - id:{}, version:{}", message.getClass().getSimpleName(), cacheRootKey.orElse(null), message.getVersion());
+        log.info("ReadModel:{}, Received event type:{} - id:{}, version:{}", readModelWrapper.getOriginalReadModelClass().getSimpleName(), message.getClass().getSimpleName(), cacheRootKey.orElse(null), message.getVersion());
 
         inMemoryCacheProcessor.ifPresent(memoryCacheProcessor -> memoryCacheProcessor.process(message));
         readModelWrapper.callEventHandlers(message);

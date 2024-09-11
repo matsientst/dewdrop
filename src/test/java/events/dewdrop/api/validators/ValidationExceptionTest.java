@@ -1,10 +1,13 @@
 package events.dewdrop.api.validators;
 
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import org.junit.jupiter.api.Test;
 
 class ValidationExceptionTest {
     @Test
@@ -14,6 +17,16 @@ class ValidationExceptionTest {
         ValidationException exception = new ValidationException(result);
 
         assertEquals(message, exception.getValidationResult().get().get(0).getMessage());
+    }
+    @Test
+    void validationException_withField() {
+        String field = "username";
+        String message = "REQUIRED";
+        ValidationResult result = ValidationResult.of(new ValidationError(field, message));
+        ValidationException exception = new ValidationException(result);
+
+        assertEquals(message, exception.getValidationResult().get().get(0).getMessage());
+        assertEquals(field, exception.getValidationResult().get().get(0).getField());
     }
 
     @Test
@@ -42,5 +55,27 @@ class ValidationExceptionTest {
     void of_exception() {
         ValidationException exception = ValidationException.of(new RuntimeException("Something broke"));
         assertEquals("Something broke", exception.getMessage());
+    }
+
+    @Test
+    void of_invocationTargetException() {
+        InvocationTargetException targetException = new InvocationTargetException(ValidationException.of("Something broke"));
+        ValidationException exception = ValidationException.of(targetException);
+        assertEquals("Something broke", exception.getMessage());
+    }
+
+    @Test
+    void of_errors() {
+        List<ValidationError> validationErrors = List.of(ValidationError.of("test"), ValidationError.of("test2"));
+        ValidationException exception = ValidationException.of(validationErrors);
+        assertEquals(exception.getValidationResult().get().get(0).getMessage(), validationErrors.get(0).getMessage());
+        assertEquals(exception.getValidationResult().get().get(1).getMessage(), validationErrors.get(1).getMessage());
+    }
+
+    @Test
+    void of_error() {
+        ValidationError validationError = ValidationError.of("test");
+        ValidationException exception = ValidationException.of(validationError);
+        assertEquals(exception.getValidationResult().get().get(0).getMessage(), validationError.getMessage());
     }
 }

@@ -9,6 +9,8 @@ import events.dewdrop.fixture.events.DewdropUserCreated;
 import events.dewdrop.read.readmodel.annotation.EventHandler;
 import events.dewdrop.structure.api.validator.DewdropValidator;
 import java.util.UUID;
+
+import jakarta.validation.Valid;
 import lombok.Data;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -23,7 +25,7 @@ public class DewdropUserAggregate {
     public DewdropUserAggregate() {}
 
     @CommandHandler
-    public DewdropUserCreated createUser(DewdropCreateUserCommand command) throws ValidationException {
+    public DewdropUserCreated createUser(@Valid DewdropCreateUserCommand command) throws ValidationException {
         DewdropValidator.validate(command);
         return new DewdropUserCreated(command.getUserId(), command.getUsername());
     }

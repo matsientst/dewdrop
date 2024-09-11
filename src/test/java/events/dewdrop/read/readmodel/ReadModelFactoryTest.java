@@ -71,7 +71,7 @@ class ReadModelFactoryTest {
 
             Optional<ReadModelConstructed> readModelConstructed = readModelFactory.constructReadModel(DewdropAccountSummaryReadModel.class);
             assertThat(readModelConstructed.isPresent(), is(true));
-            verify(readModel, times(1)).subscribe();
+            verify(readModel, times(0)).subscribe();
         }
     }
 
@@ -145,13 +145,13 @@ class ReadModelFactoryTest {
         doReturn(new Class[] {DewdropAccountCreated.class}).when(method).getParameterTypes();
         Stream stream = mock(Stream.class);
 
-        doReturn(stream).when(streamFactory).constructStreamForEvent(any(Consumer.class), any(Class.class));
+        doReturn(stream).when(streamFactory).constructStreamForEvent(any(ReadModel.class), any(Class.class));
         try (MockedStatic<DependencyInjectionUtils> utilities = mockStatic(DependencyInjectionUtils.class)) {
             utilities.when(() -> DependencyInjectionUtils.getInstance(any(Class.class))).thenReturn(Optional.of(mock(AccountCreatedService.class)));
 
             ReadModel<Event> result = readModelFactory.createReadModelForOnEvent(method);
             assertThat(result, is(notNullValue()));
-            verify(stream, times(1)).subscribe();
+            verify(stream, times(0)).subscribe();
         }
     }
 

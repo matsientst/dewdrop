@@ -44,7 +44,12 @@ public class EventStore implements StreamStore {
         SubscriptionListener listener = EventStoreUtils.createListener(subscribeRequest.getConsumeEvent());
 
         SubscribeToStreamOptions options = SubscribeToStreamOptions.get();
-        options.fromRevision(subscribeRequest.getLastCheckpoint());
+        Long lastCheckpoint = subscribeRequest.getLastCheckpoint();
+        if (lastCheckpoint == 0L) {
+            options.fromStart();
+        } else {
+            options.fromRevision(lastCheckpoint);
+        }
         options.resolveLinkTos();
 
         if (subscribeTo(subscribeRequest.getStreamName(), listener, options)) { return true; }

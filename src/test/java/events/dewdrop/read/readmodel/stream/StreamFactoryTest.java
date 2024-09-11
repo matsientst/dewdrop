@@ -1,35 +1,35 @@
 package events.dewdrop.read.readmodel.stream;
 
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.spy;
 
 import events.dewdrop.aggregate.AggregateRoot;
-import events.dewdrop.read.readmodel.annotation.Stream;
-import events.dewdrop.structure.StreamNameGenerator;
-import events.dewdrop.utils.EventHandlerUtils;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Consumer;
 import events.dewdrop.fixture.automated.DewdropAccountAggregate;
 import events.dewdrop.fixture.events.DewdropAccountCreated;
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetailsReadModel;
 import events.dewdrop.read.readmodel.ReadModel;
 import events.dewdrop.read.readmodel.ReadModelWrapper;
+import events.dewdrop.read.readmodel.annotation.Stream;
 import events.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
 import events.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
 import events.dewdrop.streamstore.stream.PrefixStreamNameGenerator;
+import events.dewdrop.structure.StreamNameGenerator;
 import events.dewdrop.structure.datastore.StreamStore;
 import events.dewdrop.structure.read.Direction;
 import events.dewdrop.structure.serialize.EventSerializer;
+import events.dewdrop.utils.EventHandlerUtils;
 import events.dewdrop.utils.StreamUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,7 +105,7 @@ class StreamFactoryTest {
             try (MockedStatic<StreamUtils> utilities = mockStatic(StreamUtils.class)) {
                 List<Class<DewdropAccountCreated>> events = List.of(DewdropAccountCreated.class);
                 eventHandlerUtils.when(() -> EventHandlerUtils.getEventHandlers(readModel)).thenReturn(events);
-                utilities.when(() -> StreamUtils.getStreamStartPositionMethod(any(events.dewdrop.read.readmodel.annotation.Stream.class), any())).thenReturn(Optional.of(startPositionMethod));
+                utilities.when(() -> StreamUtils.getStreamStartPositionMethod(anyString(), any(StreamType.class), any())).thenReturn(Optional.of(startPositionMethod));
 
                 StreamDetails streamDetails = streamFactory.fromStreamAnnotation(streamAnnotation, readModel);
 
@@ -125,7 +125,7 @@ class StreamFactoryTest {
     void fromStreamAnnotation_noStartPositionMethod() {
         readModel = new ReadModel(ReadModelWrapper.of(DewdropAccountDetailsReadModel.class).get(), Optional.empty());
         try (MockedStatic<StreamUtils> utilities = mockStatic(StreamUtils.class)) {
-            utilities.when(() -> StreamUtils.getStreamStartPositionMethod(any(events.dewdrop.read.readmodel.annotation.Stream.class), any())).thenReturn(Optional.empty());
+            utilities.when(() -> StreamUtils.getStreamStartPositionMethod(anyString(), any(StreamType.class), any())).thenReturn(Optional.empty());
 
             assertThrows(IllegalStateException.class, () -> streamFactory.fromStreamAnnotation(streamAnnotation, readModel));
         }
@@ -150,9 +150,12 @@ class StreamFactoryTest {
     @Test
     @DisplayName("fromEvent() - Given an AggregateRoot and no UUID, when fromAggregateRoot() is called, then return StreamDetails")
     void fromEvent() {
-        Consumer consumer = mock(Consumer.class);
+        ReadModel readModel = mock(ReadModel.class);
+        ReadModelWrapper readModelWrapper = mock(ReadModelWrapper.class);
+        doReturn(readModel.getClass()).when(readModelWrapper).getOriginalReadModelClass();
+        doReturn(readModelWrapper).when(readModel).getReadModelWrapper();
         Class<DewdropAccountCreated> eventClass = DewdropAccountCreated.class;
-        StreamDetails streamDetails = streamFactory.fromEvent(consumer, eventClass);
+        StreamDetails streamDetails = streamFactory.fromEvent(readModel, eventClass);
 
         assertThat(streamDetails.getStreamName(), is("$et-DewdropAccountCreated"));
         assertThat(streamDetails.getStreamType(), is(StreamType.EVENT));
@@ -188,11 +191,11 @@ class StreamFactoryTest {
     @Test
     @DisplayName("constructStreamForEvent() - Given a Consumer and an Event class, when constructStreamFromStream() is called, then return a Stream")
     void constructStreamForEvent() {
-        Consumer consumer = mock(Consumer.class);
+        ReadModel readModel = mock(ReadModel.class);
         Class<DewdropAccountCreated> eventClass = DewdropAccountCreated.class;
         StreamDetails streamDetails = mock(StreamDetails.class);
-        doReturn(streamDetails).when(streamFactory).fromEvent(any(Consumer.class), any(Class.class));
-        events.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStreamForEvent(consumer, eventClass);
+        doReturn(streamDetails).when(streamFactory).fromEvent(any(ReadModel.class), any(Class.class));
+        events.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStreamForEvent(readModel, eventClass);
         assertThat(stream.getStreamDetails(), Matchers.is(streamDetails));
         assertThat(stream.getEventSerializer(), is(eventSerializer));
         assertThat(stream.getStreamStore(), is(streamStore));

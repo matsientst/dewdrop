@@ -19,12 +19,12 @@ import events.dewdrop.structure.read.Direction;
 import events.dewdrop.utils.AggregateIdUtils;
 
 @Data
-public class StreamDetails {
+public class StreamDetails<T extends Event> {
     private StreamType streamType;
     private Direction direction;
     private List<Class<? extends Event>> messageTypes = new ArrayList<>();
     private String streamName;
-    private Consumer<Event> eventHandler;
+    private Consumer<T> eventHandler;
     private StreamNameGenerator streamNameGenerator;
     private boolean subscribed;
     private SubscriptionStartStrategy subscriptionStartStrategy;
@@ -32,8 +32,8 @@ public class StreamDetails {
 
 
     @Builder(buildMethodName = "create")
-    public StreamDetails(StreamType streamType, String name, List<Class<? extends Event>> messageTypes, Consumer<Event> eventHandler, Direction direction, AggregateRoot aggregateRoot, UUID id, Boolean subscribed,
-                    StreamNameGenerator streamNameGenerator, SubscriptionStartStrategy subscriptionStartStrategy, Optional<Method> startPositionMethod) {
+    public StreamDetails(StreamType streamType, String name, List<Class<? extends Event>> messageTypes, Consumer<T> eventHandler, Direction direction, AggregateRoot aggregateRoot, UUID id, Boolean subscribed, StreamNameGenerator streamNameGenerator,
+                    SubscriptionStartStrategy subscriptionStartStrategy, Optional<Method> startPositionMethod) {
         this.streamType = streamType;
         if (CollectionUtils.isNotEmpty(messageTypes)) {
             this.messageTypes.addAll(messageTypes);

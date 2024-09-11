@@ -1,7 +1,7 @@
 package events.dewdrop.fixture.command;
 
 import java.util.UUID;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data

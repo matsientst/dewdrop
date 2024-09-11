@@ -23,7 +23,7 @@ public class SingleItemInMemoryCache<T> implements InMemoryCacheProcessor {
     }
 
     public <T extends Message> void process(T message) {
-        log.debug("Received message: {} to cache ", message);
+        log.debug("Processing message: {} to cache ", message);
 
         EventHandlerUtils.callEventHandler(this.cache, message);
     }

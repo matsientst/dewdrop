@@ -1,18 +1,21 @@
 package events.dewdrop.utils;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import events.dewdrop.fixture.events.DewdropAccountCreated;
+import events.dewdrop.fixture.events.DewdropAccountEvent;
+import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;
 import events.dewdrop.fixture.events.DewdropUserCreated;
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetails;
 import events.dewdrop.read.readmodel.annotation.PrimaryCacheKey;
-import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;
+import events.dewdrop.structure.api.Event;
 import events.dewdrop.structure.api.Message;
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.Data;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,7 +40,7 @@ class CacheUtilsTest {
     @Test
     @DisplayName("getForeignCacheKeys() - Given a cacheObject with the foreign key annotated with @ForeignCacheKey, return the field that is annotated")
     void getForeignCacheKeys() {
-        List<Field> foreignCacheKeys = CacheUtils.getForeignCacheKeys(DewdropAccountDetails.class);
+        List<String> foreignCacheKeys = CacheUtils.getForeignCacheKeys(DewdropAccountDetails.class);
         assertThat(foreignCacheKeys.isEmpty(), is(false));
     }
 
@@ -85,17 +88,25 @@ class CacheUtilsTest {
         assertThat(cacheRootKey.isEmpty(), is(true));
     }
 
+    @Test
+    @DisplayName("getClassWithAggregateId - Given a message with @AggregateId, return the class with the @AggregateId annotation")
+    void getClassWithAggregateId() {
+        Class<? extends Event> aggregateIdClass = CacheUtils.getClassWithAggregateId(DewdropAccountCreated.class);
+        assertThat(aggregateIdClass, is(DewdropAccountEvent.class));
+
+    }
+
     @Data
     private class MultiplePrimaryCacheKeys {
-        @PrimaryCacheKey
+        @PrimaryCacheKey(creationEvent = MultiplePrimaryCacheKeys.class)
         UUID accountId;
-        @PrimaryCacheKey
+        @PrimaryCacheKey(creationEvent = MultiplePrimaryCacheKeys.class)
         UUID userId;
     }
 
     @Data
     private class AlternatePrimaryCacheKeys {
-        @PrimaryCacheKey(alternateCacheKeys = "oldAccountId")
+        @PrimaryCacheKey(creationEvent = AlternatePrimaryCacheKeys.class, alternateCacheKeys = "oldAccountId")
         UUID accountId;
         UUID userId;
     }
@@ -106,4 +117,5 @@ class CacheUtilsTest {
         UUID userId;
         UUID messageId;
     }
+
 }

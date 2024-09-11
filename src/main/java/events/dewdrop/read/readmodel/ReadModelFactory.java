@@ -43,12 +43,9 @@ public class ReadModelFactory {
 
         if (optReadModelWrapper.isPresent()) {
             ReadModelWrapper instance = optReadModelWrapper.get();
-            log.info("Created @ReadModel {} - ephemeral:{}", instance.getClass().getSimpleName(), ReadModelUtils.isEphemeral(readModelTarget));
+            log.info("Created @ReadModel {} - ephemeral:{}", instance, ReadModelUtils.isEphemeral(readModelTarget));
             ReadModel<Event> value = construct(instance);
-            if (value != null) {
-                value.subscribe();
-                return Optional.of(new ReadModelConstructed(value));
-            }
+            if (value != null) { return Optional.of(new ReadModelConstructed(value)); }
         }
 
         log.error("Could not create @ReadModel {}", readModelTarget.getSimpleName());
@@ -109,10 +106,9 @@ public class ReadModelFactory {
             log.error("Invalid first parameter:{} for @OnEvent {}.{}({} event) - First parameter must extend Event", eventType.getSimpleName(), declaringClass.getSimpleName(), annotatedMethod.getName(), eventType.getSimpleName());
             return null;
         }
-        log.info("Created @OnEvent ReadModel {} for eventType:{}", readModelWrapper.getClass().getSimpleName(), eventType.getSimpleName());
-        events.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStreamForEvent(readModel.handler(), (Class<? extends Event>) eventType);
+        log.info("Created @OnEvent ReadModel:{} for eventType:{}", readModelWrapper, eventType.getSimpleName());
+        events.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStreamForEvent(readModel, (Class<? extends Event>) eventType);
         readModel.addStream(stream);
-        readModel.subscribe();
         return readModel;
     }
 

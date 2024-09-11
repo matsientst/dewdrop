@@ -25,7 +25,7 @@ public class QueryHandlerUtils {
             return Result.empty();
         }
 
-        Optional<Method> method = DewdropReflectionUtils.getMatchingMethod(targetMethod.get(), readModelWrapper.getReadModel());
+        Optional<Method> method = DewdropReflectionUtils.getMatchingMethod(targetMethod.get(), readModelWrapper.getReadModel().getClass());
         if (method.isEmpty()) {
             log.info("Unable to find method annotated with @QueryHandler with method signature query({} query) on target class: {}", query.getClass().getSimpleName(), readModelWrapper.getOriginalReadModelClass().getSimpleName());
             return Result.empty();

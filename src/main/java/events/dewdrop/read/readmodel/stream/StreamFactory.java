@@ -1,5 +1,11 @@
 package events.dewdrop.read.readmodel.stream;
 
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
+
 import static java.util.Objects.requireNonNull;
 
 import events.dewdrop.aggregate.AggregateRoot;
@@ -12,11 +18,6 @@ import events.dewdrop.structure.read.Direction;
 import events.dewdrop.structure.serialize.EventSerializer;
 import events.dewdrop.utils.EventHandlerUtils;
 import events.dewdrop.utils.StreamUtils;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Consumer;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -62,7 +63,7 @@ public class StreamFactory {
 
         Optional<Method> streamStartPositionMethod = Optional.empty();
         if (readModel.getInMemoryCacheProcessor().isEmpty()) {
-            streamStartPositionMethod = StreamUtils.getStreamStartPositionMethod(streamAnnotation, readModel);
+            streamStartPositionMethod = StreamUtils.getStreamStartPositionMethod(streamAnnotation.name(), streamAnnotation.streamType(), readModel);
             if (streamStartPositionMethod.isEmpty()) {
                 String simpleName = readModel.getReadModelWrapper().getOriginalReadModelClass().getSimpleName();
                 log.error("Unable to create a valid stream for the ReadModel: {} - @Stream(name={}, streamType={}) - Create a method decorated with @StreamStartPosition(name = {}, streamType = {}) with the same name and streamType for the stream, which is required if the inMemoryCacheProcessor is not set. This should return a long which is your last position for that stream.",
@@ -93,17 +94,24 @@ public class StreamFactory {
      * It creates a StreamDetails object that is used to create a stream that subscribes to an event
      * stream
      *
-     * @param eventConsumer The consumer of the event.
+     * @param readModel The readModel.
      * @param eventClass The class of the event you want to listen to.
      * @return A StreamDetails object.
      */
-    <T extends Event> StreamDetails fromEvent(Consumer<Event> eventConsumer, Class<? extends Event> eventClass) {
-        return StreamDetails.builder().streamType(StreamType.EVENT).direction(Direction.FORWARD).eventHandler(eventConsumer).streamNameGenerator(streamNameGenerator).messageTypes(List.of(eventClass)).name(eventClass.getSimpleName()).subscribed(true)
-                        .subscriptionStartStrategy(SubscriptionStartStrategy.START_END_ONLY).create();
+    <T extends Event> StreamDetails fromEvent(ReadModel<T> readModel, Class<? extends Event> eventClass) {
+        String streamName = eventClass.getSimpleName();
+        Optional<Method> streamStartPositionMethod = StreamUtils.getStreamStartPositionMethod(streamName, StreamType.EVENT, readModel);
+        SubscriptionStartStrategy subscriptionStartStrategy = SubscriptionStartStrategy.START_END_ONLY;
+        if (!streamStartPositionMethod.isEmpty()) {
+            subscriptionStartStrategy = SubscriptionStartStrategy.START_FROM_POSITION;
+        }
+
+        return StreamDetails.builder().streamType(StreamType.EVENT).direction(Direction.FORWARD).eventHandler((Consumer<Event>) readModel.handler()).streamNameGenerator(streamNameGenerator).messageTypes(List.of(eventClass)).name(streamName)
+                        .subscribed(true).subscriptionStartStrategy(subscriptionStartStrategy).startPositionMethod(streamStartPositionMethod).create();
     }
 
     /**
-     * Construct a Stram from an AggregateRoot object and a UUID
+     * Construct a Stream from an AggregateRoot object and a UUID
      *
      * @param aggregateRoot The aggregate root that you want to construct a stream for.
      * @param aggregateRootId The id of the aggregate root.
@@ -134,12 +142,12 @@ public class StreamFactory {
     /**
      * Construct a Stream for an event stream from a handler, and an event class
      *
-     * @param handler The handler that will be called when an event is received.
+     * @param readModel The readModel.
      * @param eventClass The class of the event that you want to listen to.
      * @return A stream.
      */
-    public events.dewdrop.read.readmodel.stream.Stream constructStreamForEvent(Consumer handler, Class<? extends Event> eventClass) {
-        StreamDetails streamDetails = fromEvent(handler, eventClass);
+    public <T extends Event> events.dewdrop.read.readmodel.stream.Stream constructStreamForEvent(ReadModel<T> readModel, Class<? extends Event> eventClass) {
+        StreamDetails streamDetails = fromEvent(readModel, eventClass);
         events.dewdrop.read.readmodel.stream.Stream stream = new events.dewdrop.read.readmodel.stream.Stream(streamDetails, streamStore, eventSerializer);
         return stream;
     }

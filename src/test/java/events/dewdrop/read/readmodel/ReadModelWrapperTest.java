@@ -13,6 +13,7 @@ import events.dewdrop.read.readmodel.annotation.Stream;
 import events.dewdrop.utils.DependencyInjectionUtils;
 import events.dewdrop.utils.DewdropReflectionUtils;
 import events.dewdrop.utils.ReadModelUtils;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
 import events.dewdrop.fixture.events.DewdropAccountCreated;
 import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;
@@ -44,7 +46,7 @@ class ReadModelWrapperTest {
     }
 
     @Test
-    @DisplayName("of() - Given a class annotated with @ReadModel, when we retrieve an object from DI, then the ReadModelWrapper is created")
+    @DisplayName("of_dependencyInjected() - Given a class annotated with @ReadModel, when we retrieve an object from DI, then the ReadModelWrapper is created")
     void of_dependencyInjected() {
         try (MockedStatic<DependencyInjectionUtils> utilities = mockStatic(DependencyInjectionUtils.class)) {
             utilities.when(() -> DependencyInjectionUtils.getInstance(any(Class.class))).thenReturn(Optional.of(new SameAsDewdropAccountDetailsReadModel()));
@@ -118,11 +120,14 @@ class ReadModelWrapperTest {
         assertThat(readModelWrapper.getSupportedEvents(), is(List.of(DewdropAccountCreated.class)));
     }
 
-    private class SameAsDewdropAccountDetailsReadModel {
-        Map<UUID, DewdropAccountDetails> cache;
 
-        public void on(DewdropAccountCreated event, Map<UUID, DewdropAccountDetails> cachedItems) {
+}
 
-        }
+
+class SameAsDewdropAccountDetailsReadModel {
+    Map<UUID, DewdropAccountDetails> cache;
+
+    public void on(DewdropAccountCreated event) {
+
     }
 }

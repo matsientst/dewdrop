@@ -11,6 +11,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import events.dewdrop.fixture.readmodel.users.DewdropGetUserByIdQuery;
 import events.dewdrop.read.readmodel.query.QueryHandler;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -26,7 +27,6 @@ import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDet
 import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryQuery;
 import events.dewdrop.fixture.readmodel.users.DewdropUser;
 import events.dewdrop.fixture.readmodel.users.DewdropUsersReadModel;
-import events.dewdrop.fixture.readmodel.users.GetUserByIdQuery;
 import events.dewdrop.read.readmodel.ReadModelWrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class QueryHandlerUtilsTest {
     ReadModelWrapper readModelWrapper;
-    GetUserByIdQuery query;
+    DewdropGetUserByIdQuery query;
     DewdropUser user;
     Method method;
     Field field;
@@ -47,9 +47,9 @@ class QueryHandlerUtilsTest {
     @BeforeEach
     void setup() {
         readModel = new DewdropUsersReadModel();
-        query = new GetUserByIdQuery(UUID.randomUUID());
+        query = new DewdropGetUserByIdQuery(UUID.randomUUID());
         user = new DewdropUser();
-        method = MethodUtils.getMatchingMethod(DewdropUsersReadModel.class, "query", GetUserByIdQuery.class);
+        method = MethodUtils.getMatchingMethod(DewdropUsersReadModel.class, "query", DewdropGetUserByIdQuery.class);
         readModelWrapper = ReadModelWrapper.of(DewdropUsersReadModel.class).get();
         field = readModelWrapper.getCacheField().get();
         readModel = readModelWrapper.getReadModel();
@@ -101,7 +101,7 @@ class QueryHandlerUtilsTest {
         user.setUserId(query.getUserId());
         ReadModelUtils.updateReadModelCacheField(field, readModel, Map.of(user.getUserId(), user));
         Method spy = spy(method);
-        doReturn(new Class[] {GetUserByIdQuery.class}).when(spy).getParameterTypes();
+        doReturn(new Class[] {DewdropGetUserByIdQuery.class}).when(spy).getParameterTypes();
 
         try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
             try (MockedStatic<DewdropReflectionUtils> reflectionUtils = mockStatic(DewdropReflectionUtils.class)) {
@@ -120,7 +120,7 @@ class QueryHandlerUtilsTest {
         user.setUserId(query.getUserId());
         ReadModelUtils.updateReadModelCacheField(field, readModel, Map.of(user.getUserId(), user));
         Method spy = spy(method);
-        doReturn(new Class[] {GetUserByIdQuery.class}).when(spy).getParameterTypes();
+        doReturn(new Class[] {DewdropGetUserByIdQuery.class}).when(spy).getParameterTypes();
         doReturn(null).when(spy).invoke(any(), any());
         try (MockedStatic<DewdropAnnotationUtils> utilities = mockStatic(DewdropAnnotationUtils.class)) {
             try (MockedStatic<DewdropReflectionUtils> reflectionUtils = mockStatic(DewdropReflectionUtils.class)) {
@@ -137,7 +137,7 @@ class QueryHandlerUtilsTest {
     @DisplayName("callQueryHandler() - Given an object with a method annotated with @QueryHandler and an query, the object will call the method annotated with @QueryHandler")
     void callQueryHandler_IllegalArgumentException() throws InvocationTargetException, IllegalAccessException {
         Method method = mock(Method.class);
-        doReturn(new Class[] {GetUserByIdQuery.class}).when(method).getParameterTypes();
+        doReturn(new Class[] {DewdropGetUserByIdQuery.class}).when(method).getParameterTypes();
         doThrow(IllegalArgumentException.class).when(method).invoke(any(), any());
         DewdropUser instance = new DewdropUser();
 
@@ -178,7 +178,7 @@ class QueryHandlerUtilsTest {
     private class NoMethodQueryHandler {
         UUID userId;
 
-        public Boolean on(GetUserByIdQuery query) {
+        public Boolean on(DewdropGetUserByIdQuery query) {
             return true;
         }
     }

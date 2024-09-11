@@ -1,16 +1,16 @@
 package events.dewdrop.utils;
 
-import static java.util.Objects.requireNonNull;
-
-import events.dewdrop.aggregate.AggregateRoot;
-import events.dewdrop.command.CommandHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
-import lombok.extern.log4j.Log4j2;
+
+import static java.util.Objects.requireNonNull;
+
+import events.dewdrop.aggregate.AggregateRoot;
 import events.dewdrop.api.result.Result;
+import events.dewdrop.command.CommandHandler;
 import events.dewdrop.structure.api.Command;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
 @Log4j2
@@ -24,10 +24,10 @@ public class CommandHandlerUtils {
         requireNonNull(command, "We must have a command to pass to the @" + COMMAND_HANDLER);
 
         try {
-            Object instance = commandHandlerMethod.getDeclaringClass().getDeclaredConstructor().newInstance();
+            Object instance = aggregateRoot.getTarget();
             return executeCommand(instance, commandHandlerMethod, command, aggregateRoot);
-        } catch (IllegalArgumentException | InvocationTargetException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
-            log.error("We were unable to call an empty constructor on {} - message: {}", commandHandlerMethod.getDeclaringClass().getSimpleName(), e.getMessage(), e);
+        } catch (IllegalArgumentException e) {
+            log.error("We were unable to call the command handler on {} - message: {}", commandHandlerMethod.getDeclaringClass().getSimpleName(), e.getMessage(), e);
             Result.of(e);
         }
 

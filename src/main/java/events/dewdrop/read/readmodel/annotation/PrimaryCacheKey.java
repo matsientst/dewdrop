@@ -10,5 +10,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface PrimaryCacheKey {
+    // This is needed for when we have @ForeignCacheKey to know which is the primary
+    Class<?> creationEvent();
+
     String[] alternateCacheKeys() default "";
 }

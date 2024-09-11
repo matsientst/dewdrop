@@ -48,6 +48,9 @@ public class DewdropAnnotationUtils {
 
     public static Set<Class<?>> getAnnotatedClasses(Class<? extends Annotation> annotationClass) {
         Set<Class<?>> classes = REFLECTIONS.getTypesAnnotatedWith(annotationClass);
-        return classes.stream().collect(toSet());
+        return classes.stream().filter(clazz -> {
+            if (EXCLUDE_PACKAGES.contains(clazz.getPackageName())) { return false; }
+            return true;
+        }).collect(toSet());
     }
 }
