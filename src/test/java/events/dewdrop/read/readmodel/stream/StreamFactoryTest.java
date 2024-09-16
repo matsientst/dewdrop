@@ -1,27 +1,12 @@
 package events.dewdrop.read.readmodel.stream;
 
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-
 import events.dewdrop.aggregate.AggregateRoot;
 import events.dewdrop.fixture.automated.DewdropAccountAggregate;
 import events.dewdrop.fixture.events.DewdropAccountCreated;
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetailsReadModel;
 import events.dewdrop.read.readmodel.ReadModel;
 import events.dewdrop.read.readmodel.ReadModelWrapper;
-import events.dewdrop.read.readmodel.annotation.Stream;
+import events.dewdrop.read.readmodel.annotation.CategoryStream;
 import events.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
 import events.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
 import events.dewdrop.streamstore.stream.PrefixStreamNameGenerator;
@@ -38,12 +23,27 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+
 class StreamFactoryTest {
     StreamFactory streamFactory;
     StreamStore streamStore;
     EventSerializer eventSerializer;
     StreamNameGenerator streamNameGenerator;
-    events.dewdrop.read.readmodel.annotation.Stream streamAnnotation;
+    events.dewdrop.read.readmodel.annotation.CategoryStream streamAnnotation;
     InMemoryCacheProcessor inMemoryCacheProcessor;
     ReadModel readModel;
     StreamType streamType;
@@ -58,7 +58,8 @@ class StreamFactoryTest {
         streamNameGenerator = new PrefixStreamNameGenerator();
         streamFactory = Mockito.spy(new StreamFactory(streamStore, eventSerializer, streamNameGenerator));
 
-        streamAnnotation = Mockito.spy(TestReadModel.class.getAnnotation(events.dewdrop.read.readmodel.annotation.Stream.class));
+        CategoryStream annotation = TestReadModel.class.getAnnotation(CategoryStream.class);
+        streamAnnotation = Mockito.spy(annotation);
         inMemoryCacheProcessor = mock(MapBackedInMemoryCacheProcessor.class);
         readModel = new ReadModel(ReadModelWrapper.of(DewdropAccountDetailsReadModel.class).get(), Optional.of(inMemoryCacheProcessor));
         streamType = StreamType.CATEGORY;
@@ -83,7 +84,7 @@ class StreamFactoryTest {
             List<Class<DewdropAccountCreated>> events = List.of(DewdropAccountCreated.class);
             eventHandlerUtils.when(() -> EventHandlerUtils.getEventHandlers(readModel)).thenReturn(events);
 
-            StreamDetails streamDetails = streamFactory.fromStreamAnnotation(streamAnnotation, readModel);
+            StreamDetails streamDetails = streamFactory.fromStreamAnnotation(new StreamAnnotationDetails(streamAnnotation), readModel);
             assertThat(streamDetails.getStreamName(), is("$ce-test"));
             assertThat(streamDetails.getStreamType(), is(streamType));
             assertThat(streamDetails.getSubscriptionStartStrategy(), is(SubscriptionStartStrategy.READ_ALL_START_END));
@@ -107,7 +108,7 @@ class StreamFactoryTest {
                 eventHandlerUtils.when(() -> EventHandlerUtils.getEventHandlers(readModel)).thenReturn(events);
                 utilities.when(() -> StreamUtils.getStreamStartPositionMethod(anyString(), any(StreamType.class), any())).thenReturn(Optional.of(startPositionMethod));
 
-                StreamDetails streamDetails = streamFactory.fromStreamAnnotation(streamAnnotation, readModel);
+                StreamDetails streamDetails = streamFactory.fromStreamAnnotation(new StreamAnnotationDetails(streamAnnotation), readModel);
 
                 assertThat(streamDetails.getStreamName(), is("$ce-test"));
                 assertThat(streamDetails.getStreamType(), is(streamType));
@@ -127,7 +128,7 @@ class StreamFactoryTest {
         try (MockedStatic<StreamUtils> utilities = mockStatic(StreamUtils.class)) {
             utilities.when(() -> StreamUtils.getStreamStartPositionMethod(anyString(), any(StreamType.class), any())).thenReturn(Optional.empty());
 
-            assertThrows(IllegalStateException.class, () -> streamFactory.fromStreamAnnotation(streamAnnotation, readModel));
+            assertThrows(IllegalStateException.class, () -> streamFactory.fromStreamAnnotation(new StreamAnnotationDetails(streamAnnotation), readModel));
         }
     }
 
@@ -181,8 +182,8 @@ class StreamFactoryTest {
     @DisplayName("constructStreamFromStream() - Given an AggregateRoot and a UUID, when constructStreamFromStream() is called, then return a Stream")
     void constructStreamFromStream() {
         StreamDetails streamDetails = mock(StreamDetails.class);
-        doReturn(streamDetails).when(streamFactory).fromStreamAnnotation(any(events.dewdrop.read.readmodel.annotation.Stream.class), any(ReadModel.class));
-        events.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStreamFromStream(streamAnnotation, readModel);
+        doReturn(streamDetails).when(streamFactory).fromStreamAnnotation(any(StreamAnnotationDetails.class), any(ReadModel.class));
+        events.dewdrop.read.readmodel.stream.Stream stream = streamFactory.constructStreamFromStream(new StreamAnnotationDetails(streamAnnotation), readModel);
         assertThat(stream.getStreamDetails(), Matchers.is(streamDetails));
         assertThat(stream.getEventSerializer(), is(eventSerializer));
         assertThat(stream.getStreamStore(), is(streamStore));
@@ -202,13 +203,12 @@ class StreamFactoryTest {
     }
 
     private void stubStreamAnnotation(StreamType streamType, Direction direction, boolean subscribed, String name) {
-        doReturn(streamType).when(streamAnnotation).streamType();
         doReturn(direction).when(streamAnnotation).direction();
         doReturn(subscribed).when(streamAnnotation).subscribed();
         doReturn(name).when(streamAnnotation).name();
     }
 
-    @Stream(streamType = StreamType.CATEGORY, direction = Direction.FORWARD, subscribed = true, name = "test")
+    @CategoryStream(direction = Direction.FORWARD, subscribed = true, name = "test")
     private class TestReadModel {
         public TestReadModel() {}
     }

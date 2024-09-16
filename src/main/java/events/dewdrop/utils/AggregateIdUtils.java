@@ -2,13 +2,14 @@ package events.dewdrop.utils;
 
 import events.dewdrop.aggregate.AggregateRoot;
 import events.dewdrop.aggregate.annotation.AggregateId;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections4.CollectionUtils;
 
 @Log4j2
 public class AggregateIdUtils {
@@ -16,6 +17,11 @@ public class AggregateIdUtils {
 
     public static Optional<UUID> getAggregateId(AggregateRoot aggregateRoot) {
         return getAggregateId(aggregateRoot.getTarget());
+    }
+
+    public static boolean hasAggregateId(Object target) {
+        Set<Field> annotatedFields = DewdropAnnotationUtils.getAnnotatedFields(target.getClass(), AggregateId.class);
+        return CollectionUtils.isNotEmpty(annotatedFields);
     }
 
     public static Optional<UUID> getAggregateId(Object target) {

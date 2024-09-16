@@ -63,8 +63,8 @@ public class ReadModel<T extends Event> {
     }
 
 
-    public void updateState() {
-        streams.forEach(Stream::updateState);
+    public void updateQueryState(Optional<UUID> aggregateId) {
+        streams.forEach(stream -> stream.updateQueryState(aggregateId));
         inMemoryCacheProcessor.ifPresent(memoryCacheProcessor -> readModelWrapper.updateReadModelCache(memoryCacheProcessor.getCache()));
     }
 

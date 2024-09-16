@@ -18,6 +18,7 @@ class ValidationExceptionTest {
 
         assertEquals(message, exception.getValidationResult().get().get(0).getMessage());
     }
+
     @Test
     void validationException_withField() {
         String field = "username";

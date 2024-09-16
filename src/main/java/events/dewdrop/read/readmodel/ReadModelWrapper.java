@@ -1,23 +1,24 @@
 package events.dewdrop.read.readmodel;
 
-import static java.util.stream.Collectors.toList;
-
-import events.dewdrop.read.readmodel.annotation.Stream;
+import events.dewdrop.read.readmodel.stream.StreamAnnotationDetails;
+import events.dewdrop.structure.api.Event;
+import events.dewdrop.utils.DependencyInjectionUtils;
 import events.dewdrop.utils.DewdropReflectionUtils;
 import events.dewdrop.utils.EventHandlerUtils;
+import events.dewdrop.utils.ReadModelUtils;
+import events.dewdrop.utils.StreamUtils;
+import lombok.Data;
+import lombok.extern.log4j.Log4j2;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import lombok.Data;
-import events.dewdrop.structure.api.Event;
-import events.dewdrop.utils.DependencyInjectionUtils;
-import events.dewdrop.utils.ReadModelUtils;
-import lombok.extern.log4j.Log4j2;
+
+import static java.util.stream.Collectors.toList;
 
 @Log4j2
 @Data
@@ -58,9 +59,8 @@ public class ReadModelWrapper {
     }
 
 
-    public List<Stream> getStreamAnnotations() {
-        Stream[] streams = originalReadModelClass.getAnnotationsByType(Stream.class);
-        return Arrays.asList(streams);
+    public List<StreamAnnotationDetails> getStreamAnnotations() {
+        return StreamUtils.getStreamAnnotationDetails(originalReadModelClass);
     }
 
     public <T extends Event> void callEventHandlers(T message) {

@@ -22,11 +22,13 @@ import events.dewdrop.config.DewdropSettings;
 import events.dewdrop.fixture.command.DewdropAddFundsToAccountCommand;
 import events.dewdrop.fixture.command.DewdropCreateAccountCommand;
 import events.dewdrop.fixture.command.DewdropCreateUserCommand;
+import events.dewdrop.fixture.command.DewdropDeactivateUserCommand;
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropAccountDetails;
 import events.dewdrop.fixture.readmodel.accountdetails.details.DewdropGetAccountByIdQuery;
 import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummary;
 import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryQuery;
 import events.dewdrop.fixture.readmodel.users.DewdropGetUserByIdQuery;
+import events.dewdrop.fixture.readmodel.users.DewdropGetUserByIdQueryForAggregate;
 import events.dewdrop.fixture.readmodel.users.DewdropUser;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -87,6 +89,7 @@ class DewdropTest {
             if (StringUtils.isNotEmpty(dewdropUser.getUsername()) && dewdropUser.getUserId().equals(createUserCommand.getUserId())) { return true; }
             return false;
         });
+
         Result<DewdropUser> userResult = dewdrop.executeQuery(getUserById);
         DewdropUser dewdropUser = userResult.get();
         assertThat(createUserCommand.getUserId(), is(dewdropUser.getUserId()));
@@ -104,6 +107,21 @@ class DewdropTest {
                 return true;
             }
             return false;
+        });
+
+        DewdropDeactivateUserCommand deactivateCommand = new DewdropDeactivateUserCommand(createUserCommand.getUserId());
+        dewdrop.executeCommand(deactivateCommand);
+
+        DewdropGetUserByIdQueryForAggregate aggregateUserById = new DewdropGetUserByIdQueryForAggregate(createUserCommand.getUserId());
+
+        retryUntilComplete(dewdrop, aggregateUserById, (deactivatedUser) -> {
+            if (deactivatedUser.isEmpty()) {
+                log.info("Query not found:{}", query);
+                return false;
+            }
+            DewdropUser innactiveUser = (DewdropUser) deactivatedUser.get();
+            assertThat(innactiveUser.isActive(), is(false));
+            return true;
         });
     }
 

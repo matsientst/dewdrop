@@ -1,17 +1,18 @@
 package events.dewdrop.read.readmodel;
 
-import static java.util.Objects.requireNonNull;
-
-import events.dewdrop.read.readmodel.annotation.Stream;
+import events.dewdrop.read.readmodel.stream.StreamAnnotationDetails;
 import events.dewdrop.read.readmodel.stream.StreamFactory;
-import events.dewdrop.utils.ReadModelUtils;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Optional;
-import lombok.extern.log4j.Log4j2;
 import events.dewdrop.structure.api.Event;
 import events.dewdrop.structure.datastore.StreamStore;
 import events.dewdrop.structure.serialize.EventSerializer;
+import events.dewdrop.utils.ReadModelUtils;
+import lombok.extern.log4j.Log4j2;
+
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Optional;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Factory class is responsible for creating read models
@@ -62,7 +63,7 @@ public class ReadModelFactory {
     <T extends Event> ReadModel<T> construct(ReadModelWrapper readModelWrapper) {
         ReadModel<T> readModel = ReadModelUtils.createReadModel(readModelWrapper);
 
-        List<Stream> streams = readModelWrapper.getStreamAnnotations();
+        List<StreamAnnotationDetails> streams = readModelWrapper.getStreamAnnotations();
         if (streams.isEmpty()) {
             log.error("No @Stream annotation found on {} - This is used to know what stream to read from and is required", readModelWrapper.getClass().getSimpleName());
             return null;
@@ -74,7 +75,7 @@ public class ReadModelFactory {
                 readModel.addStream(stream);
                 log.info("Creating Stream for stream:{} - subscribed:{} for ReadModel:{}", stream.getStreamDetails().getStreamName(), stream.getStreamDetails().isSubscribed(), readModelWrapper.getOriginalReadModelClass().getSimpleName());
             } catch (IllegalArgumentException e) {
-                log.error("Could not create stream for {} for ReadModel:{} - skipping", streamAnnotation.name(), readModel.getReadModelWrapper().getOriginalReadModelClass().getSimpleName());
+                log.error("Could not create stream for {} for ReadModel:{} - skipping", streamAnnotation.getStreamName(), readModel.getReadModelWrapper().getOriginalReadModelClass().getSimpleName());
             }
         });
         return readModel;

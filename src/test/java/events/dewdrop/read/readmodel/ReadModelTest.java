@@ -1,5 +1,29 @@
 package events.dewdrop.read.readmodel;
 
+import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;
+import events.dewdrop.fixture.events.DewdropUserCreated;
+import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryReadModel;
+import events.dewdrop.fixture.readmodel.users.lifecycle.UsersReadModel;
+import events.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
+import events.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
+import events.dewdrop.read.readmodel.stream.Stream;
+import events.dewdrop.structure.api.Event;
+import events.dewdrop.utils.CacheUtils;
+import events.dewdrop.utils.ReadModelUtils;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
@@ -10,32 +34,8 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-
-import events.dewdrop.fixture.events.DewdropFundsAddedToAccount;
-import events.dewdrop.fixture.events.DewdropUserCreated;
-import events.dewdrop.fixture.readmodel.users.lifecycle.UsersReadModel;
-import events.dewdrop.read.readmodel.cache.InMemoryCacheProcessor;
-import events.dewdrop.read.readmodel.cache.MapBackedInMemoryCacheProcessor;
-import events.dewdrop.read.readmodel.stream.Stream;
-import events.dewdrop.utils.CacheUtils;
-import events.dewdrop.utils.ReadModelUtils;
-import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import events.dewdrop.fixture.readmodel.accountdetails.summary.DewdropAccountSummaryReadModel;
-import events.dewdrop.structure.api.Event;
-import org.hamcrest.MatcherAssert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 class ReadModelTest {
     ReadModel<Event> readModel;
@@ -135,15 +135,15 @@ class ReadModelTest {
 
     @Test
     @DisplayName("updateState() - Given a readModel, should call inMemoryCacheProcessor.updateState()")
-    void updateState() {
+    void updateQueryState() {
         Stream<Event> stream = mock(Stream.class);
         readModel.addStream(stream);
         doReturn(new HashMap<>()).when(inMemoryCacheProcessor).getCache();
 
         try (MockedStatic<ReadModelUtils> utilities = mockStatic(ReadModelUtils.class)) {
-            readModel.updateState();
+            readModel.updateQueryState(Optional.empty());
             utilities.verify(() -> ReadModelUtils.updateReadModelCacheField(any(Field.class), any(Object.class), any()), times(1));
-            verify(stream, times(1)).updateState();
+            verify(stream, times(1)).updateQueryState(Optional.empty());
         }
     }
 }

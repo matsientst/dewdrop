@@ -1,25 +1,26 @@
 package events.dewdrop.read.readmodel.stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-
 import events.dewdrop.aggregate.AggregateRoot;
 import events.dewdrop.fixture.automated.DewdropUserAggregate;
 import events.dewdrop.fixture.events.DewdropAccountCreated;
 import events.dewdrop.fixture.events.DewdropUserEvent;
 import events.dewdrop.streamstore.stream.PrefixStreamNameGenerator;
 import events.dewdrop.structure.StreamNameGenerator;
-import events.dewdrop.structure.read.Direction;
-import java.lang.reflect.Method;
-import java.util.Optional;
 import events.dewdrop.structure.api.Event;
-import java.util.List;
-import java.util.UUID;
-import java.util.function.Consumer;
+import events.dewdrop.structure.read.Direction;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 class StreamDetailsTest {
     Consumer<Event> handler = mock(Consumer.class);
@@ -52,7 +53,7 @@ class StreamDetailsTest {
         StreamType streamType = StreamType.AGGREGATE;
         UUID id = UUID.randomUUID();
         StreamDetails streamDetails = StreamDetails.builder().streamType(streamType).direction(Direction.FORWARD).eventHandler(handler).streamNameGenerator(streamNameGenerator).messageTypes(messageTypes).name("Test")
-                        .aggregateRoot(new AggregateRoot()).id(id).subscribed(true).create();
+                        .aggregateName(new AggregateRoot().getTarget().getClass().getSimpleName()).id(id).subscribed(true).create();
         assertThat(streamDetails.getStreamName(), is("AggregateRoot-" + id));
         assertThat(streamDetails.getStreamType(), Matchers.is(StreamType.AGGREGATE));
     }
@@ -65,20 +66,10 @@ class StreamDetailsTest {
         target.setUserId(id);
         AggregateRoot aggregateRoot = new AggregateRoot(target);
 
-        StreamDetails streamDetails = StreamDetails.builder().streamType(streamType).direction(Direction.FORWARD).eventHandler(handler).streamNameGenerator(streamNameGenerator).messageTypes(messageTypes).name("Test").aggregateRoot(aggregateRoot)
-                        .subscribed(true).create();
+        StreamDetails streamDetails = StreamDetails.builder().streamType(streamType).direction(Direction.FORWARD).eventHandler(handler).streamNameGenerator(streamNameGenerator).messageTypes(messageTypes).name("Test")
+                        .aggregateName(aggregateRoot.getTarget().getClass().getSimpleName()).id(id).subscribed(true).create();
         assertThat(streamDetails.getStreamName(), is("DewdropUserAggregate-" + id));
         assertThat(streamDetails.getStreamType(), Matchers.is(StreamType.AGGREGATE));
-    }
-
-    @Test
-    void builder_aggregate_withoutId() {
-        StreamType streamType = StreamType.AGGREGATE;
-        DewdropUserAggregate target = new DewdropUserAggregate();
-        AggregateRoot aggregateRoot = new AggregateRoot(target);
-
-        assertThrows(IllegalArgumentException.class, () -> StreamDetails.builder().streamType(streamType).direction(Direction.FORWARD).eventHandler(handler).streamNameGenerator(streamNameGenerator).messageTypes(messageTypes).name("Test")
-                        .aggregateRoot(aggregateRoot).subscribed(true).create());
     }
 
     @Test

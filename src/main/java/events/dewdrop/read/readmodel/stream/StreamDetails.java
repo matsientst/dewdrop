@@ -1,22 +1,20 @@
 package events.dewdrop.read.readmodel.stream;
 
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
-
-import events.dewdrop.aggregate.AggregateRoot;
 import events.dewdrop.structure.StreamNameGenerator;
+import events.dewdrop.structure.api.Event;
+import events.dewdrop.structure.read.Direction;
+import lombok.Builder;
+import lombok.Data;
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
-import lombok.Builder;
-import lombok.Data;
-import org.apache.commons.collections4.CollectionUtils;
-import events.dewdrop.structure.api.Event;
-import events.dewdrop.structure.read.Direction;
-import events.dewdrop.utils.AggregateIdUtils;
+
+import static java.util.stream.Collectors.joining;
 
 @Data
 public class StreamDetails<T extends Event> {
@@ -32,7 +30,7 @@ public class StreamDetails<T extends Event> {
 
 
     @Builder(buildMethodName = "create")
-    public StreamDetails(StreamType streamType, String name, List<Class<? extends Event>> messageTypes, Consumer<T> eventHandler, Direction direction, AggregateRoot aggregateRoot, UUID id, Boolean subscribed, StreamNameGenerator streamNameGenerator,
+    public StreamDetails(StreamType streamType, String name, List<Class<? extends Event>> messageTypes, Consumer<T> eventHandler, Direction direction, String aggregateName, UUID id, Boolean subscribed, StreamNameGenerator streamNameGenerator,
                     SubscriptionStartStrategy subscriptionStartStrategy, Optional<Method> startPositionMethod) {
         this.streamType = streamType;
         if (CollectionUtils.isNotEmpty(messageTypes)) {
@@ -49,10 +47,7 @@ public class StreamDetails<T extends Event> {
                 this.streamName = streamNameGenerator.generateForEvent(name);
                 break;
             case AGGREGATE:
-                requireNonNull(aggregateRoot, "AggregateRoot is required to create a StreamDetails of StreamType.AGGREGATE");
-
-                UUID verifiedId = Optional.ofNullable(id).orElseGet(() -> AggregateIdUtils.getAggregateId(aggregateRoot).orElseThrow(() -> new IllegalArgumentException("No ID found for AggregateRoot")));
-                this.streamName = streamNameGenerator.generateForAggregate(aggregateRoot.getTarget().getClass(), verifiedId);
+                this.streamName = streamNameGenerator.generateForAggregate(aggregateName, id);
                 break;
             case CATEGORY:
             default:

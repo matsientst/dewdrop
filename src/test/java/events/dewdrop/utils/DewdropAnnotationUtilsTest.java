@@ -78,7 +78,7 @@ class DewdropAnnotationUtilsTest {
     void getAnnotatedMethodsWithTarget() {
         Set<Method> annotated = DewdropAnnotationUtils.getAnnotatedMethods(DewdropUserAggregate.class, CommandHandler.class);
 
-        assertThat(annotated.size(), is(1));
+        assertThat(annotated.size(), is(2));
     }
 
     @Test
