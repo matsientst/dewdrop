@@ -4,7 +4,7 @@
 
     <groupId>events.dewdrop</groupId>
     <artifactId>dewdrop</artifactId>
-    <version>1.0.4.16</version>
+    <version>1.0.4.18</version>
 
     <name>Dewdrop Event Sourcing Framework</name>
     <description>Dewdrop is a simple, fast, and powerful java based event sourcing framework.</description>

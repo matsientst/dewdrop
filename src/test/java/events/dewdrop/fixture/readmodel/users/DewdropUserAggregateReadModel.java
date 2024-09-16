@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ReadModel
-@AggregateStream(name = "DewdropUserAggregate", subscribed = false, dto = DewdropUser.class)
+@AggregateStream(name = "DewdropUserAggregate", subscribed = false)
 public class DewdropUserAggregateReadModel {
     @DewdropCache
     DewdropUser dewdropUser;

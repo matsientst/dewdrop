@@ -14,6 +14,4 @@ public @interface AggregateStream {
     Direction direction() default Direction.FORWARD;
 
     boolean subscribed() default true;
-
-    Class<?> dto();
 }
