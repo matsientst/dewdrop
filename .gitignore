@@ -29,3 +29,5 @@ target/*
 
 # mac
 .DS_Store
+
+.java-version
