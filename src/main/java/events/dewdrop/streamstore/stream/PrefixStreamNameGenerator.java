@@ -1,9 +1,10 @@
 package events.dewdrop.streamstore.stream;
 
 import events.dewdrop.structure.StreamNameGenerator;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Locale;
 import java.util.UUID;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * The type Prefix stream name generator.
@@ -33,13 +34,15 @@ public class PrefixStreamNameGenerator implements StreamNameGenerator {
      * DewdropUserAggregate-fc19e182-045a-4f91-9c61-ae081383ed36
      *
      * @param aggregateName The class of the aggregate.
-     * @param id The id of the aggregate
+     * @param id            The id of the aggregate
      * @return A string that is the name of the stream.
      */
     @Override
     public String generateForAggregate(String aggregateName, UUID id) {
         StringBuilder builder = new StringBuilder();
-        appendPrefix(builder);
+        if (!StringUtils.startsWith(aggregateName, prefix)) {
+            appendPrefix(builder);
+        }
         builder.append(aggregateName);
         if (id != null) {
             builder.append("-").append(id);
