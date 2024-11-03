@@ -107,10 +107,11 @@ public class StreamFactory {
         String streamName = eventClass.getSimpleName();
         Optional<Method> streamStartPositionMethod = StreamUtils.getStreamStartPositionMethod(streamName, StreamType.EVENT, readModel);
         SubscriptionStartStrategy subscriptionStartStrategy = SubscriptionStartStrategy.START_END_ONLY;
-        if (!streamStartPositionMethod.isEmpty()) {
+        if (streamStartPositionMethod.isPresent()) {
             subscriptionStartStrategy = SubscriptionStartStrategy.START_FROM_POSITION;
         }
-
+        log.info("Creating Stream for event:{} - subscribed:{} for ReadModel:{}, streamStartPositionMethod:{}, subscriptionStartStrategy:{}", streamName, true, readModel.getReadModelWrapper().getOriginalReadModelClass().getSimpleName(),
+                        streamStartPositionMethod, subscriptionStartStrategy);
         return StreamDetails.builder().streamType(StreamType.EVENT).direction(Direction.FORWARD).eventHandler((Consumer<Event>) readModel.handler()).streamNameGenerator(streamNameGenerator).messageTypes(List.of(eventClass)).name(streamName)
                         .subscribed(true).subscriptionStartStrategy(subscriptionStartStrategy).startPositionMethod(streamStartPositionMethod).create();
     }

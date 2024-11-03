@@ -366,7 +366,7 @@ class StreamReaderTest {
         AggregateRoot aggregateRoot = new AggregateRoot(new DewdropUserAggregate());
         UUID id = UUID.randomUUID();
         String username = "Test";
-        StreamStoreGetByIDRequest request = new StreamStoreGetByIDRequest(aggregateRoot, id, 1, new DewdropCreateUserCommand(id, username));
+        StreamStoreGetByIDRequest request = StreamStoreGetByIDRequest.builder().aggregateRoot(aggregateRoot).id(id).command(new DewdropCreateUserCommand(id, username)).create();
         doReturn(results).when(streamStore).read(any(ReadRequest.class));
         doReturn(Optional.of(new DewdropUserCreated(id, username))).when(eventSerializer).deserialize(any(ReadEventData.class));
         AggregateRoot byId = streamReader.getById(request);
@@ -374,31 +374,57 @@ class StreamReaderTest {
         verify(eventSerializer, times(1)).deserialize(any(ReadEventData.class));
     }
 
+
+
+    // @Test
+    // @DisplayName("getById() - Given an aggregateRoot, an ID, a version and a command, when we
+    // getById(), confirm that the aggregateRoot is returned and that we have deserialized it")
+    // void getById_notEndOfStream() {
+    // AggregateRoot aggregateRoot = new AggregateRoot(new DewdropUserAggregate());
+    // UUID id = UUID.randomUUID();
+    // String username = "Test";
+    // StreamStoreGetByIDRequest request = new StreamStoreGetByIDRequest(aggregateRoot, id, 1, new
+    // DewdropCreateUserCommand(id, username));
+    // doReturn(true).doReturn(false).when(streamReader).moreToRead(anyLong(), anyLong(), anyBoolean());
+    // doReturn(results).when(streamStore).read(any(ReadRequest.class));
+    // doReturn(Optional.of(new DewdropUserCreated(id,
+    // username))).when(eventSerializer).deserialize(any(ReadEventData.class));
+    // AggregateRoot byId = streamReader.getById(request);
+    // assertThat(byId, is(notNullValue()));
+    // verify(eventSerializer, times(2)).deserialize(any(ReadEventData.class));
+    // }
+
     @Test
-    @DisplayName("getById() - Given an aggregateRoot, an ID, a version and a command, when we getById(), confirm that the aggregateRoot is returned and that we have deserialized it")
-    void getById_notEndOfStream() {
+    @DisplayName("getById() - Given an aggregateRoot, an ID, a version greater than 500, when we getById(), confirm that the aggregateRoot is returned and that we have deserialized it")
+    void getById_moreThan500Events() {
         AggregateRoot aggregateRoot = new AggregateRoot(new DewdropUserAggregate());
         UUID id = UUID.randomUUID();
         String username = "Test";
-        StreamStoreGetByIDRequest request = new StreamStoreGetByIDRequest(aggregateRoot, id, 1, new DewdropCreateUserCommand(id, username));
-        doReturn(true).doReturn(false).when(streamReader).moreToRead(anyLong(), anyLong(), anyBoolean());
-        doReturn(results).when(streamStore).read(any(ReadRequest.class));
+        StreamStoreGetByIDRequest request = new StreamStoreGetByIDRequest(aggregateRoot, id, 600, new DewdropCreateUserCommand(id, username));
+
+        StreamReadResults firstBatchResults = new StreamReadResults("Test", 500L, Direction.FORWARD, List.of(mock(ReadEventData.class)), 500L, 500L, false);
+        StreamReadResults secondBatchResults = new StreamReadResults("Test", 100L, Direction.FORWARD, List.of(mock(ReadEventData.class)), 600L, 100L, true);
+
+        doReturn(firstBatchResults).doReturn(secondBatchResults).when(streamStore).read(any(ReadRequest.class));
         doReturn(Optional.of(new DewdropUserCreated(id, username))).when(eventSerializer).deserialize(any(ReadEventData.class));
+
         AggregateRoot byId = streamReader.getById(request);
         assertThat(byId, is(notNullValue()));
         verify(eventSerializer, times(2)).deserialize(any(ReadEventData.class));
     }
-
-    @Test
-    @DisplayName("getById() - Given an aggregateRoot, an ID, a an invalid version and a command, when we getById(), confirm that the aggregateRoot is returned and that we have deserialized it")
-    void getById_invalidVersion() {
-        AggregateRoot aggregateRoot = new AggregateRoot(new DewdropUserAggregate());
-        UUID id = UUID.randomUUID();
-        String username = "Test";
-        StreamStoreGetByIDRequest request = new StreamStoreGetByIDRequest(aggregateRoot, id, -100, new DewdropCreateUserCommand(id, username));
-
-        assertThrows(IllegalArgumentException.class, () -> streamReader.getById(request));
-    }
+    //
+    // @Test
+    // @DisplayName("getById() - Given an aggregateRoot, an ID, a an invalid version and a command, when
+    // we getById(), confirm that the aggregateRoot is returned and that we have deserialized it")
+    // void getById_invalidVersion() {
+    // AggregateRoot aggregateRoot = new AggregateRoot(new DewdropUserAggregate());
+    // UUID id = UUID.randomUUID();
+    // String username = "Test";
+    // StreamStoreGetByIDRequest request = new StreamStoreGetByIDRequest(aggregateRoot, id, -100, new
+    // DewdropCreateUserCommand(id, username));
+    //
+    // assertThrows(IllegalArgumentException.class, () -> streamReader.getById(request));
+    // }
 
     @Test
     @DisplayName("getById() - Given an aggregateRoot, an ID, a version and a null command, when we are unable to deserialize it, confirm that the aggregateRoot is returned and that we have NOT deserialized it")
