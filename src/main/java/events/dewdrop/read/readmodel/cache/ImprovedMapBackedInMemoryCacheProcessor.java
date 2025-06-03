@@ -1,14 +1,5 @@
 package events.dewdrop.read.readmodel.cache;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
 import events.dewdrop.structure.api.Event;
 import events.dewdrop.structure.api.Message;
 import events.dewdrop.utils.CacheUtils;
@@ -16,6 +7,16 @@ import events.dewdrop.utils.DewdropReflectionUtils;
 import events.dewdrop.utils.ReadModelUtils;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Log4j2
 @Data
@@ -72,24 +73,34 @@ public class ImprovedMapBackedInMemoryCacheProcessor<R> implements InMemoryCache
     private <T extends Message> void processForeignStashedMessages() {
         if (foreignStashedMessages.isEmpty()) { return; }
         Collection<List<Message>> values = foreignStashedMessages.values();
-        values.forEach(stashedMessages -> {
-            List<Message> toRemove = new ArrayList<>();
-            stashedMessages.forEach(message -> {
+        for (List<Message> stashedMessages : values) {
+            Iterator<Message> iterator = stashedMessages.iterator();
+            if (stashedMessages.isEmpty()) {
+                iterator.remove();
+                continue;
+            }
+            while (iterator.hasNext()) {
+                Message message = iterator.next();
                 foreignCacheKeyFields.forEach(field -> {
-                    processForeignCache(message, field, false).ifPresent(uuid -> toRemove.add(message));
+                    if (processForeignCache(message, field, false).isPresent()) {
+                        iterator.remove();
+                    }
                 });
-
-            });
-            stashedMessages.removeAll(toRemove);
-        });
+            }
+        }
     }
 
     private <T extends Message> void processPrimaryStashedMessages(UUID uuid) {
         if (primaryStashedMessages.isEmpty()) { return; }
         Collection<List<Message>> values = primaryStashedMessages.values();
-        values.forEach(stashedMessages -> {
+        for (Iterator<List<Message>> iterator = values.iterator(); iterator.hasNext();) {
+            List<Message> stashedMessages = iterator.next();
+            if (stashedMessages.isEmpty()) {
+                iterator.remove();
+                continue;
+            }
             List<Message> toRemove = new ArrayList<>();
-            stashedMessages.forEach(message -> {
+            for (Message message : stashedMessages) {
                 Optional<UUID> cacheRootKey = CacheUtils.getCacheRootKey(message);
 
                 if (cacheRootKey.isPresent() && uuid.equals(cacheRootKey.get())) {
@@ -99,9 +110,9 @@ public class ImprovedMapBackedInMemoryCacheProcessor<R> implements InMemoryCache
                         toRemove.add(message);
                     }
                 }
-            });
+            }
             stashedMessages.removeAll(toRemove);
-        });
+        }
     }
 
     // If we see that we have found a foreignKey in our dto field make sure to add it to index
@@ -144,7 +155,7 @@ public class ImprovedMapBackedInMemoryCacheProcessor<R> implements InMemoryCache
         foreignCacheKeyFields.forEach(foreignCacheKeyName -> processForeignCache(message, foreignCacheKeyName, true));
     }
 
-    <T extends Message> Optional<Boolean> processForeignCache(T message, Field foreignCacheKeyField, boolean cache) {
+    <T extends Message> Optional<UUID> processForeignCache(T message, Field foreignCacheKeyField, boolean cache) {
         log.debug("Received message: {} in foreign cache", message);
         Optional<UUID> optForeignCacheKey = CacheUtils.getForeignCacheEventKeyValue(message, foreignCacheKeyField);
 
@@ -152,7 +163,7 @@ public class ImprovedMapBackedInMemoryCacheProcessor<R> implements InMemoryCache
             UUID uuidFromMessage = optForeignCacheKey.get();
             if (isForeignKeyValueInIndex(uuidFromMessage)) {
                 processForeignKeyMessage(message, uuidFromMessage);
-                return Optional.of(true);
+                return Optional.of(uuidFromMessage);
             } else if (cache) {
                 notFoundInCacheIndex(uuidFromMessage, message);
             }
