@@ -71,9 +71,7 @@ public class ImprovedMapBackedInMemoryCacheProcessor<R> implements InMemoryCache
     }
 
     private <T extends Message> void processForeignStashedMessages() {
-        if (foreignStashedMessages.isEmpty()) {
-            return;
-        }
+        if (foreignStashedMessages.isEmpty()) { return; }
         Collection<List<Message>> values = foreignStashedMessages.values();
         for (List<Message> stashedMessages : values) {
             Iterator<Message> iterator = stashedMessages.iterator();
@@ -93,11 +91,9 @@ public class ImprovedMapBackedInMemoryCacheProcessor<R> implements InMemoryCache
     }
 
     private <T extends Message> void processPrimaryStashedMessages(UUID uuid) {
-        if (primaryStashedMessages.isEmpty()) {
-            return;
-        }
+        if (primaryStashedMessages.isEmpty()) { return; }
         Collection<List<Message>> values = primaryStashedMessages.values();
-        for (Iterator<List<Message>> iterator = values.iterator(); iterator.hasNext(); ) {
+        for (Iterator<List<Message>> iterator = values.iterator(); iterator.hasNext();) {
             List<Message> stashedMessages = iterator.next();
             if (stashedMessages.isEmpty()) {
                 iterator.remove();
